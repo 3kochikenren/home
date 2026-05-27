@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>〇〇党 高知県連 | 公式サイト</title>
+    <meta name="description" content="〇〇党高知県連の公式ウェブサイトです。活動報告、政策、お知らせなどを掲載しています。">
+
+    <!-- CSSフレームワーク (Tailwind CSS) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1d4ed8', /* メインカラー（青系を想定） */
+                        secondary: '#f97316', /* アクセントカラー（オレンジ系） */
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Webフォント (Google Fonts) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- アイコンフォント (FontAwesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- 独自のスタイルシート (style.css) を読み込む -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+    <!-- ヘッダー -->
+    <header class="bg-white shadow-md fixed w-full top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- ロゴ領域 -->
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="#" class="flex items-center gap-2">
+                        <img class="h-12 w-auto object-contain" src="https://placehold.co/200x80/ffffff/333333?text=LOGO" alt="ロゴ">
+                        <span class="font-bold text-xl tracking-wider text-gray-800">高知県連</span>
+                    </a>
+                </div>
+
+                <!-- PC用ナビゲーション -->
+                <nav class="hidden md:flex space-x-8 items-center">
+                    <a href="#about" class="text-gray-600 hover:text-primary font-medium transition">理念・ご挨拶</a>
+                    <a href="#news" class="text-gray-600 hover:text-primary font-medium transition">お知らせ</a>
+                    <a href="#policy" class="text-gray-600 hover:text-primary font-medium transition">基本政策</a>
+                    <a href="#activity" class="text-gray-600 hover:text-primary font-medium transition">活動報告</a>
+                    <a href="#join" class="bg-primary hover:bg-blue-800 text-white px-6 py-2 rounded-full font-bold transition shadow-md">
+                        入党・参加する
+                    </a>
+                </nav>
+
+                <!-- モバイル用ハンバーガーボタン -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-600 hover:text-gray-900 focus:outline-none p-2">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- モバイル用ドロップダウンメニュー -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#about" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">理念・ご挨拶</a>
+                <a href="#news" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">お知らせ</a>
+                <a href="#policy" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">基本政策</a>
+                <a href="#activity" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">活動報告</a>
+                <a href="#join" class="block mt-4 px-3 py-3 text-center rounded-md text-base font-bold text-white bg-primary hover:bg-blue-800">入党・参加する</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="flex-grow pt-20">
+
+        <!-- ヒーローセクション -->
+        <section class="hero-bg relative h-[60vh] min-h-[400px] flex items-center justify-center">
+            <div class="absolute inset-0 bg-black bg-opacity-30"></div>
+            <div class="relative z-10 text-center px-4">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 drop-shadow-lg leading-tight">
+                    高知の未来を、<br class="md:hidden">共に創る。
+                </h1>
+                <p class="text-lg md:text-2xl text-white font-medium mb-8 drop-shadow-md">
+                    地域に根ざし、新しい県政を目指して
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="#policy" class="bg-white text-primary font-bold px-8 py-3 rounded-full hover:bg-gray-100 transition shadow-lg text-lg">
+                        政策を見る
+                    </a>
+                    <a href="#join" class="bg-secondary text-white font-bold px-8 py-3 rounded-full hover:bg-orange-600 transition shadow-lg text-lg">
+                        活動に参加する
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- お知らせセクション -->
+        <section id="news" class="py-16 bg-white">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold section-title">お知らせ</h2>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-6 shadow-inner">
+                    <ul class="divide-y divide-gray-200">
+                        <li class="py-4 flex flex-col md:flex-row md:items-center gap-2 md:gap-6 hover:bg-gray-100 transition px-2 rounded">
+                            <div class="flex items-center gap-4 md:w-48 shrink-0">
+                                <span class="text-sm text-gray-500 font-mono">2026.05.28</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">イベント</span>
+                            </div>
+                            <a href="#" class="text-gray-800 hover:text-primary font-medium flex-grow">高知市内での街頭演説会のお知らせ</a>
+                        </li>
+                        <li class="py-4 flex flex-col md:flex-row md:items-center gap-2 md:gap-6 hover:bg-gray-100 transition px-2 rounded">
+                            <div class="flex items-center gap-4 md:w-48 shrink-0">
+                                <span class="text-sm text-gray-500 font-mono">2026.05.15</span>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold">活動報告</span>
+                            </div>
+                            <a href="#" class="text-gray-800 hover:text-primary font-medium flex-grow">県政報告会を四万十市で開催しました</a>
+                        </li>
+                        <li class="py-4 flex flex-col md:flex-row md:items-center gap-2 md:gap-6 hover:bg-gray-100 transition px-2 rounded">
+                            <div class="flex items-center gap-4 md:w-48 shrink-0">
+                                <span class="text-sm text-gray-500 font-mono">2026.05.01</span>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-bold">重要</span>
+                            </div>
+                            <a href="#" class="text-gray-800 hover:text-primary font-medium flex-grow">県連ホームページをリニューアルしました</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="text-center mt-6">
+                    <a href="#" class="text-primary hover:underline font-medium inline-flex items-center gap-1">
+                        お知らせ一覧を見る <i class="fa-solid fa-angle-right"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 理念・ご挨拶セクション -->
+        <section id="about" class="py-20 bg-gray-50">
+            <div class="container mx-auto px-4 max-w-5xl">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold section-title">理念・ご挨拶</h2>
+                </div>
+                <div class="flex flex-col md:flex-row gap-10 items-center">
+                    <div class="w-full md:w-1/2">
+                        <img src="https://placehold.co/600x400/e5e7eb/6b7280?text=Representative+Image" alt="代表画像" class="rounded-lg shadow-lg w-full object-cover">
+                    </div>
+                    <div class="w-full md:w-1/2 space-y-6">
+                        <h3 class="text-2xl font-bold text-gray-800">県民の声を力に、<br>新しい高知を創り出す。</h3>
+                        <p class="text-gray-600 leading-relaxed">
+                            ここに代表者の挨拶や、県連としての理念の文章が入ります。高知県が抱える少子高齢化、産業の活性化、防災対策などの課題に対して、どのような姿勢で取り組んでいくのかを力強く語るスペースです。
+                        </p>
+                        <p class="text-gray-600 leading-relaxed">
+                            県民一人ひとりの声に耳を傾け、それを県政に反映させていく。しがらみのない政治を実現し、次世代に誇れる高知を残すために、私たちは全力で活動を続けてまいります。皆様の温かいご支援とご参加を心 marginち申し上げております。
+                        </p>
+                        <div class="mt-8">
+                            <p class="text-lg font-bold text-gray-800">〇〇党 高知県連 代表</p>
+                            <p class="text-xl font-bold text-primary mt-1">高知 太郎 (仮名)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 政策セクション -->
+        <section id="policy" class="py-20 bg-white">
+            <div class="container mx-auto px-4 max-w-6xl">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold section-title">重点政策</h2>
+                    <p class="mt-4 text-gray-600">高知県連が掲げる3つの柱</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="hover-card bg-white border border-gray-100 rounded-xl p-8 shadow-md text-center">
+                        <div class="w-20 h-20 mx-auto bg-blue-100 text-primary rounded-full flex items-center justify-center mb-6">
+                            <i class="fa-solid fa-child-reaching text-4xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">子育て・教育支援</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed text-left">
+                            政策の詳細が入ります。切れ目のない子育て支援策の拡充、教育環境の整備、給食費の無償化など、次世代を担う子どもたちが健やかに育つ環境づくりを推進します。
+                        </p>
+                    </div>
+                    <div class="hover-card bg-white border border-gray-100 rounded-xl p-8 shadow-md text-center">
+                        <div class="w-20 h-20 mx-auto bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+                            <i class="fa-solid fa-leaf text-4xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">地域産業の活性化</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed text-left">
+                            政策の詳細が入ります。第一次産業（農業・林業・水産業）の高付加価値化、観光産業の振興、地元中小企業への支援を通じて、活力ある地域経済を実現します。
+                        </p>
+                    </div>
+                    <div class="hover-card bg-white border border-gray-100 rounded-xl p-8 shadow-md text-center">
+                        <div class="w-20 h-20 mx-auto bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
+                            <i class="fa-solid fa-house-chimney-crack text-4xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">防災・減災対策</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed text-left">
+                            政策の詳細が入ります。南海トラフ地震などの大規模災害に備え、インフラの強靭化、避難所の環境改善、地域防災力の向上など、命を守る対策を最優先で進めます。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 活動報告セクション -->
+        <section id="activity" class="py-20 bg-gray-50">
+            <div class="container mx-auto px-4 max-w-6xl">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold section-title">活動報告</h2>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-lg shadow overflow-hidden hover-card">
+                        <img src="https://placehold.co/400x250/e5e7eb/6b7280?text=Activity+Image" alt="活動画像" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <span class="text-xs text-gray-500 font-mono mb-2 block">2026.05.20</span>
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">高知駅前での街頭活動</h3>
+                            <p class="text-gray-600 text-sm line-clamp-3">活動の概要が入ります。朝の通勤・通学時間帯に高知駅前にて街頭演説を行いました。多くの方にチラシを受け取っていただき...</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow overflow-hidden hover-card">
+                        <img src="https://placehold.co/400x250/e5e7eb/6b7280?text=Activity+Image" alt="活動画像" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <span class="text-xs text-gray-500 font-mono mb-2 block">2026.05.12</span>
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">〇〇地区タウンミーティング</h3>
+                            <p class="text-gray-600 text-sm line-clamp-3">活動の概要が入ります。地域の皆様と直接意見交換をするタウンミーティングを開催。交通インフラの課題について活発な議論が交わされました。</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow overflow-hidden hover-card hidden lg:block">
+                        <img src="https://placehold.co/400x250/e5e7eb/6b7280?text=Activity+Image" alt="活動画像" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <span class="text-xs text-gray-500 font-mono mb-2 block">2026.04.28</span>
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">海岸清掃ボランティア</h3>
+                            <p class="text-gray-600 text-sm line-clamp-3">活動の概要が入ります。党員・サポーターの皆様と一緒に、桂浜周辺の清掃活動を実施しました。環境保全への取り組みも継続してまいります。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-10">
+                    <a href="#" class="inline-block border-2 border-primary text-primary font-bold px-8 py-3 rounded-full hover:bg-primary hover:text-white transition">
+                        活動報告をもっと見る
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- アクション（参加・寄付）セクション -->
+        <section id="join" class="py-20 bg-primary relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
+            <div class="container mx-auto px-4 max-w-4xl relative z-10 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">あなたの力が、高知を変える。</h2>
+                <p class="text-blue-100 text-lg mb-10 leading-relaxed">
+                    私たちは、同じ志を持つ仲間を募集しています。<br class="hidden md:block">
+                    党員・サポーターとしての参加、ポスター掲示、ボランティア活動、ご寄付など、<br class="hidden md:block">
+                    あなたにできる形でのご支援をお願いいたします。
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-6">
+                    <a href="#" class="bg-white text-primary font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition shadow-lg flex items-center justify-center gap-2 text-lg">
+                        <i class="fa-solid fa-user-plus"></i> 入党・サポーター登録
+                    </a>
+                    <a href="#" class="bg-secondary text-white font-bold px-8 py-4 rounded-lg hover:bg-orange-600 transition shadow-lg flex items-center justify-center gap-2 text-lg">
+                        <i class="fa-solid fa-hand-holding-dollar"></i> 寄付で支援する
+                    </a>
+                </div>
+                <div class="mt-8 text-blue-200 text-sm">
+                    <p>※リンク先は外部フォーム等へ遷移します。</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-gray-900 text-gray-300 pt-16 pb-8">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <div class="flex flex-col md:flex-row justify-between gap-10 mb-12">
+                <div class="md:w-1/3">
+                    <a href="#" class="flex items-center gap-2 mb-6">
+                        <img class="h-10 w-auto bg-white p-1 rounded" src="https://placehold.co/200x80/ffffff/333333?text=LOGO" alt="ロゴ">
+                        <span class="font-bold text-xl tracking-wider text-white">高知県連</span>
+                    </a>
+                    <p class="text-sm mb-4 leading-relaxed">
+                        〒780-0000<br>
+                        高知県高知市〇〇町 1-2-3<br>
+                        〇〇ビル 2F
+                    </p>
+                    <p class="text-sm mb-2"><i class="fa-solid fa-phone mr-2"></i> 088-000-0000</p>
+                    <p class="text-sm"><i class="fa-solid fa-envelope mr-2"></i> info@example.com</p>
+                    <div class="flex gap-4 mt-6">
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-800 hover:text-white transition"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition"><i class="fa-brands fa-youtube"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition"><i class="fa-brands fa-line"></i></a>
+                    </div>
+                </div>
+                <div class="md:w-2/3 flex flex-wrap gap-10">
+                    <div>
+                        <h4 class="text-white font-bold mb-4 border-b border-gray-700 pb-2">コンテンツ</h4>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="#about" class="hover:text-white transition">理念・ご挨拶</a></li>
+                            <li><a href="#policy" class="hover:text-white transition">基本政策</a></li>
+                            <li><a href="#activity" class="hover:text-white transition">活動報告</a></li>
+                            <li><a href="#news" class="hover:text-white transition">お知らせ</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-bold mb-4 border-b border-gray-700 pb-2">参加・支援</h4>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="#join" class="hover:text-white transition">入党案内</a></li>
+                            <li><a href="#" class="hover:text-white transition">ボランティア募集</a></li>
+                            <li><a href="#" class="hover:text-white transition">寄付について</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-bold mb-4 border-b border-gray-700 pb-2">その他</h4>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="#" class="hover:text-white transition">お問い合わせ</a></li>
+                            <li><a href="#" class="hover:text-white transition">プライバシーポリシー</a></li>
+                            <li><a href="#" class="hover:text-white transition">サイトマップ</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-xs text-gray-500">
+                <p>&copy; 2026 〇〇党 高知県連 All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 独自のJavaScript (script.js) を読み込む -->
+    <script src="script.js"></script>
+</body>
+</html>
