@@ -1,0 +1,49 @@
+ <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* スムーズスクロール */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* ヒーローエリアの画像プレースホルダー用背景 */
+        .hero-bg {
+            background-color: #d1d5db; /* グレーの背景 */
+            background-image: url('https://placehold.co/1920x800/d1d5db/a3a8b4?text=Main+Visual');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* セクションのタイトル装飾 */
+        .section-title {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background-color: #1d4ed8; /* primary color */
+            border-radius: 2px;
+        }
+
+        /* カードのホバーエフェクト */
+        .hover-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen">
