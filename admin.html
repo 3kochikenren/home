@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理画面 | 参政党 高知県連</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .nav-btn { color: #6b7280; }
+        .nav-btn:hover { background: #fff7ed; color: #f97316; }
+        .nav-btn.active { background: #fff7ed; color: #f97316; font-weight: 700; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<!-- ログイン画面 -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center bg-gray-100">
+    <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-lock text-orange-500 text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">管理画面ログイン</h1>
+            <p class="text-gray-500 text-sm mt-2">参政党 高知県連</p>
+        </div>
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">パスワード</label>
+            <input type="password" id="password-input"
+                   class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-lg focus:outline-none focus:border-orange-400"
+                   placeholder="パスワードを入力してください">
+            <p id="login-error" class="text-red-500 text-sm mt-2 hidden"><i class="fa-solid fa-circle-exclamation mr-1"></i>パスワードが違います</p>
+            <button onclick="doLogin()"
+                    class="w-full bg-orange-500 text-white font-bold py-3 rounded-lg mt-5 hover:bg-orange-600 transition text-lg">
+                <i class="fa-solid fa-right-to-bracket mr-2"></i>ログイン
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 管理画面本体 -->
+<div id="admin-screen" class="hidden">
+
+    <!-- ヘッダー -->
+    <header class="bg-white shadow-sm fixed w-full top-0 z-50">
+        <div class="flex justify-between items-center px-6 py-4">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-orange-500 rounded-lg flex items-center justify-center">
+                    <i class="fa-solid fa-cog text-white"></i>
+                </div>
+                <span class="font-bold text-gray-800 text-lg">管理画面｜参政党 高知県連</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="index.html" target="_blank" class="text-sm text-orange-500 hover:underline font-medium">
+                    <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>サイトを確認
+                </a>
+                <button onclick="doLogout()" class="text-sm text-gray-500 hover:text-gray-800 font-medium">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i>ログアウト
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex pt-16 min-h-screen">
+
+        <!-- サイドバー -->
+        <aside class="w-60 bg-white shadow-sm fixed left-0 top-16 bottom-0">
+            <div class="p-4">
+                <p class="text-xs font-bold text-gray-400 px-4 mb-3 tracking-widest">コンテンツ管理</p>
+                <nav class="space-y-1">
+                    <button onclick="showSection('members')" id="nav-members"
+                            class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span>
+                    </button>
+                    <button onclick="showSection('events')" id="nav-events"
+                            class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-calendar-days w-5 text-center"></i><span>イベント</span>
+                    </button>
+                    <button onclick="showSection('activities')" id="nav-activities"
+                            class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-newspaper w-5 text-center"></i><span>活動報告</span>
+                    </button>
+                    <button onclick="showSection('news')" id="nav-news"
+                            class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-bell w-5 text-center"></i><span>お知らせ</span>
+                    </button>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- メインコンテンツ -->
+        <main class="ml-60 flex-1 p-8">
+
+            <!-- 議員情報 -->
+            <section id="section-members" class="admin-section">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-users mr-2 text-orange-500"></i>議員情報</h2>
+                        <p class="text-gray-500 text-sm mt-1">議員の写真・氏名・役職・紹介文を管理します</p>
+                    </div>
+                    <button onclick="openModal('members')"
+                            class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                        <i class="fa-solid fa-plus mr-1"></i>議員を追加
+                    </button>
+                </div>
+                <div id="members-list"></div>
+            </section>
+
+            <!-- イベント -->
+            <section id="section-events" class="admin-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-calendar-days mr-2 text-orange-500"></i>イベント</h2>
+                        <p class="text-gray-500 text-sm mt-1">開催予定・済みのイベントを管理します</p>
+                    </div>
+                    <button onclick="openModal('events')"
+                            class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                        <i class="fa-solid fa-plus mr-1"></i>イベントを追加
+                    </button>
+                </div>
+                <div id="events-list"></div>
+            </section>
+
+            <!-- 活動報告 -->
+            <section id="section-activities" class="admin-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-newspaper mr-2 text-orange-500"></i>活動報告</h2>
+                        <p class="text-gray-500 text-sm mt-1">活動の様子や報告記事を管理します</p>
+                    </div>
+                    <button onclick="openModal('activities')"
+                            class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                        <i class="fa-solid fa-plus mr-1"></i>活動報告を追加
+                    </button>
+                </div>
+                <div id="activities-list"></div>
+            </section>
+
+            <!-- お知らせ -->
+            <section id="section-news" class="admin-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-bell mr-2 text-orange-500"></i>お知らせ</h2>
+                        <p class="text-gray-500 text-sm mt-1">サイトに表示するお知らせを管理します</p>
+                    </div>
+                    <button onclick="openModal('news')"
+                            class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                        <i class="fa-solid fa-plus mr-1"></i>お知らせを追加
+                    </button>
+                </div>
+                <div id="news-list"></div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<!-- 入力モーダル -->
+<div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center px-6 py-5 border-b sticky top-0 bg-white rounded-t-2xl">
+            <h3 id="modal-title" class="text-xl font-bold text-gray-800"></h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div id="modal-body" class="px-6 py-5"></div>
+    </div>
+</div>
+
+<!-- 完了トースト -->
+<div id="toast" class="hidden fixed bottom-8 right-8 bg-green-500 text-white px-6 py-4 rounded-xl shadow-xl z-50 font-bold flex items-center gap-2">
+    <i class="fa-solid fa-circle-check text-xl"></i>
+    <span id="toast-msg"></span>
+</div>
+
+<script>
+const SUPABASE_URL = "https://yaimsonvxpujfupstpsd.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaW1zb252eHB1amZ1cHN0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODEwMjksImV4cCI6MjA5NTA1NzAyOX0.2PAKyBs8z44Ft4TXigKAsRfh6zEQwdVl2KNRZojxwzk";
+const ADMIN_PASSWORD = "sanseito2026";
+let editingId = null;
+
+// ========== ログイン ==========
+function doLogin() {
+    if (document.getElementById("password-input").value === ADMIN_PASSWORD) {
+        document.getElementById("login-screen").classList.add("hidden");
+        document.getElementById("admin-screen").classList.remove("hidden");
+        loadSection("members");
+    } else {
+        document.getElementById("login-error").classList.remove("hidden");
+    }
+}
+function doLogout() {
+    document.getElementById("admin-screen").classList.add("hidden");
+    document.getElementById("login-screen").classList.remove("hidden");
+    document.getElementById("password-input").value = "";
+}
+document.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !document.getElementById("login-screen").classList.contains("hidden")) doLogin();
+});
+
+// ========== セクション切替 ==========
+function showSection(name) {
+    document.querySelectorAll(".admin-section").forEach(s => s.classList.add("hidden"));
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById("section-" + name).classList.remove("hidden");
+    document.getElementById("nav-" + name).classList.add("active");
+    loadSection(name);
+}
+
+// ========== Supabase操作 ==========
+const headers = { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` };
+async function dbFetch(table, q = "") {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}`, { headers });
+    return r.json();
+}
+async function dbInsert(table, data) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+        method: "POST", body: JSON.stringify(data),
+        headers: { ...headers, "Content-Type": "application/json", "Prefer": "return=minimal" }
+    });
+    return r.ok;
+}
+async function dbUpdate(table, id, data) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+        method: "PATCH", body: JSON.stringify(data),
+        headers: { ...headers, "Content-Type": "application/json", "Prefer": "return=minimal" }
+    });
+    return r.ok;
+}
+async function dbDelete(table, id) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+        method: "DELETE", headers
+    });
+    return r.ok;
+}
+
+// ========== リスト表示 ==========
+async function loadSection(name) {
+    const el = document.getElementById(name + "-list");
+    el.innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>`;
+    const queries = { members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
+    const data = await dbFetch(name, queries[name]);
+    if (!data || data.length === 0) {
+        el.innerHTML = `<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">データがありません</p><p class="text-sm mt-1">右上の「追加」ボタンから登録してください</p></div>`;
+        return;
+    }
+    el.innerHTML = data.map(item => renderCard(name, item)).join("");
+}
+
+function renderCard(type, item) {
+    const icons = { members: "fa-user", events: "fa-calendar-days", activities: "fa-newspaper", news: "fa-bell" };
+    const statusBadge = type !== "members" ? (item.is_published === false
+        ? `<span class="bg-gray-100 text-gray-500 text-xs px-3 py-1 rounded-full font-bold">非公開</span>`
+        : `<span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">公開中</span>`) : "";
+    const titles = { members: item.name, events: item.title, activities: item.title, news: item.title };
+    const subs = {
+        members: item.role || "役職未設定",
+        events: `📅 ${item.event_date}　📍 ${item.location || "場所未定"}`,
+        activities: `📅 ${item.activity_date}`,
+        news: `📅 ${item.published_date}　🏷 ${item.category || ""}`
+    };
+    const thumb = (type === "members" && item.photo_url)
+        ? `<img src="${item.photo_url}" class="w-14 h-14 rounded-full object-cover border-2 border-orange-200 flex-shrink-0">`
+        : `<div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-orange-400 text-xl flex-shrink-0"><i class="fa-solid ${icons[type]}"></i></div>`;
+    return `
+    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 mb-3">
+        ${thumb}
+        <div class="flex-1 min-w-0">
+            <div class="font-bold text-gray-800 text-base truncate">${titles[type]}</div>
+            <div class="text-sm text-gray-500 mt-1">${subs[type]}</div>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+            ${statusBadge}
+            <button onclick="editItem('${type}','${item.id}')"
+                    class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100 transition">
+                <i class="fa-solid fa-pen mr-1"></i>編集
+            </button>
+            <button onclick="deleteItem('${type}','${item.id}','${(titles[type]||'').replace(/'/g,"\\'")}' )"
+                    class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100 transition">
+                <i class="fa-solid fa-trash mr-1"></i>削除
+            </button>
+        </div>
+    </div>`;
+}
+
+// ========== モーダル ==========
+function openModal(type, data = null) {
+    editingId = data ? data.id : null;
+    const names = { members: "議員情報", events: "イベント", activities: "活動報告", news: "お知らせ" };
+    document.getElementById("modal-title").textContent = (editingId ? "編集：" : "追加：") + names[type];
+    document.getElementById("modal-body").innerHTML = buildForm(type, data);
+    document.getElementById("modal").classList.remove("hidden");
+}
+function closeModal() {
+    document.getElementById("modal").classList.add("hidden");
+    editingId = null;
+}
+
+function field(name, label, type = "text", value = "", placeholder = "", note = "") {
+    return `<div class="mb-5">
+        <label class="block text-sm font-bold text-gray-700 mb-1">${label}</label>
+        ${note ? `<p class="text-xs text-gray-400 mb-1">${note}</p>` : ""}
+        <input type="${type}" name="${name}" value="${value||''}" placeholder="${placeholder}"
+               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 text-base">
+    </div>`;
+}
+function textareaField(name, label, value = "", placeholder = "") {
+    return `<div class="mb-5">
+        <label class="block text-sm font-bold text-gray-700 mb-1">${label}</label>
+        <textarea name="${name}" rows="4" placeholder="${placeholder}"
+                  class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 text-base resize-none">${value||''}</textarea>
+    </div>`;
+}
+function toggleField(name, label, checked = true) {
+    return `<div class="mb-5 flex items-center gap-3 bg-gray-50 rounded-xl p-4">
+        <input type="checkbox" name="${name}" id="chk_${name}" ${checked?"checked":""} class="w-5 h-5 accent-orange-500">
+        <label for="chk_${name}" class="font-bold text-gray-700 cursor-pointer">${label}</label>
+        <span class="text-xs text-gray-400 ml-auto">オフにすると非公開になります</span>
+    </div>`;
+}
+
+function buildForm(type, d = {}) {
+    d = d || {};
+    let f = "";
+    if (type === "members") {
+        f = field("name","氏名 ※必須","text",d.name,"例：山田 太郎") +
+            field("role","役職・肩書き","text",d.role,"例：高知市議会議員") +
+            field("photo_url","写真のURL","text",d.photo_url,"https://...","写真をGoogleドライブ等にアップロードしてURLを貼り付けてください") +
+            textareaField("bio","紹介文",d.bio,"経歴や活動方針などを入力してください") +
+            field("sort_order","表示順（数字が小さいほど左に表示）","number",d.sort_order??0,"","1、2、3...の順に表示されます");
+    } else if (type === "events") {
+        f = field("title","イベント名 ※必須","text",d.title,"例：高知市内での街頭演説会") +
+            field("event_date","開催日 ※必須","date",d.event_date) +
+            field("location","開催場所","text",d.location,"例：高知駅前広場") +
+            textareaField("description","イベントの詳細",d.description,"参加方法や持ち物などを入力してください") +
+            toggleField("is_published","サイトに公開する",d.is_published!==false);
+    } else if (type === "activities") {
+        f = field("title","タイトル ※必須","text",d.title,"例：高知駅前での街頭活動") +
+            field("activity_date","活動日 ※必須","date",d.activity_date) +
+            field("photo_url","写真のURL","text",d.photo_url,"https://...","写真をGoogleドライブ等にアップロードしてURLを貼り付けてください") +
+            textareaField("content","活動内容",d.content,"活動の様子・成果などを入力してください") +
+            toggleField("is_published","サイトに公開する",d.is_published!==false);
+    } else if (type === "news") {
+        f = field("title","タイトル ※必須","text",d.title,"例：ホームページをリニューアルしました") +
+            field("published_date","掲載日 ※必須","date",d.published_date) +
+            `<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">カテゴリ</label>
+            <select name="category" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 text-base">
+                <option value="イベント" ${d.category==="イベント"?"selected":""}>📅 イベント</option>
+                <option value="活動報告" ${d.category==="活動報告"?"selected":""}>📋 活動報告</option>
+                <option value="重要" ${d.category==="重要"?"selected":""}>🔴 重要</option>
+                <option value="その他" ${d.category==="その他"?"selected":""}>📌 その他</option>
+            </select></div>` +
+            textareaField("content","本文",d.content) +
+            toggleField("is_published","サイトに公開する",d.is_published!==false);
+    }
+    return `<form onsubmit="saveItem(event,'${type}')">${f}
+        <div class="flex gap-3 mt-2">
+            <button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600 transition text-base">
+                <i class="fa-solid fa-floppy-disk mr-2"></i>保存する
+            </button>
+            <button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl hover:bg-gray-200 transition text-base">
+                キャンセル
+            </button>
+        </div>
+    </form>`;
+}
+
+// ========== 保存 ==========
+async function saveItem(e, type) {
+    e.preventDefault();
+    const data = {};
+    e.target.querySelectorAll("input,textarea,select").forEach(el => {
+        if (el.type === "checkbox") data[el.name] = el.checked;
+        else if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
+    });
+    const ok = editingId ? await dbUpdate(type, editingId, data) : await dbInsert(type, data);
+    if (ok) { closeModal(); loadSection(type); showToast(editingId ? "✅ 更新しました" : "✅ 追加しました"); }
+    else alert("保存に失敗しました。もう一度お試しください。");
+}
+
+// ========== 編集 ==========
+async function editItem(type, id) {
+    const data = await dbFetch(type, `id=eq.${id}`);
+    if (data && data[0]) openModal(type, data[0]);
+}
+
+// ========== 削除 ==========
+async function deleteItem(type, id, name) {
+    if (!confirm(`「${name}」を削除しますか？\n\nこの操作は元に戻せません。`)) return;
+    const ok = await dbDelete(type, id);
+    if (ok) { loadSection(type); showToast("🗑 削除しました"); }
+    else alert("削除に失敗しました。");
+}
+
+// ========== トースト通知 ==========
+function showToast(msg) {
+    const t = document.getElementById("toast");
+    document.getElementById("toast-msg").textContent = msg;
+    t.classList.remove("hidden");
+    setTimeout(() => t.classList.add("hidden"), 3000);
+}
+</script>
+</body>
+</html>
