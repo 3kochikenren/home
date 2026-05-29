@@ -70,6 +70,7 @@
                 <nav class="space-y-1">
                     <button onclick="showSection('greeting')" id="nav-greeting" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"><i class="fa-solid fa-handshake w-5 text-center"></i><span>ご挨拶</span></button><button onclick="showSection('members')" id="nav-members" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"><i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span></button>
 
+                    <button onclick="showSection('events')" id="nav-events" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"><i class="fa-solid fa-calendar-days w-5 text-center"></i><span>イベント</span></button>
                     <button onclick="showSection('activities')" id="nav-activities"
                             class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-newspaper w-5 text-center"></i><span>活動報告</span>
@@ -112,6 +113,16 @@
                             class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                         <i class="fa-solid fa-plus mr-1"></i>イベントを追加
                     </button>
+                </div>
+                <div id="events-list"></div>
+            </section>
+
+            <!-- イベント -->
+            <section id="section-events" class="admin-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div><h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-calendar-days mr-2 text-orange-500"></i>イベント</h2>
+                    <p class="text-gray-500 text-sm mt-1">開催イベントの登録・管理をします</p></div>
+                    <button onclick="openModal('events')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow"><i class="fa-solid fa-plus mr-1"></i>イベントを追加</button>
                 </div>
                 <div id="events-list"></div>
             </section>
@@ -246,7 +257,7 @@ async function loadSection(name) {
     }
     const el = document.getElementById(name + "-list");
     el.innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>`;
-    const queries = { members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
+    const queries = { events: "order=event_date.desc", members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
     const data = await dbFetch(name, queries[name]);
     if (!data || data.length === 0) {
         el.innerHTML = `<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">データがありません</p><p class="text-sm mt-1">右上の「追加」ボタンから登録してください</p></div>`;
@@ -263,7 +274,7 @@ function renderCard(type, item) {
     const titles = { members: item.name, events: item.title, activities: item.title, news: item.title };
     const subs = {
         members: item.role || "役職未設定",
-        events: `📅 ${item.event_date}　📍 ${item.location || "場所未定"}`,
+        events: `📅 ${item.event_date}　📍 ${item.venue_name || "会場未定"}　👥 ${item.target || ""}`,
         activities: `📅 ${item.activity_date}`,
         news: `📅 ${item.published_date}　🏷 ${item.category || ""}`
     };
@@ -289,6 +300,23 @@ function renderCard(type, item) {
             </button>
         </div>
     </div>`;
+}
+
+async function saveEventItem(e) {
+    e.preventDefault();
+    const data = {};
+    // チェックボックス（対象）を収集
+    const checked = [...e.target.querySelectorAll("input[name=target_cb]:checked")].map(el=>el.value);
+    if (checked.length > 0) data.target = checked.join(",");
+    // その他のフィールド
+    e.target.querySelectorAll("input,textarea,select").forEach(el => {
+        if (el.name === "target_cb" || el.type === "file") return;
+        if (el.type === "checkbox") data[el.name] = el.checked;
+        else if (el.value !== "") data[el.name] = el.value;
+    });
+    const ok = editingId ? await dbUpdate("events", editingId, data) : await dbInsert("events", data);
+    if (ok) { closeModal(); loadSection("events"); showToast(editingId ? "更新しました" : "追加しました"); }
+    else alert("保存に失敗しました。もう一度お試しください。");
 }
 
 function renderGreetingPreview(d){const p=document.getElementById("greeting-preview");if(!p)return;const g=d&&d.length>0?d[0]:null;p.innerHTML=g?`<div class="flex gap-6"><img src="${g.photo_url||""}" class="w-36 h-36 object-cover rounded-xl border flex-shrink-0"><div><p class="font-bold text-xl mb-2">${g.title||""}</p><p class="text-gray-600 mb-3">${g.content||""}</p><p class="font-bold">${g.role||""}</p><p class="text-orange-500 font-bold">${g.name||""}</p></div></div>`:`<p class="text-center text-gray-400 py-8">未登録です。「編集する」から入力してください</p>`;}
@@ -383,6 +411,38 @@ function toggleField(name, label, checked = true) {
 function buildForm(type, d = {}) {
     d = d || {};
     let f = "";
+    if (type === "events") {
+        const targetOptions = ["党員","サポーター","一般","その他"];
+        const selectedTargets = d.target ? d.target.split(",") : [];
+        const targetCheckboxes = targetOptions.map(t => `
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" name="target_cb" value="${t}" ${selectedTargets.includes(t)?"checked":""} class="w-4 h-4 accent-orange-500">
+                <span class="text-sm font-medium text-gray-700">${t}</span>
+            </label>`).join("");
+        f = field("title","イベント名 ※必須","text",d.title,"例：街頭演説会") +
+            field("event_date","実施日 ※必須","date",d.event_date) +
+            `<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">時間</label>
+            <div class="grid grid-cols-3 gap-3">
+                <div><p class="text-xs text-gray-500 mb-1">受付開始</p><input type="time" name="reception_start" value="${d.reception_start||'}" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>
+                <div><p class="text-xs text-gray-500 mb-1">開始時間</p><input type="time" name="start_time" value="${d.start_time||'}" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>
+                <div><p class="text-xs text-gray-500 mb-1">終了時間</p><input type="time" name="end_time" value="${d.end_time||'}" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>
+            </div></div>` +
+            field("venue_name","会場名","text",d.venue_name,"例：高知市文化プラザかるぽーと") +
+            field("address","住所","text",d.address,"例：高知県高知市九反田2-1") +
+            `<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">対象（複数選択可）</label>
+            <div class="flex flex-wrap gap-4 bg-gray-50 rounded-xl p-4">${targetCheckboxes}</div></div>` +
+            field("sender","発信者（肩書＋名前）","text",d.sender,"例：参政党高知県連 代表 山田太郎") +
+            `<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">カテゴリ</label>
+            <select name="category" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">
+                <option value="イベント" ${d.category==="イベント"||!d.category?"selected":""}>📅 イベント</option>
+                <option value="活動報告" ${d.category==="活動報告"?"selected":""}>📋 活動報告</option>
+                <option value="重要" ${d.category==="重要"?"selected":""}>🔴 重要</option>
+                <option value="その他" ${d.category==="その他"?"selected":""}>📌 その他</option>
+            </select></div>` +
+            textareaField("content","本文",d.content,"イベントの詳細を入力してください") +
+            toggleField("is_published","サイトに公開する",d.is_published!==false);
+        return `<form onsubmit="saveEventItem(event)">${f}<div class="flex gap-3 mt-2"><button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600 transition"><i class="fa-solid fa-floppy-disk mr-2"></i>保存する</button><button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button></div></form>`;
+    }
     if (type === "greeting") { f=field("photo_url","写真URL","text",d.photo_url,"https://")+field("title","タイトル","text",d.title,"例：県民の声を力に…")+textareaField("content","本文",d.content,"挨拶文を入力")+field("role","役職","text",d.role,"例：参政党 高知県連 代表")+field("name","名前","text",d.name,"例：山田 太郎"); return `<form onsubmit="saveGreeting(event)">${f}<div class="flex gap-3 mt-2"><button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl">保存する</button><button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button></div></form>`; }
     if (type === "members") {
         f = field("name","氏名 ※必須","text",d.name,"例：山田 太郎") +
