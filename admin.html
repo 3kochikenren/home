@@ -223,6 +223,7 @@ async function dbInsert(table, data) {
         method: "POST", body: JSON.stringify(data),
         headers: { ...headers, "Content-Type": "application/json", "Prefer": "return=minimal" }
     });
+    if (!r.ok) { const e = await r.json(); console.error("Insert error:", e); alert("エラー詳細: " + JSON.stringify(e)); }
     return r.ok;
 }
 async function dbUpdate(table, id, data) {
