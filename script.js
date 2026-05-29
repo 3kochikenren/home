@@ -67,7 +67,7 @@ async function loadNews() {
         return `
         <li class="py-4 flex flex-col md:flex-row md:items-center gap-2 md:gap-6 hover:bg-gray-100 transition px-2 rounded">
             <div class="flex items-center gap-4 md:w-48 shrink-0">
-                <span class="text-sm text-gray-500 font-mono">${n.published_date}</span>
+                <span class="text-sm text-gray-700 font-mono font-bold">${n.published_date}</span>
                 <span class="${color} text-xs px-2 py-1 rounded font-bold">${n.category || ""}</span>
             </div>
             <span class="text-gray-800 font-medium flex-grow">${n.title}</span>
