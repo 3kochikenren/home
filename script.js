@@ -27,21 +27,7 @@ async function loadMembers() {
     `).join("");
 }
 
-// イベントを表示
-async function loadEvents() {
-    const events = await fetchDB("events", "is_published=eq.true&order=event_date.desc");
-    const container = document.getElementById("events-container");
-    if (!container || events.length === 0) return;
-    container.innerHTML = events.map(e => `
-        <li class="py-4 flex flex-col md:flex-row md:items-center gap-2 md:gap-6 hover:bg-gray-100 transition px-2 rounded">
-            <div class="flex items-center gap-4 md:w-48 shrink-0">
-                <span class="text-sm text-gray-500 font-mono">${e.event_date}</span>
-                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">イベント</span>
-            </div>
-            <span class="text-gray-800 font-medium flex-grow">${e.title}</span>
-        </li>
-    `).join("");
-}
+// イベント（削除済み - お知らせに統合）
 
 // 活動報告を表示
 async function loadActivities() {
@@ -61,18 +47,23 @@ async function loadActivities() {
     `).join("");
 }
 
-// お知らせを表示
+// お知らせ・イベントを表示（統合）
 async function loadNews() {
-    const newsList = await fetchDB("news", "is_published=eq.true&order=published_date.desc&limit=5");
+    const newsList = await fetchDB("news", "is_published=eq.true&order=published_date.desc&limit=10");
     const container = document.getElementById("news-container");
-    if (!container || newsList.length === 0) return;
+    if (!container) return;
+    if (!newsList || newsList.length === 0) {
+        container.innerHTML = `<li class="py-6 text-center text-gray-400">お知らせはありません</li>`;
+        return;
+    }
     const categoryColors = {
         "イベント": "bg-blue-100 text-blue-800",
         "活動報告": "bg-green-100 text-green-800",
-        "重要": "bg-red-100 text-red-800"
+        "重要": "bg-red-100 text-red-800",
+        "その他": "bg-gray-100 text-gray-600"
     };
     container.innerHTML = newsList.map(n => {
-        const color = categoryColors[n.category] || "bg-gray-100 text-gray-800";
+        const color = categoryColors[n.category] || "bg-gray-100 text-gray-600";
         return `
         <li class="py-4 flex flex-col md:flex-row md:items-center gap-2 md:gap-6 hover:bg-gray-100 transition px-2 rounded">
             <div class="flex items-center gap-4 md:w-48 shrink-0">
@@ -104,7 +95,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Supabaseからデータ読み込み
     loadMembers();
-    loadEvents();
     loadActivities();
     loadNews();
 });
