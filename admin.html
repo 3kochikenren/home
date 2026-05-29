@@ -293,7 +293,10 @@ function renderCard(type, item) {
 
 function renderGreetingPreview(d){const p=document.getElementById("greeting-preview");if(!p)return;const g=d&&d.length>0?d[0]:null;p.innerHTML=g?`<div class="flex gap-6"><img src="${g.photo_url||""}" class="w-36 h-36 object-cover rounded-xl border flex-shrink-0"><div><p class="font-bold text-xl mb-2">${g.title||""}</p><p class="text-gray-600 mb-3">${g.content||""}</p><p class="font-bold">${g.role||""}</p><p class="text-orange-500 font-bold">${g.name||""}</p></div></div>`:`<p class="text-center text-gray-400 py-8">未登録です。「編集する」から入力してください</p>`;}
 async function openGreetingModal(){const d=await dbFetch("greeting","limit=1");const g=d&&d.length>0?d[0]:null;editingId=g?g.id:null;document.getElementById("modal-title").textContent="ご挨拶を編集";document.getElementById("modal-body").innerHTML=buildForm("greeting",g);document.getElementById("modal").classList.remove("hidden");}
-async function saveGreeting(e){e.preventDefault();const d={};e.target.querySelectorAll("input,textarea").forEach(el=>{if(el.value)d[el.name]=el.value;});const ok=editingId?await dbUpdate("greeting",editingId,d):await dbInsert("greeting",d);if(ok){closeModal();loadSection("greeting");showToast("保存しました");}else alert("保存に失敗しました。");}
+async function saveGreeting(e){e.preventDefault();const d={};
+const fi=e.target.querySelector("input[type=file]");
+if(fi&&fi.files&&fi.files[0]){showToast("写真をアップロード中...");const url=await uploadPhoto(fi.files[0]);if(url){const h=e.target.querySelector("input[name=photo_url]");if(h)h.value=url;}}
+e.target.querySelectorAll("input,textarea").forEach(el=>{if(el.type==="file")return;if(el.value)d[el.name]=el.value;});const ok=editingId?await dbUpdate("greeting",editingId,d):await dbInsert("greeting",d);if(ok){closeModal();loadSection("greeting");showToast("保存しました");}else alert("保存に失敗しました。");}
 // ========== モーダル ==========
 function openModal(type, data = null) {
     editingId = data ? data.id : null;
@@ -307,13 +310,60 @@ function closeModal() {
     editingId = null;
 }
 
+const STORAGE_URL = "https://yaimsonvxpujfupstpsd.supabase.co/storage/v1";
+
+async function uploadPhoto(file) {
+    const ext = file.name.split(".").pop();
+    const fileName = Date.now() + "." + ext;
+    const res = await fetch(`${STORAGE_URL}/object/images/${fileName}`, {
+        method: "POST",
+        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": file.type },
+        body: file
+    });
+    if (!res.ok) { const e = await res.json(); console.error(e); return null; }
+    return `${STORAGE_URL}/object/public/images/${fileName}`;
+}
+
 function field(name, label, type = "text", value = "", placeholder = "", note = "") {
+    if (name === "photo_url") {
+        return `<div class="mb-5">
+            <label class="block text-sm font-bold text-gray-700 mb-1">${label}</label>
+            <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center bg-gray-50 hover:border-orange-400 transition cursor-pointer" onclick="document.getElementById('file-input-${name}').click()">
+                <img id="preview-${name}" src="${value||''}" class="${value ? '' : 'hidden'} w-32 h-32 object-cover rounded-xl mx-auto mb-2 border">
+                <div id="upload-hint-${name}" class="${value ? 'hidden' : ''}">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-300 mb-2 block"></i>
+                    <p class="text-sm text-gray-400">クリックして写真を選択</p>
+                    <p class="text-xs text-gray-300 mt-1">JPG・PNG・GIF対応</p>
+                </div>
+                <p id="file-name-${name}" class="text-xs text-gray-400 mt-2"></p>
+            </div>
+            <input type="file" id="file-input-${name}" accept="image/*" class="hidden"
+                onchange="previewPhoto(this, '${name}')">
+            <input type="hidden" name="${name}" id="hidden-${name}" value="${value||''}">
+        </div>`;
+    }
     return `<div class="mb-5">
         <label class="block text-sm font-bold text-gray-700 mb-1">${label}</label>
         ${note ? `<p class="text-xs text-gray-400 mb-1">${note}</p>` : ""}
         <input type="${type}" name="${name}" value="${value||''}" placeholder="${placeholder}"
                class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 text-base">
     </div>`;
+}
+
+function previewPhoto(input, fieldName) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const preview = document.getElementById("preview-" + fieldName);
+        const hint = document.getElementById("upload-hint-" + fieldName);
+        const fname = document.getElementById("file-name-" + fieldName);
+        preview.src = e.target.result;
+        preview.classList.remove("hidden");
+        if (hint) hint.classList.add("hidden");
+        if (fname) fname.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
 }
 function textareaField(name, label, value = "", placeholder = "") {
     return `<div class="mb-5">
