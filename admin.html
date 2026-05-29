@@ -237,9 +237,16 @@ async function dbDelete(table, id) {
 
 // ========== リスト表示 ==========
 async function loadSection(name) {
+    if (name === "greeting") {
+        const preview = document.getElementById("greeting-preview");
+        if (preview) preview.innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>`;
+        const data = await dbFetch("greeting", "limit=1");
+        renderGreetingPreview(data);
+        return;
+    }
     const el = document.getElementById(name + "-list");
     el.innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>`;
-    const queries = { greeting: "limit=1", members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
+    const queries = { members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
     const data = await dbFetch(name, queries[name]);
     if (!data || data.length === 0) {
         el.innerHTML = `<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">データがありません</p><p class="text-sm mt-1">右上の「追加」ボタンから登録してください</p></div>`;
