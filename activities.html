@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動報告一覧｜参政党高知県連</title>
+    <meta name="description" content="参政党高知県連の活動報告一覧です。最新の活動を掲載しています。">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1d4ed8',
+                        secondary: '#f97316'
+                    }
+                }
+            }
+        };
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <header class="bg-white shadow-md sticky top-0 z-40">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2">
+                <img class="h-12 w-auto object-contain" src="https://placehold.co/200x80/ffffff/333333?text=LOGO" alt="ロゴ">
+                <span class="font-bold text-xl tracking-wider text-gray-800">参政党高知県連</span>
+            </a>
+            <a href="index.html#activity" class="text-primary hover:underline font-bold inline-flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> トップへ戻る
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow py-14">
+        <section class="container mx-auto px-4 max-w-7xl">
+            <div class="text-center mb-12">
+                <h1 class="text-3xl md:text-4xl font-black text-gray-900">活動報告一覧</h1>
+                <p class="text-gray-500 mt-3">参政党 高知県連の活動を時系列で掲載しています</p>
+            </div>
+
+            <div id="activities-status" class="text-center text-gray-500 mb-8">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>活動報告を読み込み中です...
+            </div>
+
+            <div id="activities-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+            <div id="activities-pagination" class="hidden mt-10 flex items-center justify-center gap-3">
+                <button id="page-prev" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-angle-left mr-1"></i>前へ
+                </button>
+                <p id="page-info" class="text-sm font-bold text-gray-700"></p>
+                <button id="page-next" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                    次へ<i class="fa-solid fa-angle-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 py-8">
+        <div class="container mx-auto px-4 text-center text-sm">
+            <p>&copy; 2026 参政党 高知県連 All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = "https://yaimsonvxpujfupstpsd.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaW1zb252eHB1amZ1cHN0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODEwMjksImV4cCI6MjA5NTA1NzAyOX0.2PAKyBs8z44Ft4TXigKAsRfh6zEQwdVl2KNRZojxwzk";
+        const PAGE_SIZE = 21;
+        let allActivities = [];
+        let currentPage = 1;
+
+        async function fetchDB(table, query = "") {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+                headers: {
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`
+                }
+            });
+            return res.json();
+        }
+
+        function renderActivitiesPage() {
+            const status = document.getElementById("activities-status");
+            const list = document.getElementById("activities-list");
+            const pagination = document.getElementById("activities-pagination");
+            const prevBtn = document.getElementById("page-prev");
+            const nextBtn = document.getElementById("page-next");
+            const pageInfo = document.getElementById("page-info");
+
+            const total = allActivities.length;
+            const totalPages = Math.ceil(total / PAGE_SIZE);
+
+            if (!total || totalPages === 0) {
+                status.innerHTML = '<i class="fa-regular fa-folder-open mr-2"></i>公開中の活動報告はありません。';
+                list.innerHTML = "";
+                pagination.classList.add("hidden");
+                return;
+            }
+
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+            const pageItems = allActivities.slice(start, end);
+
+            status.textContent = `全${total}件中 ${start + 1}〜${Math.min(end, total)}件を表示`;
+            list.innerHTML = pageItems.map(a => `
+                <article class="bg-white rounded-lg shadow overflow-hidden hover-card">
+                    <img src="${a.photo_url || 'https://placehold.co/400x250/e5e7eb/6b7280?text=Activity+Image'}"
+                         alt="${a.title || ''}" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <span class="text-xs text-gray-500 font-mono mb-2 block">${a.activity_date || ''}</span>
+                        <h2 class="text-lg font-bold text-gray-800 mb-3">${a.title || ''}</h2>
+                        <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">${a.content || ''}</p>
+                    </div>
+                </article>
+            `).join("");
+
+            pageInfo.textContent = `${currentPage} / ${totalPages}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+            pagination.classList.remove("hidden");
+        }
+
+        async function loadActivitiesAll() {
+            allActivities = await fetchDB("activities", "is_published=eq.true&order=activity_date.desc");
+            renderActivitiesPage();
+        }
+
+        function bindPaginationEvents() {
+            const prevBtn = document.getElementById("page-prev");
+            const nextBtn = document.getElementById("page-next");
+
+            prevBtn.addEventListener("click", function () {
+                if (currentPage <= 1) return;
+                currentPage -= 1;
+                renderActivitiesPage();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            nextBtn.addEventListener("click", function () {
+                const totalPages = Math.ceil(allActivities.length / PAGE_SIZE);
+                if (currentPage >= totalPages) return;
+                currentPage += 1;
+                renderActivitiesPage();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            bindPaginationEvents();
+            loadActivitiesAll();
+        });
+    </script>
+</body>
+</html>

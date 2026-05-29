@@ -63,7 +63,7 @@
                         <i class="fa-solid fa-sliders w-5 text-center"></i><span>サイト設定</span>
                     </button>
                     <button onclick="showSection('greeting')" id="nav-greeting" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
-                        <i class="fa-solid fa-handshake w-5 text-center"></i><span>ご挨拶</span>
+                        <i class="fa-solid fa-handshake w-5 text-center"></i><span>役員</span>
                     </button>
                     <button onclick="showSection('members')" id="nav-members" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span>
@@ -102,13 +102,25 @@
                             <i class="fa-solid fa-floppy-disk mr-2"></i>この画像をヒーローに設定する
                         </button>
                     </div>
+
+                    <div class="mt-10 border-t border-gray-100 pt-8">
+                        <h3 class="text-lg font-bold text-gray-800 mb-2"><i class="fa-solid fa-calendar-day mr-2 text-red-500"></i>公認候補者 投開票日</h3>
+                        <p class="text-sm text-gray-500 mb-4">トップページの公認候補者写真上に大きく表示します</p>
+                        <p id="election-date-current" class="text-sm text-gray-700 mb-3">現在の設定: 未設定</p>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <input type="date" id="election-date-input" class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-red-400">
+                            <button onclick="saveElectionDate()" class="bg-red-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-red-600 transition">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i>投開票日を保存
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <section id="section-greeting" class="admin-section">
                 <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-handshake mr-2 text-orange-500"></i>ご挨拶</h2>
-                    <p class="text-gray-500 text-sm mt-1">トップページの「ご挨拶」セクションを管理します</p>
+                    <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-building-columns mr-2 text-orange-500"></i>役員</h2>
+                    <p class="text-gray-500 text-sm mt-1">トップページの「県連及び支部役員の組織図」を管理します</p>
                 </div>
                 <div id="greeting-preview" class="bg-white rounded-2xl shadow p-6"></div>
             </section>
@@ -119,9 +131,14 @@
                         <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-users mr-2 text-orange-500"></i>議員情報</h2>
                         <p class="text-gray-500 text-sm mt-1">議員の写真・氏名・役職・紹介文を管理します</p>
                     </div>
-                    <button onclick="openModal('members')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
-                        <i class="fa-solid fa-plus mr-1"></i>議員を追加
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <button id="toggle-deleted-members-btn" onclick="toggleDeletedMembersView()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition">
+                            <i class="fa-solid fa-user-xmark mr-1"></i>削除メンバー
+                        </button>
+                        <button onclick="openModal('members')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                            <i class="fa-solid fa-plus mr-1"></i>議員を追加
+                        </button>
+                    </div>
                 </div>
                 <div id="members-list"></div>
             </section>
@@ -213,6 +230,8 @@ function showSection(name) {
 }
 
 const hdrs = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY };
+let showDeletedMembers = false;
+
 async function dbFetch(table, q) {
     try {
         const r = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?" + (q || ""), { headers: hdrs });
@@ -251,9 +270,166 @@ async function uploadPhoto(file) {
     return STORAGE_URL + "/object/public/images/" + fileName;
 }
 
+
+function formatDisplayDate(dateValue) {
+    if (!dateValue) return "未設定";
+    const d = new Date(dateValue);
+    if (Number.isNaN(d.getTime())) return "未設定";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}.${m}.${day}`;
+}
+
+function updateDeletedMembersToggleButton() {
+    const btn = document.getElementById("toggle-deleted-members-btn");
+    if (!btn) return;
+    if (showDeletedMembers) {
+        btn.className = "bg-red-100 text-red-700 px-4 py-2 rounded-xl font-bold hover:bg-red-200 transition";
+        btn.innerHTML = '<i class="fa-solid fa-rotate-left mr-1"></i>通常メンバー表示';
+    } else {
+        btn.className = "bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition";
+        btn.innerHTML = '<i class="fa-solid fa-user-xmark mr-1"></i>削除メンバー';
+    }
+}
+
+const GREETING_GROUPS = [
+    { label: "県連4役", type: "fixed", slots: ["県連会長", "県連副会長", "事務局長", "財政局長"], note: "固定役職の4枠です" },
+    { label: "県連役員", type: "multi", note: "複数名を順番に表示します", defaultRole: "県連役員" },
+    { label: "第一支部役員", type: "branch", headRole: "支部長", note: "支部長を先頭に、残りを順番に表示します" },
+    { label: "第二支部役員", type: "branch", headRole: "支部長", note: "支部長を先頭に、残りを順番に表示します" }
+];
+
+const GREETING_CONTENT_ROLES = ["県連会長", "支部長", "第一支部長", "第二支部長"];
+
+function getGreetingGroup(label) {
+    return GREETING_GROUPS.find(function(group) { return group.label === label; }) || GREETING_GROUPS[0];
+}
+
+function normalizeGreetingRole(role, group) {
+    const text = (role || "").trim();
+    if (group.type === "fixed") return text;
+    if (group.type === "branch") {
+        if (text.includes("支部長")) return group.headRole;
+        return text || "役員";
+    }
+    return text || group.defaultRole || "県連役員";
+}
+
+function canWriteGreetingContent(role) {
+    return GREETING_CONTENT_ROLES.includes((role || "").trim());
+}
+
+function greetingGroupOptions(selectedValue) {
+    return GREETING_GROUPS.map(function(group) {
+        return '<option value="' + group.label + '" ' + (selectedValue === group.label ? 'selected' : '') + '>' + group.label + '</option>';
+    }).join("");
+}
+
+function greetingRoleField(group, selectedRole) {
+    if (group.type === "fixed") {
+        return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">役職</label><select name="role" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+            group.slots.map(function(slot) { return '<option value="' + slot + '" ' + (selectedRole === slot ? 'selected' : '') + '>' + slot + '</option>'; }).join("") +
+            '</select><p class="text-xs text-gray-400 mt-2">県連4役は4枠固定です</p></div>';
+    }
+    if (group.type === "branch") {
+        const branchRole = selectedRole && selectedRole.includes("支部長") ? "支部長" : (selectedRole || "役員");
+        return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">役職</label><select name="role" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+            '<option value="支部長" ' + (branchRole === "支部長" ? 'selected' : '') + '>支部長</option>' +
+            '<option value="役員" ' + (branchRole !== "支部長" ? 'selected' : '') + '>役員</option>' +
+            '</select><p class="text-xs text-gray-400 mt-2">支部長だけが挨拶文を入力できます</p></div>';
+    }
+    return '<input type="hidden" name="role" value="' + (group.defaultRole || "県連役員") + '"><div class="mb-5 rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm font-bold text-gray-700">役職: ' + (group.defaultRole || "県連役員") + '</div>';
+}
+
+function greetingPreviewCard(item, group, options) {
+    const isPlaceholder = options && options.placeholder;
+    const roleText = options && options.roleText ? options.roleText : normalizeGreetingRole(item.role, group);
+    const content = !isPlaceholder && item.content ? '<p class="text-xs text-gray-600 leading-relaxed mt-2 line-clamp-3">' + item.content + '</p>' : '';
+    const nameText = isPlaceholder ? '未登録' : (item.name || '');
+    const photoUrl = isPlaceholder ? 'https://placehold.co/120x120/f3f4f6/9ca3af?text=未登録' : (item.photo_url || 'https://placehold.co/120x120/fff7ed/f97316?text=写真');
+    const actionButtons = isPlaceholder
+        ? '<button onclick="openGreetingModal(\'' + group.label + '\', null, \'' + roleText + '\')" class="w-full bg-orange-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-orange-600">追加する</button>'
+        : '<div class="flex gap-2 mt-3 w-full"><button onclick="editGreeting(\'' + item.id + '\')" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded-lg hover:bg-blue-100">編集</button><button onclick="deleteGreeting(\'' + item.id + '\')" class="flex-1 bg-red-50 text-red-500 text-xs font-bold py-2 rounded-lg hover:bg-red-100">削除</button></div>';
+    return '<div class="bg-' + (isPlaceholder ? 'gray-50' : 'gray-50') + ' rounded-2xl border ' + (isPlaceholder ? 'border-dashed border-gray-200' : 'border-orange-100') + ' p-4 flex flex-col items-center text-center shadow-sm">' +
+        '<img src="' + photoUrl + '" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow mb-3 ' + (isPlaceholder ? 'opacity-40' : '') + '">' +
+        '<p class="text-xs font-bold text-orange-500 mb-1">' + roleText + '</p>' +
+        '<p class="font-bold text-gray-800">' + nameText + '</p>' +
+        content +
+        actionButtons +
+        '</div>';
+}
+
+function updateGreetingContentVisibility() {
+    const roleInput = document.querySelector('#greeting-form [name="role"]');
+    const wrapper = document.getElementById('greeting-content-wrapper');
+    if (!roleInput || !wrapper) return;
+    wrapper.classList.toggle('hidden', !canWriteGreetingContent(roleInput.value));
+}
+
+function toggleDeletedMembersView() {
+    showDeletedMembers = !showDeletedMembers;
+    loadMembersAdmin();
+}
+
+async function loadMembersAdmin() {
+    const el = document.getElementById("members-list");
+    if (!el) return;
+    updateDeletedMembersToggleButton();
+    el.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>';
+    const members = await dbFetch("members", "order=sort_order.asc");
+    const filtered = (members || []).filter(function(m) {
+        return (m.is_deleted === true) === showDeletedMembers;
+    });
+    if (!filtered || filtered.length === 0) {
+        const emptyText = showDeletedMembers ? "削除メンバーはありません" : "データがありません";
+        const helperText = showDeletedMembers ? "復活可能なメンバーがここに表示されます" : "右上の追加ボタンから登録してください";
+        el.innerHTML = '<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">' + emptyText + '</p><p class="text-sm mt-1">' + helperText + '</p></div>';
+        return;
+    }
+    el.innerHTML = filtered.map(function(item) { return renderCard("members", item); }).join("");
+}
+
+async function setMemberDeleted(id, isDeleted) {
+    return dbUpdate("members", id, { is_deleted: isDeleted });
+}
+
+async function softDeleteMember(id, name) {
+    if (!confirm("「" + name + "」を削除メンバーに移動しますか？")) return;
+    const ok = await setMemberDeleted(id, true);
+    if (ok) { loadMembersAdmin(); showToast("削除しました"); }
+}
+
+async function restoreMember(id, name) {
+    if (!confirm("「" + name + "」を復活しますか？")) return;
+    const ok = await setMemberDeleted(id, false);
+    if (ok) { loadMembersAdmin(); showToast("復活しました"); }
+}
+
+function sortByNearestFutureDate(items, fieldName) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return (items || []).slice().sort(function(a, b) {
+        const da = new Date(a[fieldName] || "");
+        const db = new Date(b[fieldName] || "");
+        const aValid = !Number.isNaN(da.getTime());
+        const bValid = !Number.isNaN(db.getTime());
+        if (!aValid && !bValid) return 0;
+        if (!aValid) return 1;
+        if (!bValid) return -1;
+        const aFuture = da >= today;
+        const bFuture = db >= today;
+        if (aFuture && !bFuture) return -1;
+        if (!aFuture && bFuture) return 1;
+        if (aFuture && bFuture) return da - db;
+        return db - da;
+    });
+}
+
 async function loadSection(name) {
     if (name === "settings") { loadSettings(); return; }
     if (name === "greeting") { loadGreeting(); return; }
+    if (name === "members") { loadMembersAdmin(); return; }
     const el = document.getElementById(name + "-list");
     if (!el) return;
     el.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>';
@@ -263,14 +439,16 @@ async function loadSection(name) {
         el.innerHTML = '<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">データがありません</p><p class="text-sm mt-1">右上の追加ボタンから登録してください</p></div>';
         return;
     }
-    el.innerHTML = data.map(function(item) { return renderCard(name, item); }).join("");
+    const list = name === "news" ? sortByNearestFutureDate(data, "published_date") : data;
+    el.innerHTML = list.map(function(item) { return renderCard(name, item); }).join("");
 }
 
 function renderCard(type, item) {
     const icons = { members: "fa-user", events: "fa-calendar-days", activities: "fa-newspaper", news: "fa-bell" };
     const statusBadge = type !== "members" ? (item.is_published === false ? '<span class="bg-gray-100 text-gray-500 text-xs px-3 py-1 rounded-full font-bold">非公開</span>' : '<span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">公開中</span>') : "";
     const title = type === "members" ? item.name : item.title;
-    const sub = type === "members" ? (item.role || "役職未設定") :
+    const memberCategory = type === "members" ? (item.member_type || "議員") : "";
+    const sub = type === "members" ? ("区分: " + memberCategory + " / " + (item.role || "役職未設定")) :
                 type === "events" ? "📅 " + item.event_date + "　📍 " + (item.venue_name || "会場未定") :
                 type === "activities" ? "📅 " + item.activity_date :
                 "📅 " + item.published_date + "　🏷 " + (item.category || "");
@@ -278,11 +456,16 @@ function renderCard(type, item) {
         '<img src="' + item.photo_url + '" class="w-14 h-14 rounded-full object-cover border-2 border-orange-200 flex-shrink-0">' :
         '<div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-orange-400 text-xl flex-shrink-0"><i class="fa-solid ' + icons[type] + '"></i></div>';
     const safeTitle = (title || "").replace(/'/g, "");
+    const actionButtons = type === "members"
+        ? ('<button onclick="editItem(\'' + type + '\',\'' + item.id + '\')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
+           (showDeletedMembers
+                ? '<button onclick="restoreMember(\'' + item.id + '\',\'' + safeTitle + '\')" class="bg-green-50 text-green-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-100"><i class="fa-solid fa-rotate-left mr-1"></i>復活</button>'
+                : '<button onclick="softDeleteMember(\'' + item.id + '\',\'' + safeTitle + '\')" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>'))
+        : ('<button onclick="editItem(\'' + type + '\',\'' + item.id + '\')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
+           '<button onclick="deleteItem(\'' + type + '\',\'' + item.id + '\',\'' + safeTitle + '\')" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>');
     return '<div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 mb-3">' + thumb +
         '<div class="flex-1 min-w-0"><div class="font-bold text-gray-800 truncate">' + (title || "") + '</div><div class="text-sm text-gray-500 mt-1">' + sub + '</div></div>' +
-        '<div class="flex items-center gap-2 flex-shrink-0">' + statusBadge +
-        '<button onclick="editItem(\'' + type + '\',\'' + item.id + '\')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
-        '<button onclick="deleteItem(\'' + type + '\',\'' + item.id + '\',\'' + safeTitle + '\')" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>' +
+        '<div class="flex items-center gap-2 flex-shrink-0">' + statusBadge + actionButtons +
         '</div></div>';
 }
 
@@ -291,51 +474,94 @@ async function loadGreeting() {
     if (!preview) return;
     preview.innerHTML = '<p class="text-center text-gray-400 py-8"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>';
     const data = await dbFetch("greeting", "order=sort_order.asc");
-    let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
-    POSITIONS.forEach(function(pos) {
-        const g = data.find(function(d) { return d.position_label === pos.label; });
-        if (g) {
-            html += '<div class="border-2 border-orange-200 rounded-xl p-5 text-center">';
-            html += '<p class="text-xs font-bold text-orange-500 mb-3">' + pos.label + '</p>';
-            html += '<img src="' + (g.photo_url || "https://placehold.co/100x100/fff7ed/f97316?text=写真") + '" class="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-orange-100">';
-            html += '<p class="font-bold text-gray-800">' + (g.name || "") + '</p>';
-            html += '<p class="text-xs text-gray-500 mt-1 mb-2">' + (g.role || "") + '</p>';
-            html += '<p class="text-xs text-gray-600 text-left leading-relaxed">' + (g.content || "") + '</p>';
-            html += '<div class="flex gap-2 mt-3">';
-            html += '<button onclick="openGreetingModal(\'' + pos.label + '\',' + pos.order + ')" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded-lg hover:bg-blue-100">編集</button>';
-            html += '<button onclick="deleteGreeting(\'' + g.id + '\')" class="flex-1 bg-red-50 text-red-500 text-xs font-bold py-2 rounded-lg hover:bg-red-100">削除</button>';
-            html += '</div></div>';
+    preview.innerHTML = GREETING_GROUPS.map(function(group) {
+        const items = (data || []).filter(function(d) { return (d.position_label || "県連役員") === group.label; });
+        const addRole = group.type === "fixed" ? group.slots[0] : (group.type === "branch" ? "役員" : (group.defaultRole || "県連役員"));
+        let sectionHtml = '<div class="mb-8 last:mb-0">';
+        sectionHtml += '<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">';
+        sectionHtml += '<div><h3 class="text-lg font-black text-gray-800">' + group.label + '</h3><p class="text-xs text-gray-400 mt-1">' + group.note + '</p></div>';
+        sectionHtml += '<button onclick="openGreetingModal(\'' + group.label + '\', null, \'' + addRole + '\')" class="bg-orange-500 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-600">追加する</button>';
+        sectionHtml += '</div>';
+
+        if (group.type === "fixed") {
+            const byRole = new Map();
+            items.forEach(function(item) { byRole.set(normalizeGreetingRole(item.role, group), item); });
+            sectionHtml += '<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">';
+            group.slots.forEach(function(slot) {
+                const item = byRole.get(slot);
+                sectionHtml += item
+                    ? greetingPreviewCard(item, group, { roleText: slot })
+                    : greetingPreviewCard({ role: slot }, group, { roleText: slot, placeholder: true });
+            });
+            sectionHtml += '</div>';
+        } else if (group.type === "branch") {
+            const head = items.find(function(item) { return normalizeGreetingRole(item.role, group) === group.headRole; }) || null;
+            const others = items.filter(function(item) { return normalizeGreetingRole(item.role, group) !== group.headRole; }).sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); });
+            sectionHtml += '<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">';
+            sectionHtml += head
+                ? greetingPreviewCard(head, group, { roleText: group.headRole })
+                : greetingPreviewCard({ role: group.headRole }, group, { roleText: group.headRole, placeholder: true });
+            others.forEach(function(item) {
+                sectionHtml += greetingPreviewCard(item, group, { roleText: normalizeGreetingRole(item.role, group) });
+            });
+            sectionHtml += '</div>';
         } else {
-            html += '<div class="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center">';
-            html += '<p class="text-xs font-bold text-orange-500 mb-3">' + pos.label + '</p>';
-            html += '<div class="w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 flex items-center justify-center"><i class="fa-solid fa-user text-3xl text-gray-300"></i></div>';
-            html += '<p class="text-gray-400 text-xs mb-3">未登録</p>';
-            html += '<button onclick="openGreetingModal(\'' + pos.label + '\',' + pos.order + ')" class="w-full bg-orange-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-orange-600">登録する</button>';
-            html += '</div>';
+            if (items.length > 0) {
+                sectionHtml += '<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">';
+                items.sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); }).forEach(function(item) {
+                    sectionHtml += greetingPreviewCard(item, group, { roleText: normalizeGreetingRole(item.role, group) });
+                });
+                sectionHtml += '</div>';
+            } else {
+                sectionHtml += '<div class="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center text-gray-400 bg-gray-50">';
+                sectionHtml += '<i class="fa-solid fa-user-group text-3xl mb-3 block"></i>';
+                sectionHtml += '<p class="font-bold">まだ登録がありません</p>';
+                sectionHtml += '<p class="text-sm mt-1">「追加する」から登録できます</p>';
+                sectionHtml += '</div>';
+            }
         }
-    });
-    html += '</div>';
-    preview.innerHTML = html;
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }).join('');
 }
 
-async function openGreetingModal(posLabel, sortOrder) {
-    const data = await dbFetch("greeting", "position_label=eq." + encodeURIComponent(posLabel));
+async function editGreeting(id) {
+    const data = await dbFetch("greeting", "id=eq." + encodeURIComponent(id));
     const g = data && data.length > 0 ? data[0] : null;
+    if (!g) return;
+    openGreetingModal(g.position_label || GREETING_GROUPS[0].label, g, g.role);
+}
+
+async function openGreetingModal(groupLabel, greetingItem, presetRole) {
+    const group = getGreetingGroup(groupLabel);
+    const g = greetingItem || null;
     editingId = g ? g.id : null;
-    document.getElementById("modal-title").textContent = posLabel + " ご挨拶登録";
+    const selectedGroup = g && g.position_label ? g.position_label : group.label;
+    const selectedRole = g ? normalizeGreetingRole(g.role, group) : (presetRole || (group.defaultRole || (group.slots && group.slots[0]) || ""));
+    document.getElementById("modal-title").textContent = (g ? "編集：" : "追加：") + group.label;
     document.getElementById("modal-body").innerHTML =
         '<form id="greeting-form">' +
         photoField("photo_url", "写真", g && g.photo_url ? g.photo_url : "") +
-        '<input type="hidden" name="position_label" value="' + posLabel + '">' +
-        '<input type="hidden" name="sort_order" value="' + sortOrder + '">' +
+        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">区分</label><select name="position_label" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+        greetingGroupOptions(selectedGroup) +
+        '</select></div>' +
         inputField("name", "名前 ※必須", "text", g && g.name ? g.name : "", "例：山田 太郎") +
-        inputField("role", "役職・肩書き", "text", g && g.role ? g.role : "", "例：参政党 高知県連 代表") +
-        textareaField("content", "ご挨拶文", g && g.content ? g.content : "", "挨拶文を入力してください") +
+        greetingRoleField(group, selectedRole) +
+        '<div id="greeting-content-wrapper" class="mb-5">' +
+        textareaField("content", "あいさつ文", g && g.content ? g.content : "", "県連会長、第一支部長、第二支部長のみ入力できます") +
+        '<p class="text-xs text-gray-400 -mt-3">県連会長、第一支部長、第二支部長のみ入力できます</p>' +
+        '</div>' +
+        inputField("sort_order", "表示順", "number", g && g.sort_order !== undefined ? g.sort_order : 0, "") +
         '<div class="flex gap-3 mt-4">' +
         '<button type="button" onclick="saveGreeting()" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600"><i class="fa-solid fa-floppy-disk mr-2"></i>保存する</button>' +
         '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
         '</div></form>';
     document.getElementById("modal").classList.remove("hidden");
+    const roleInput = document.querySelector('#greeting-form [name="role"]');
+    if (roleInput && roleInput.tagName === "SELECT") {
+        roleInput.addEventListener("change", updateGreetingContentVisibility);
+    }
+    updateGreetingContentVisibility();
 }
 
 async function saveGreeting() {
@@ -350,10 +576,14 @@ async function saveGreeting() {
             if (hid) hid.value = url;
         }
     }
-    form.querySelectorAll("input,textarea").forEach(function(el) {
+    form.querySelectorAll("input,textarea,select").forEach(function(el) {
         if (el.type === "file") return;
         if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
     });
+    if (!data.role) data.role = getGreetingGroup(data.position_label || GREETING_GROUPS[0].label).defaultRole || "県連役員";
+    if (!canWriteGreetingContent(data.role)) {
+        delete data.content;
+    }
     const ok = editingId ? await dbUpdate("greeting", editingId, data) : await dbInsert("greeting", data);
     if (ok) { closeModal(); loadGreeting(); showToast("保存しました"); }
     else alert("保存に失敗しました。");
@@ -367,13 +597,19 @@ async function deleteGreeting(id) {
 
 async function loadSettings() {
     const data = await dbFetch("settings", "key=eq.hero_image");
+    const electionDateData = await dbFetch("settings", "key=eq.election_date");
     const el = document.getElementById("hero-current");
+    const electionCurrent = document.getElementById("election-date-current");
+    const electionInput = document.getElementById("election-date-input");
     if (!el) return;
     if (data && data.length > 0 && data[0].value) {
         el.innerHTML = "<p class=\"text-sm font-bold text-gray-700 mb-2\">現在のヒーロー画像：</p><img src=\"" + data[0].value + "\" class=\"w-full rounded-xl border-2 border-gray-200 max-h-64 object-cover\">";
     } else {
         el.innerHTML = "<p class=\"text-sm text-gray-400 mb-2\">現在は既定の画像が表示されています</p>";
     }
+    const electionDateValue = electionDateData && electionDateData.length > 0 ? electionDateData[0].value : "";
+    if (electionCurrent) electionCurrent.textContent = "現在の設定: " + formatDisplayDate(electionDateValue);
+    if (electionInput) electionInput.value = electionDateValue || "";
 }
 function previewHero(input) {
     const file = input.files[0];
@@ -400,6 +636,29 @@ async function saveHeroImage() {
     }
     if (ok) { loadSettings(); document.getElementById("hero-new-preview").classList.add("hidden"); showToast("ヒーロー画像を更新しました"); }
     else alert("保存に失敗しました。");
+}
+
+async function saveElectionDate() {
+    const input = document.getElementById("election-date-input");
+    if (!input) return;
+    const value = (input.value || "").trim();
+    if (!value) {
+        alert("投開票日を入力してください。");
+        return;
+    }
+    const existing = await dbFetch("settings", "key=eq.election_date");
+    let ok;
+    if (existing && existing.length > 0) {
+        ok = await dbUpdate("settings", existing[0].id, { value: value });
+    } else {
+        ok = await dbInsert("settings", { key: "election_date", value: value });
+    }
+    if (ok) {
+        loadSettings();
+        showToast("投開票日を更新しました");
+    } else {
+        alert("保存に失敗しました。");
+    }
 }
 
 function openModal(type, data) {
@@ -454,10 +713,26 @@ function buildForm(type, d) {
     d = d || {};
     let f = "";
     if (type === "members") {
+        const selectedMemberCategory = d.member_type || "議員";
+        const plainMemberBio = d.bio || "";
+        const memberDeleted = d.is_deleted === true;
+        const memberElectionDistrict = d.election_district || "";
+        const memberVoteDate = d.vote_date || "";
+        const memberKinds = ["議員", "候補者", "改革委員"];
+        let kindHTML = '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">区分</label><select name="member_category" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">';
+        memberKinds.forEach(function(k) {
+            const selected = selectedMemberCategory === k ? "selected" : "";
+            kindHTML += '<option value="' + k + '" ' + selected + '>' + k + '</option>';
+        });
+        kindHTML += '</select></div>';
         f = photoField("photo_url", "写真", d.photo_url) +
             inputField("name", "氏名 ※必須", "text", d.name, "例：山田 太郎") +
+            kindHTML +
+            '<input type="hidden" name="member_deleted" value="' + (memberDeleted ? "true" : "false") + '">' +
+            inputField("member_election_district", "選挙区", "text", memberElectionDistrict, "例：安芸市") +
+            inputField("member_vote_date", "投票月日", "date", memberVoteDate, "") +
             inputField("role", "役職・肩書き", "text", d.role, "例：高知市議会議員") +
-            textareaField("bio", "紹介文", d.bio, "経歴や活動方針などを入力してください") +
+            textareaField("bio", "紹介文", plainMemberBio, "経歴や活動方針などを入力してください") +
             inputField("sort_order", "表示順", "number", d.sort_order || 0, "");
     } else if (type === "events") {
         const targetOpts = ["党員", "サポーター", "一般", "その他"];
@@ -500,7 +775,18 @@ function buildForm(type, d) {
         f = inputField("title", "タイトル ※必須", "text", d.title, "例：ホームページをリニューアルしました") +
             inputField("published_date", "掲載日 ※必須", "date", d.published_date, "") +
             catHTML2 +
-            textareaField("content", "本文", d.content, "") +
+            inputField("target_audience", "対象者", "text", d.target_audience, "例：党員・サポーター・一般") +
+            '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">時間</label>' +
+            '<div class="grid grid-cols-1 md:grid-cols-3 gap-3">' +
+            '<div><p class="text-xs text-gray-500 mb-1">受付時間</p><input type="time" name="reception_time" value="' + (d.reception_time || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+            '<div><p class="text-xs text-gray-500 mb-1">開始時間</p><input type="time" name="start_time" value="' + (d.start_time || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+            '<div><p class="text-xs text-gray-500 mb-1">終了時間</p><input type="time" name="end_time" value="' + (d.end_time || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+            '</div></div>' +
+            inputField("venue_name", "会場名", "text", d.venue_name, "例：ちより街テラス") +
+            inputField("venue_address", "会場住所", "text", d.venue_address, "例：高知県高知市知寄町2丁目1-37") +
+            textareaField("content", "内容", d.content, "イベント内容を入力してください") +
+            inputField("participation_fee", "参加費", "text", d.participation_fee, "例：無料") +
+            inputField("application_url", "申込のURL", "url", d.application_url, "https://") +
             toggleField("is_published", "サイトに公開する", d.is_published !== false);
     }
     return '<form onsubmit="saveItem(event,\'' + type + '\')">' + f +
@@ -528,6 +814,19 @@ async function saveItem(e, type) {
         if (el.type === "checkbox") data[el.name] = el.checked;
         else if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
     });
+    if (type === "members") {
+        const selectedCategory = data.member_category || "議員";
+        const isDeleted = data.member_deleted === "true";
+        data.member_type = selectedCategory;
+        data.is_deleted = isDeleted;
+        data.election_district = (data.member_election_district || "").trim() || null;
+        data.vote_date = (data.member_vote_date || "").trim() || null;
+        data.bio = (data.bio || "").trim() || null;
+        delete data.member_category;
+        delete data.member_deleted;
+        delete data.member_election_district;
+        delete data.member_vote_date;
+    }
     const ok = editingId ? await dbUpdate(type, editingId, data) : await dbInsert(type, data);
     if (ok) { closeModal(); loadSection(type); showToast(editingId ? "更新しました" : "追加しました"); }
     else alert("保存に失敗しました。");

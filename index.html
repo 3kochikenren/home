@@ -13,7 +13,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#1d4ed8', /* メインカラー（青系を想定） */
+                        primary: '#f97316', /* メインカラー（オレンジ系） */
                         secondary: '#f97316', /* アクセントカラー（オレンジ系） */
                     }
                 }
@@ -44,11 +44,11 @@
 
                 <!-- PC用ナビゲーション -->
                 <nav class="hidden md:flex space-x-8 items-center">
-                    <a href="#about" class="text-gray-600 hover:text-primary font-medium transition">ご挨拶</a>
+                    <a href="#about" class="text-gray-600 hover:text-primary font-medium transition">役員</a>
                     <a href="#news" class="text-gray-600 hover:text-primary font-medium transition">イベント</a>
                     <a href="#policy" class="text-gray-600 hover:text-primary font-medium transition">高知県所属議員</a>
                     <a href="#activity" class="text-gray-600 hover:text-primary font-medium transition">活動報告</a>
-                    <a href="https://sanseito.jp/participation/" target="_blank" class="bg-primary hover:bg-blue-800 text-white px-6 py-2 rounded-full font-bold transition shadow-md">
+                    <a href="https://sanseito.jp/participation/" target="_blank" class="bg-primary hover:bg-orange-700 text-white px-6 py-2 rounded-full font-bold transition shadow-md">
                         入党・参加する
                     </a>
                 </nav>
@@ -65,11 +65,11 @@
         <!-- モバイル用ドロップダウンメニュー -->
         <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#about" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">ご挨拶</a>
+                <a href="#about" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">役員</a>
                 <a href="#news" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">イベント</a>
                 <a href="#policy" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">高知県所属議員</a>
                 <a href="#activity" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">活動報告</a>
-                <a href="https://sanseito.jp/participation/" target="_blank" class="block mt-4 px-3 py-3 text-center rounded-md text-base font-bold text-white bg-primary hover:bg-blue-800">入党・参加する</a>
+                <a href="https://sanseito.jp/participation/" target="_blank" class="block mt-4 px-3 py-3 text-center rounded-md text-base font-bold text-white bg-primary hover:bg-orange-700">入党・参加する</a>
             </div>
         </div>
     </header>
@@ -102,7 +102,7 @@
                         <li class="py-4 flex flex-col md:flex-row md:items-center gap-2 md:gap-6 hover:bg-gray-100 transition px-2 rounded">
                             <div class="flex items-center gap-4 md:w-48 shrink-0">
                                 <span class="text-sm text-gray-500 font-mono">2026.05.28</span>
-                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">イベント</span>
+                                <span class="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded font-bold">イベント</span>
                             </div>
                             <a href="#" class="text-gray-800 hover:text-primary font-medium flex-grow">高知市内での街頭演説会のイベント</a>
                         </li>
@@ -130,25 +130,19 @@
             </div>
         </section>
 
-        <!-- ご挨拶セクション -->
+        <!-- 役員組織図セクション -->
         <section id="about" class="py-20 bg-gray-50">
-            <div class="container mx-auto px-4 max-w-5xl">
+            <div class="container mx-auto px-4 max-w-6xl">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl font-bold section-title">ご挨拶</h2>
+                    <h2 class="text-3xl font-bold section-title">役員紹介</h2>
+                    <p class="mt-4 text-gray-600">県連会長・第一支部長・第二支部長を表示しています</p>
                 </div>
-                <div class="flex flex-col md:flex-row gap-10 items-center">
-                    <div class="w-full md:w-1/2">
-                        <img id="greeting-photo" src="https://placehold.co/600x400/e5e7eb/6b7280?text=Representative+Image" alt="代表画像" class="rounded-lg shadow-lg w-full object-cover">
-                    </div>
-                    <div class="w-full md:w-1/2 space-y-6">
-                        <h3 id="greeting-title" class="text-2xl font-bold text-gray-800">県民の声を力に、新しい高知を創り出す。</h3>
-                        <p id="greeting-content" class="text-gray-600 leading-relaxed">
-                            ここに代表者の挨拶や、県連としての理念の文章が入ります。
-                        </p>
-                        <div class="mt-8">
-                            <p id="greeting-role" class="text-lg font-bold text-gray-800">参政党 高知県連 代表</p>
-                            <p id="greeting-name" class="text-xl font-bold text-primary mt-1">お名前</p>
-                        </div>
+                <div id="greeting-container" class="space-y-10">
+                    <div class="bg-white rounded-2xl shadow-md p-8 flex flex-col items-center text-center">
+                        <div class="w-32 h-32 rounded-full bg-gray-100 border-4 border-orange-100 mb-4"></div>
+                        <p class="text-sm font-bold text-orange-500 mb-1">読み込み中...</p>
+                        <h3 class="text-xl font-bold text-gray-800 mb-3">役員データを取得しています</h3>
+                        <p class="text-gray-600 text-sm">しばらくお待ちください。</p>
                     </div>
                 </div>
             </div>
@@ -162,23 +156,38 @@
                     <p class="mt-4 text-gray-600">参政党 高知県連の議員をご紹介します</p>
                 </div>
                 <div id="members-container" class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <!-- 議員1 -->
                     <div class="hover-card bg-white border border-gray-100 rounded-xl p-8 shadow-md text-center">
-                        <img src="https://placehold.co/200x200/f97316/ffffff?text=議員写真" alt="議員1 写真" class="w-40 h-40 rounded-full object-cover mx-auto mb-6 border-4 border-orange-100">
-                        <h3 class="text-xl font-bold text-gray-800 mb-1">議員氏名（仮）</h3>
-                        <p class="text-secondary font-medium text-sm mb-4">〇〇市議会議員</p>
-                        <p class="text-gray-600 text-sm leading-relaxed text-left">
-                            議員の紹介文がここに入ります。経歴や活動方針、地域への想いなどを記載してください。
-                        </p>
+                        <div class="w-40 h-40 rounded-full bg-gray-100 mx-auto mb-6 border-4 border-orange-100"></div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">読み込み中</h3>
+                        <p class="text-gray-500 text-sm">所属議員データを取得しています</p>
                     </div>
-                    <!-- 議員2 -->
-                    <div class="hover-card bg-white border border-gray-100 rounded-xl p-8 shadow-md text-center">
-                        <img src="https://placehold.co/200x200/f97316/ffffff?text=議員写真" alt="議員2 写真" class="w-40 h-40 rounded-full object-cover mx-auto mb-6 border-4 border-orange-100">
-                        <h3 class="text-xl font-bold text-gray-800 mb-1">議員氏名（仮）</h3>
-                        <p class="text-secondary font-medium text-sm mb-4">〇〇市議会議員</p>
-                        <p class="text-gray-600 text-sm leading-relaxed text-left">
-                            議員の紹介文がここに入ります。経歴や活動方針、地域への想いなどを記載してください。
-                        </p>
+                </div>
+
+                <div id="candidates-section" class="mt-16">
+                    <div class="text-center mb-10">
+                        <h3 class="text-2xl font-bold text-gray-800">公認候補者の紹介</h3>
+                        <p class="mt-3 text-gray-600">地域の未来に向けて活動する公認候補者を表示します。</p>
+                    </div>
+                    <div id="candidates-container" class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div class="hover-card bg-white border border-gray-100 rounded-xl p-8 shadow-md text-center">
+                            <div class="w-40 h-40 rounded-full bg-gray-100 mx-auto mb-6 border-4 border-orange-100"></div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-1">読み込み中</h3>
+                            <p class="text-gray-500 text-sm">公認候補者データを取得しています</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reformers-section" class="mt-16">
+                    <div class="text-center mb-10">
+                        <h3 class="text-2xl font-bold text-gray-800">改革委員の紹介</h3>
+                        <p class="mt-3 text-gray-600">各地域で地域をよくする活動をしている人を表示します。</p>
+                    </div>
+                    <div id="reformers-container" class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div class="hover-card bg-white border border-gray-100 rounded-xl p-8 shadow-md text-center">
+                            <div class="w-40 h-40 rounded-full bg-gray-100 mx-auto mb-6 border-4 border-orange-100"></div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-1">読み込み中</h3>
+                            <p class="text-gray-500 text-sm">改革委員データを取得しています</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -191,33 +200,13 @@
                     <h2 class="text-3xl font-bold section-title">活動報告</h2>
                 </div>
                 <div id="activities-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-white rounded-lg shadow overflow-hidden hover-card">
-                        <img src="https://placehold.co/400x250/e5e7eb/6b7280?text=Activity+Image" alt="活動画像" class="w-full h-48 object-cover">
-                        <div class="p-6">
-                            <span class="text-xs text-gray-500 font-mono mb-2 block">2026.05.20</span>
-                            <h3 class="text-lg font-bold text-gray-800 mb-2">高知駅前での街頭活動</h3>
-                            <p class="text-gray-600 text-sm line-clamp-3">活動の概要が入ります。朝の通勤・通学時間帯に高知駅前にて街頭演説を行いました。多くの方にチラシを受け取っていただき...</p>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow overflow-hidden hover-card">
-                        <img src="https://placehold.co/400x250/e5e7eb/6b7280?text=Activity+Image" alt="活動画像" class="w-full h-48 object-cover">
-                        <div class="p-6">
-                            <span class="text-xs text-gray-500 font-mono mb-2 block">2026.05.12</span>
-                            <h3 class="text-lg font-bold text-gray-800 mb-2">〇〇地区タウンミーティング</h3>
-                            <p class="text-gray-600 text-sm line-clamp-3">活動の概要が入ります。地域の皆様と直接意見交換をするタウンミーティングを開催。交通インフラの課題について活発な議論が交わされました。</p>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow overflow-hidden hover-card hidden lg:block">
-                        <img src="https://placehold.co/400x250/e5e7eb/6b7280?text=Activity+Image" alt="活動画像" class="w-full h-48 object-cover">
-                        <div class="p-6">
-                            <span class="text-xs text-gray-500 font-mono mb-2 block">2026.04.28</span>
-                            <h3 class="text-lg font-bold text-gray-800 mb-2">海岸清掃ボランティア</h3>
-                            <p class="text-gray-600 text-sm line-clamp-3">活動の概要が入ります。党員・サポーターの皆様と一緒に、桂浜周辺の清掃活動を実施しました。環境保全への取り組みも継続してまいります。</p>
-                        </div>
+                    <div class="bg-white rounded-lg shadow overflow-hidden p-6 text-center text-gray-400">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-3"></i>
+                        <p class="text-sm">活動報告を読み込み中です...</p>
                     </div>
                 </div>
                 <div class="text-center mt-10">
-                    <a href="#" class="inline-block border-2 border-primary text-primary font-bold px-8 py-3 rounded-full hover:bg-primary hover:text-white transition">
+                    <a href="activities.html" class="inline-block border-2 border-primary text-primary font-bold px-8 py-3 rounded-full hover:bg-primary hover:text-white transition">
                         活動報告をもっと見る
                     </a>
                 </div>
@@ -265,15 +254,15 @@
                     </p>
                     <p class="text-sm"><i class="fa-solid fa-envelope mr-2"></i> kochi@sanseito.jp</p>
                     <div class="flex gap-4 mt-6">
-                        <a href="https://x.com/sanseito_kochi" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-500 hover:text-white transition"><i class="fa-brands fa-x-twitter"></i></a>
-                        <a href="https://www.facebook.com/profile.php?id=100082876765213" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-800 hover:text-white transition"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="https://x.com/sanseito_kochi" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-orange-500 hover:text-white transition"><i class="fa-brands fa-x-twitter"></i></a>
+                        <a href="https://www.facebook.com/profile.php?id=100082876765213" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-orange-700 hover:text-white transition"><i class="fa-brands fa-facebook-f"></i></a>
                     </div>
                 </div>
                 <div class="md:w-2/3 flex flex-wrap gap-10">
                     <div>
                         <h4 class="text-white font-bold mb-4 border-b border-gray-700 pb-2">コンテンツ</h4>
                         <ul class="space-y-2 text-sm">
-                            <li><a href="#about" class="hover:text-white transition">ご挨拶</a></li>
+                            <li><a href="#about" class="hover:text-white transition">役員</a></li>
                             <li><a href="#policy" class="hover:text-white transition">高知県所属議員</a></li>
                             <li><a href="#activity" class="hover:text-white transition">活動報告</a></li>
                             <li><a href="#news" class="hover:text-white transition">イベント</a></li>
