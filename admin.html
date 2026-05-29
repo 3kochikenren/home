@@ -65,9 +65,7 @@
                     <button onclick="showSection('members')" id="nav-members" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span>
                     </button>
-                    <button onclick="showSection('events')" id="nav-events" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
-                        <i class="fa-solid fa-calendar-days w-5 text-center"></i><span>イベント</span>
-                    </button>
+                    
                     <button onclick="showSection('activities')" id="nav-activities" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-newspaper w-5 text-center"></i><span>活動報告</span>
                     </button>
@@ -100,18 +98,7 @@
                 <div id="members-list"></div>
             </section>
 
-            <section id="section-events" class="admin-section hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-calendar-days mr-2 text-orange-500"></i>イベント</h2>
-                        <p class="text-gray-500 text-sm mt-1">開催イベントの登録・管理をします</p>
-                    </div>
-                    <button onclick="openModal('events')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
-                        <i class="fa-solid fa-plus mr-1"></i>イベントを追加
-                    </button>
-                </div>
-                <div id="events-list"></div>
-            </section>
+            
 
             <section id="section-activities" class="admin-section hidden">
                 <div class="flex justify-between items-center mb-6">
