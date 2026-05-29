@@ -11,6 +11,23 @@ async function fetchDB(table, query = "") {
     return res.json();
 }
 
+// ご挨拶を表示
+async function loadGreeting() {
+    const data = await fetchDB("greeting", "limit=1");
+    if (!data || data.length === 0) return;
+    const g = data[0];
+    const photo = document.getElementById("greeting-photo");
+    const title = document.getElementById("greeting-title");
+    const content = document.getElementById("greeting-content");
+    const role = document.getElementById("greeting-role");
+    const name = document.getElementById("greeting-name");
+    if (photo && g.photo_url) photo.src = g.photo_url;
+    if (title && g.title) title.textContent = g.title;
+    if (content && g.content) content.textContent = g.content;
+    if (role && g.role) role.textContent = g.role;
+    if (name && g.name) name.textContent = g.name;
+}
+
 // 議員情報を表示
 async function loadMembers() {
     const members = await fetchDB("members", "order=sort_order.asc");
@@ -94,6 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Supabaseからデータ読み込み
+    loadGreeting();
     loadMembers();
     loadActivities();
     loadNews();
