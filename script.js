@@ -11,21 +11,21 @@ async function fetchDB(table, query = "") {
     return res.json();
 }
 
-// ご挨拶を表示
+// ご挨拶を表示（3名）
 async function loadGreeting() {
-    const data = await fetchDB("greeting", "limit=1");
-    if (!data || data.length === 0) return;
-    const g = data[0];
-    const photo = document.getElementById("greeting-photo");
-    const title = document.getElementById("greeting-title");
-    const content = document.getElementById("greeting-content");
-    const role = document.getElementById("greeting-role");
-    const name = document.getElementById("greeting-name");
-    if (photo && g.photo_url) photo.src = g.photo_url;
-    if (title && g.title) title.textContent = g.title;
-    if (content && g.content) content.textContent = g.content;
-    if (role && g.role) role.textContent = g.role;
-    if (name && g.name) name.textContent = g.name;
+    const data = await fetchDB("greeting", "order=sort_order.asc");
+    const container = document.getElementById("greeting-container");
+    if (!container || !data || data.length === 0) return;
+    container.innerHTML = data.map(g => `
+        <div class="bg-white rounded-2xl shadow-md p-8 flex flex-col items-center text-center hover:shadow-lg transition">
+            <img src="${g.photo_url || "https://placehold.co/200x200/fff7ed/f97316?text=写真"}"
+                 alt="${g.name || ""}" class="w-32 h-32 rounded-full object-cover border-4 border-orange-100 mb-4">
+            <p class="text-sm font-bold text-orange-500 mb-1">${g.position_label || ""}</p>
+            <h3 class="text-xl font-bold text-gray-800 mb-3">${g.name || ""}</h3>
+            <p class="text-sm font-bold text-gray-600 mb-3">${g.role || ""}</p>
+            <p class="text-gray-600 text-sm leading-relaxed text-left">${g.content || ""}</p>
+        </div>
+    `).join("");
 }
 
 // 議員情報を表示
