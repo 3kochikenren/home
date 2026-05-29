@@ -14,8 +14,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-<!-- ログイン画面 -->
-<div id="login-screen" class="min-h-screen flex items-center justify-center bg-gray-100">
+<div id="login-screen" class="min-h-screen flex items-center justify-center">
     <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md">
         <div class="text-center mb-8">
             <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -24,24 +23,18 @@
             <h1 class="text-2xl font-bold text-gray-800">管理画面ログイン</h1>
             <p class="text-gray-500 text-sm mt-2">参政党 高知県連</p>
         </div>
-        <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">パスワード</label>
-            <input type="password" id="password-input"
-                   class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-lg focus:outline-none focus:border-orange-400"
-                   placeholder="パスワードを入力してください">
-            <p id="login-error" class="text-red-500 text-sm mt-2 hidden"><i class="fa-solid fa-circle-exclamation mr-1"></i>パスワードが違います</p>
-            <button onclick="doLogin()"
-                    class="w-full bg-orange-500 text-white font-bold py-3 rounded-lg mt-5 hover:bg-orange-600 transition text-lg">
-                <i class="fa-solid fa-right-to-bracket mr-2"></i>ログイン
-            </button>
-        </div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">パスワード</label>
+        <input type="password" id="password-input"
+               class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-lg focus:outline-none focus:border-orange-400"
+               placeholder="パスワードを入力してください">
+        <p id="login-error" class="text-red-500 text-sm mt-2 hidden">パスワードが違います</p>
+        <button onclick="doLogin()" class="w-full bg-orange-500 text-white font-bold py-3 rounded-lg mt-5 hover:bg-orange-600 transition text-lg">
+            <i class="fa-solid fa-right-to-bracket mr-2"></i>ログイン
+        </button>
     </div>
 </div>
 
-<!-- 管理画面本体 -->
 <div id="admin-screen" class="hidden">
-
-    <!-- ヘッダー -->
     <header class="bg-white shadow-sm fixed w-full top-0 z-50">
         <div class="flex justify-between items-center px-6 py-4">
             <div class="flex items-center gap-3">
@@ -62,111 +55,98 @@
     </header>
 
     <div class="flex pt-16 min-h-screen">
-
-        <!-- サイドバー -->
         <aside class="w-60 bg-white shadow-sm fixed left-0 top-16 bottom-0">
             <div class="p-4">
                 <p class="text-xs font-bold text-gray-400 px-4 mb-3 tracking-widest">コンテンツ管理</p>
                 <nav class="space-y-1">
-                    <button onclick="showSection('greeting')" id="nav-greeting" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"><i class="fa-solid fa-handshake w-5 text-center"></i><span>ご挨拶</span></button><button onclick="showSection('members')" id="nav-members" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"><i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span></button>
-
-                    <button onclick="showSection('events')" id="nav-events" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"><i class="fa-solid fa-calendar-days w-5 text-center"></i><span>イベント</span></button>
-                    <button onclick="showSection('activities')" id="nav-activities"
-                            class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                    <button onclick="showSection('greeting')" id="nav-greeting" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-handshake w-5 text-center"></i><span>ご挨拶</span>
+                    </button>
+                    <button onclick="showSection('members')" id="nav-members" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span>
+                    </button>
+                    <button onclick="showSection('events')" id="nav-events" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-calendar-days w-5 text-center"></i><span>イベント</span>
+                    </button>
+                    <button onclick="showSection('activities')" id="nav-activities" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-newspaper w-5 text-center"></i><span>活動報告</span>
                     </button>
-                    <button onclick="showSection('news')" id="nav-news"
-                            class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                    <button onclick="showSection('news')" id="nav-news" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-bell w-5 text-center"></i><span>お知らせ</span>
                     </button>
                 </nav>
             </div>
         </aside>
 
-        <!-- メインコンテンツ -->
         <main class="ml-60 flex-1 p-8">
+            <section id="section-greeting" class="admin-section">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-handshake mr-2 text-orange-500"></i>ご挨拶</h2>
+                    <p class="text-gray-500 text-sm mt-1">トップページの「ご挨拶」セクションを管理します</p>
+                </div>
+                <div id="greeting-preview" class="bg-white rounded-2xl shadow p-6"></div>
+            </section>
 
-            <section id="section-greeting" class="admin-section hidden"><div class="flex justify-between items-center mb-6"><div><h2 class="text-2xl font-bold text-gray-800">ご挨拶</h2></div><button onclick="openGreetingModal()" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600">編集する</button></div><div id="greeting-preview" class="bg-white rounded-2xl shadow p-8"></div></section>
-            <!-- 議員情報 -->
-            <section id="section-members" class="admin-section">
+            <section id="section-members" class="admin-section hidden">
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-users mr-2 text-orange-500"></i>議員情報</h2>
                         <p class="text-gray-500 text-sm mt-1">議員の写真・氏名・役職・紹介文を管理します</p>
                     </div>
-                    <button onclick="openModal('members')"
-                            class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                    <button onclick="openModal('members')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                         <i class="fa-solid fa-plus mr-1"></i>議員を追加
                     </button>
                 </div>
                 <div id="members-list"></div>
             </section>
 
-            <!-- イベント -->
             <section id="section-events" class="admin-section hidden">
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-calendar-days mr-2 text-orange-500"></i>イベント</h2>
-                        <p class="text-gray-500 text-sm mt-1">開催予定・済みのイベントを管理します</p>
+                        <p class="text-gray-500 text-sm mt-1">開催イベントの登録・管理をします</p>
                     </div>
-                    <button onclick="openModal('events')"
-                            class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                    <button onclick="openModal('events')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                         <i class="fa-solid fa-plus mr-1"></i>イベントを追加
                     </button>
                 </div>
                 <div id="events-list"></div>
             </section>
 
-            <!-- イベント -->
-            <section id="section-events" class="admin-section hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <div><h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-calendar-days mr-2 text-orange-500"></i>イベント</h2>
-                    <p class="text-gray-500 text-sm mt-1">開催イベントの登録・管理をします</p></div>
-                    <button onclick="openModal('events')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow"><i class="fa-solid fa-plus mr-1"></i>イベントを追加</button>
-                </div>
-                <div id="events-list"></div>
-            </section>
-
-            <!-- 活動報告 -->
             <section id="section-activities" class="admin-section hidden">
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-newspaper mr-2 text-orange-500"></i>活動報告</h2>
                         <p class="text-gray-500 text-sm mt-1">活動の様子や報告記事を管理します</p>
                     </div>
-                    <button onclick="openModal('activities')"
-                            class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                    <button onclick="openModal('activities')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                         <i class="fa-solid fa-plus mr-1"></i>活動報告を追加
                     </button>
                 </div>
                 <div id="activities-list"></div>
             </section>
 
-            <!-- お知らせ -->
             <section id="section-news" class="admin-section hidden">
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-bell mr-2 text-orange-500"></i>お知らせ</h2>
                         <p class="text-gray-500 text-sm mt-1">サイトに表示するお知らせを管理します</p>
                     </div>
-                    <button onclick="openModal('news')"
-                            class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                    <button onclick="openModal('news')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                         <i class="fa-solid fa-plus mr-1"></i>お知らせを追加
                     </button>
                 </div>
                 <div id="news-list"></div>
             </section>
-
         </main>
     </div>
 </div>
 
-<!-- 入力モーダル -->
 <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center px-6 py-5 border-b sticky top-0 bg-white rounded-t-2xl">
             <h3 id="modal-title" class="text-xl font-bold text-gray-800"></h3>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center">
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -174,7 +154,6 @@
     </div>
 </div>
 
-<!-- 完了トースト -->
 <div id="toast" class="hidden fixed bottom-8 right-8 bg-green-500 text-white px-6 py-4 rounded-xl shadow-xl z-50 font-bold flex items-center gap-2">
     <i class="fa-solid fa-circle-check text-xl"></i>
     <span id="toast-msg"></span>
@@ -183,15 +162,20 @@
 <script>
 const SUPABASE_URL = "https://yaimsonvxpujfupstpsd.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaW1zb252eHB1amZ1cHN0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODEwMjksImV4cCI6MjA5NTA1NzAyOX0.2PAKyBs8z44Ft4TXigKAsRfh6zEQwdVl2KNRZojxwzk";
+const STORAGE_URL = "https://yaimsonvxpujfupstpsd.supabase.co/storage/v1";
 const ADMIN_PASSWORD = "sanseito2026";
+const POSITIONS = [
+    { label: "県連会長", order: 1 },
+    { label: "第一支部長", order: 2 },
+    { label: "第二支部長", order: 3 }
+];
 let editingId = null;
 
-// ========== ログイン ==========
 function doLogin() {
     if (document.getElementById("password-input").value === ADMIN_PASSWORD) {
         document.getElementById("login-screen").classList.add("hidden");
         document.getElementById("admin-screen").classList.remove("hidden");
-        loadSection("members");
+        loadSection("greeting");
     } else {
         document.getElementById("login-error").classList.remove("hidden");
     }
@@ -201,134 +185,171 @@ function doLogout() {
     document.getElementById("login-screen").classList.remove("hidden");
     document.getElementById("password-input").value = "";
 }
-document.addEventListener("keydown", e => {
+document.addEventListener("keydown", function(e) {
     if (e.key === "Enter" && !document.getElementById("login-screen").classList.contains("hidden")) doLogin();
 });
 
-// ========== セクション切替 ==========
 function showSection(name) {
-    document.querySelectorAll(".admin-section").forEach(s => s.classList.add("hidden"));
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".admin-section").forEach(function(s) { s.classList.add("hidden"); });
+    document.querySelectorAll(".nav-btn").forEach(function(b) { b.classList.remove("active"); });
     document.getElementById("section-" + name).classList.remove("hidden");
     document.getElementById("nav-" + name).classList.add("active");
     loadSection(name);
 }
 
-// ========== Supabase操作 ==========
-const headers = { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` };
-async function dbFetch(table, q = "") {
+const hdrs = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY };
+async function dbFetch(table, q) {
     try {
-        const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}`, { headers });
-        const data = await r.json();
-        if (!r.ok) { console.error("Supabase error:", data); return []; }
-        return Array.isArray(data) ? data : [];
-    } catch(e) { console.error("Fetch error:", e); return []; }
+        const r = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?" + (q || ""), { headers: hdrs });
+        const d = await r.json();
+        return Array.isArray(d) ? d : [];
+    } catch(e) { return []; }
 }
 async function dbInsert(table, data) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    const r = await fetch(SUPABASE_URL + "/rest/v1/" + table, {
         method: "POST", body: JSON.stringify(data),
-        headers: { ...headers, "Content-Type": "application/json", "Prefer": "return=minimal" }
+        headers: Object.assign({}, hdrs, { "Content-Type": "application/json", "Prefer": "return=minimal" })
     });
-    if (!r.ok) { const e = await r.json(); console.error("Insert error:", e); alert("エラー詳細: " + JSON.stringify(e)); }
+    if (!r.ok) { const e = await r.json(); console.error(e); alert("エラー: " + (e.message || JSON.stringify(e))); }
     return r.ok;
 }
 async function dbUpdate(table, id, data) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    const r = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?id=eq." + id, {
         method: "PATCH", body: JSON.stringify(data),
-        headers: { ...headers, "Content-Type": "application/json", "Prefer": "return=minimal" }
+        headers: Object.assign({}, hdrs, { "Content-Type": "application/json", "Prefer": "return=minimal" })
     });
     return r.ok;
 }
 async function dbDelete(table, id) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-        method: "DELETE", headers
-    });
+    const r = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?id=eq." + id, { method: "DELETE", headers: hdrs });
     return r.ok;
 }
+async function uploadPhoto(file) {
+    const ext = file.name.split(".").pop();
+    const fileName = Date.now() + "." + ext;
+    const r = await fetch(STORAGE_URL + "/object/images/" + fileName, {
+        method: "POST",
+        headers: Object.assign({}, hdrs, { "Content-Type": file.type }),
+        body: file
+    });
+    if (!r.ok) return null;
+    return STORAGE_URL + "/object/public/images/" + fileName;
+}
 
-// ========== リスト表示 ==========
 async function loadSection(name) {
-    if (name === "greeting") {
-        const preview = document.getElementById("greeting-preview");
-        if (preview) preview.innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>`;
-        const data = await dbFetch("greeting", "limit=1");
-        renderGreetingPreview(data);
-        return;
-    }
+    if (name === "greeting") { loadGreeting(); return; }
     const el = document.getElementById(name + "-list");
-    el.innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>`;
-    const queries = { events: "order=event_date.desc", members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
+    if (!el) return;
+    el.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>';
+    const queries = { members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
     const data = await dbFetch(name, queries[name]);
     if (!data || data.length === 0) {
-        el.innerHTML = `<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">データがありません</p><p class="text-sm mt-1">右上の「追加」ボタンから登録してください</p></div>`;
+        el.innerHTML = '<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">データがありません</p><p class="text-sm mt-1">右上の追加ボタンから登録してください</p></div>';
         return;
     }
-    el.innerHTML = data.map(item => renderCard(name, item)).join("");
+    el.innerHTML = data.map(function(item) { return renderCard(name, item); }).join("");
 }
 
 function renderCard(type, item) {
     const icons = { members: "fa-user", events: "fa-calendar-days", activities: "fa-newspaper", news: "fa-bell" };
-    const statusBadge = type !== "members" ? (item.is_published === false
-        ? `<span class="bg-gray-100 text-gray-500 text-xs px-3 py-1 rounded-full font-bold">非公開</span>`
-        : `<span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">公開中</span>`) : "";
-    const titles = { members: item.name, events: item.title, activities: item.title, news: item.title };
-    const subs = {
-        members: item.role || "役職未設定",
-        events: `📅 ${item.event_date}　📍 ${item.venue_name || "会場未定"}　👥 ${item.target || ""}`,
-        activities: `📅 ${item.activity_date}`,
-        news: `📅 ${item.published_date}　🏷 ${item.category || ""}`
-    };
-    const thumb = (type === "members" && item.photo_url)
-        ? `<img src="${item.photo_url}" class="w-14 h-14 rounded-full object-cover border-2 border-orange-200 flex-shrink-0">`
-        : `<div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-orange-400 text-xl flex-shrink-0"><i class="fa-solid ${icons[type]}"></i></div>`;
-    return `
-    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 mb-3">
-        ${thumb}
-        <div class="flex-1 min-w-0">
-            <div class="font-bold text-gray-800 text-base truncate">${titles[type]}</div>
-            <div class="text-sm text-gray-500 mt-1">${subs[type]}</div>
-        </div>
-        <div class="flex items-center gap-2 flex-shrink-0">
-            ${statusBadge}
-            <button onclick="editItem('${type}','${item.id}')"
-                    class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100 transition">
-                <i class="fa-solid fa-pen mr-1"></i>編集
-            </button>
-            <button onclick="deleteItem('${type}','${item.id}','${(titles[type]||'').replace(/'/g,"\\'")}' )"
-                    class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100 transition">
-                <i class="fa-solid fa-trash mr-1"></i>削除
-            </button>
-        </div>
-    </div>`;
+    const statusBadge = type !== "members" ? (item.is_published === false ? '<span class="bg-gray-100 text-gray-500 text-xs px-3 py-1 rounded-full font-bold">非公開</span>' : '<span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">公開中</span>') : "";
+    const title = type === "members" ? item.name : item.title;
+    const sub = type === "members" ? (item.role || "役職未設定") :
+                type === "events" ? "📅 " + item.event_date + "　📍 " + (item.venue_name || "会場未定") :
+                type === "activities" ? "📅 " + item.activity_date :
+                "📅 " + item.published_date + "　🏷 " + (item.category || "");
+    const thumb = (type === "members" && item.photo_url) ?
+        '<img src="' + item.photo_url + '" class="w-14 h-14 rounded-full object-cover border-2 border-orange-200 flex-shrink-0">' :
+        '<div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-orange-400 text-xl flex-shrink-0"><i class="fa-solid ' + icons[type] + '"></i></div>';
+    const safeTitle = (title || "").replace(/'/g, "");
+    return '<div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 mb-3">' + thumb +
+        '<div class="flex-1 min-w-0"><div class="font-bold text-gray-800 truncate">' + (title || "") + '</div><div class="text-sm text-gray-500 mt-1">' + sub + '</div></div>' +
+        '<div class="flex items-center gap-2 flex-shrink-0">' + statusBadge +
+        '<button onclick="editItem(\'' + type + '\',\'' + item.id + '\')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
+        '<button onclick="deleteItem(\'' + type + '\',\'' + item.id + '\',\'' + safeTitle + '\')" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>' +
+        '</div></div>';
 }
 
-async function saveEventItem(e) {
-    e.preventDefault();
-    const data = {};
-    // チェックボックス（対象）を収集
-    const checked = [...e.target.querySelectorAll("input[name=target_cb]:checked")].map(el=>el.value);
-    if (checked.length > 0) data.target = checked.join(",");
-    // その他のフィールド
-    e.target.querySelectorAll("input,textarea,select").forEach(el => {
-        if (el.name === "target_cb" || el.type === "file") return;
-        if (el.type === "checkbox") data[el.name] = el.checked;
-        else if (el.value !== "") data[el.name] = el.value;
+async function loadGreeting() {
+    const preview = document.getElementById("greeting-preview");
+    if (!preview) return;
+    preview.innerHTML = '<p class="text-center text-gray-400 py-8"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>';
+    const data = await dbFetch("greeting", "order=sort_order.asc");
+    let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
+    POSITIONS.forEach(function(pos) {
+        const g = data.find(function(d) { return d.position_label === pos.label; });
+        if (g) {
+            html += '<div class="border-2 border-orange-200 rounded-xl p-5 text-center">';
+            html += '<p class="text-xs font-bold text-orange-500 mb-3">' + pos.label + '</p>';
+            html += '<img src="' + (g.photo_url || "https://placehold.co/100x100/fff7ed/f97316?text=写真") + '" class="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-orange-100">';
+            html += '<p class="font-bold text-gray-800">' + (g.name || "") + '</p>';
+            html += '<p class="text-xs text-gray-500 mt-1 mb-2">' + (g.role || "") + '</p>';
+            html += '<p class="text-xs text-gray-600 text-left leading-relaxed">' + (g.content || "") + '</p>';
+            html += '<div class="flex gap-2 mt-3">';
+            html += '<button onclick="openGreetingModal(\'' + pos.label + '\',' + pos.order + ')" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded-lg hover:bg-blue-100">編集</button>';
+            html += '<button onclick="deleteGreeting(\'' + g.id + '\')" class="flex-1 bg-red-50 text-red-500 text-xs font-bold py-2 rounded-lg hover:bg-red-100">削除</button>';
+            html += '</div></div>';
+        } else {
+            html += '<div class="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center">';
+            html += '<p class="text-xs font-bold text-orange-500 mb-3">' + pos.label + '</p>';
+            html += '<div class="w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 flex items-center justify-center"><i class="fa-solid fa-user text-3xl text-gray-300"></i></div>';
+            html += '<p class="text-gray-400 text-xs mb-3">未登録</p>';
+            html += '<button onclick="openGreetingModal(\'' + pos.label + '\',' + pos.order + ')" class="w-full bg-orange-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-orange-600">登録する</button>';
+            html += '</div>';
+        }
     });
-    const ok = editingId ? await dbUpdate("events", editingId, data) : await dbInsert("events", data);
-    if (ok) { closeModal(); loadSection("events"); showToast(editingId ? "更新しました" : "追加しました"); }
-    else alert("保存に失敗しました。もう一度お試しください。");
+    html += '</div>';
+    preview.innerHTML = html;
 }
 
-function renderGreetingPreview(d){const p=document.getElementById("greeting-preview");if(!p)return;const g=d&&d.length>0?d[0]:null;p.innerHTML=g?`<div class="flex gap-6"><img src="${g.photo_url||""}" class="w-36 h-36 object-cover rounded-xl border flex-shrink-0"><div><p class="font-bold text-xl mb-2">${g.title||""}</p><p class="text-gray-600 mb-3">${g.content||""}</p><p class="font-bold">${g.role||""}</p><p class="text-orange-500 font-bold">${g.name||""}</p></div></div>`:`<p class="text-center text-gray-400 py-8">未登録です。「編集する」から入力してください</p>`;}
-async function openGreetingModal(){const d=await dbFetch("greeting","limit=1");const g=d&&d.length>0?d[0]:null;editingId=g?g.id:null;document.getElementById("modal-title").textContent="ご挨拶を編集";document.getElementById("modal-body").innerHTML=buildForm("greeting",g);document.getElementById("modal").classList.remove("hidden");}
-async function saveGreeting(e){e.preventDefault();const d={};
-const fi=e.target.querySelector("input[type=file]");
-if(fi&&fi.files&&fi.files[0]){showToast("写真をアップロード中...");const url=await uploadPhoto(fi.files[0]);if(url){const h=document.getElementById("hidden-photo_url");if(h)h.value=url;}}
-e.target.querySelectorAll("input,textarea,select").forEach(el=>{if(el.type==="file")return;if(el.type==="number"&&el.value!=="")d[el.name]=Number(el.value);else if(el.value!=="")d[el.name]=el.value;});
-const ok=editingId?await dbUpdate("greeting",editingId,d):await dbInsert("greeting",d);
-if(ok){closeModal();loadSection("greeting");showToast("保存しました");}else alert("保存に失敗しました。");}
-// ========== モーダル ==========
-function openModal(type, data = null) {
+async function openGreetingModal(posLabel, sortOrder) {
+    const data = await dbFetch("greeting", "position_label=eq." + encodeURIComponent(posLabel));
+    const g = data && data.length > 0 ? data[0] : null;
+    editingId = g ? g.id : null;
+    document.getElementById("modal-title").textContent = posLabel + " ご挨拶登録";
+    document.getElementById("modal-body").innerHTML =
+        '<form id="greeting-form">' +
+        photoField("photo_url", "写真", g && g.photo_url ? g.photo_url : "") +
+        '<input type="hidden" name="position_label" value="' + posLabel + '">' +
+        '<input type="hidden" name="sort_order" value="' + sortOrder + '">' +
+        inputField("name", "名前 ※必須", "text", g && g.name ? g.name : "", "例：山田 太郎") +
+        inputField("role", "役職・肩書き", "text", g && g.role ? g.role : "", "例：参政党 高知県連 代表") +
+        textareaField("content", "ご挨拶文", g && g.content ? g.content : "", "挨拶文を入力してください") +
+        '<div class="flex gap-3 mt-4">' +
+        '<button type="button" onclick="saveGreeting()" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600"><i class="fa-solid fa-floppy-disk mr-2"></i>保存する</button>' +
+        '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+        '</div></form>';
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+async function saveGreeting() {
+    const form = document.getElementById("greeting-form");
+    const data = {};
+    const fi = form.querySelector("input[type=file]");
+    if (fi && fi.files && fi.files[0]) {
+        showToast("写真をアップロード中...");
+        const url = await uploadPhoto(fi.files[0]);
+        if (url) {
+            const hid = document.getElementById("hidden-photo_url");
+            if (hid) hid.value = url;
+        }
+    }
+    form.querySelectorAll("input,textarea").forEach(function(el) {
+        if (el.type === "file") return;
+        if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
+    });
+    const ok = editingId ? await dbUpdate("greeting", editingId, data) : await dbInsert("greeting", data);
+    if (ok) { closeModal(); loadGreeting(); showToast("保存しました"); }
+    else alert("保存に失敗しました。");
+}
+
+async function deleteGreeting(id) {
+    if (!confirm("削除しますか？")) return;
+    const ok = await dbDelete("greeting", id);
+    if (ok) { loadGreeting(); showToast("削除しました"); }
+}
+
+function openModal(type, data) {
     editingId = data ? data.id : null;
     const names = { members: "議員情報", events: "イベント", activities: "活動報告", news: "お知らせ" };
     document.getElementById("modal-title").textContent = (editingId ? "編集：" : "追加：") + names[type];
@@ -340,196 +361,140 @@ function closeModal() {
     editingId = null;
 }
 
-const STORAGE_URL = "https://yaimsonvxpujfupstpsd.supabase.co/storage/v1";
-
-async function uploadPhoto(file) {
-    const ext = file.name.split(".").pop();
-    const fileName = Date.now() + "." + ext;
-    const res = await fetch(`${STORAGE_URL}/object/images/${fileName}`, {
-        method: "POST",
-        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": file.type },
-        body: file
-    });
-    if (!res.ok) { const e = await res.json(); console.error(e); return null; }
-    return `${STORAGE_URL}/object/public/images/${fileName}`;
+function inputField(name, label, type, value, placeholder) {
+    return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">' + label + '</label>' +
+        '<input type="' + type + '" name="' + name + '" value="' + (value || "") + '" placeholder="' + (placeholder || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400"></div>';
 }
-
-function field(name, label, type = "text", value = "", placeholder = "", note = "") {
-    if (name === "photo_url") {
-        return `<div class="mb-5">
-            <label class="block text-sm font-bold text-gray-700 mb-1">${label}</label>
-            <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center bg-gray-50 hover:border-orange-400 transition cursor-pointer" onclick="document.getElementById('file-input-${name}').click()">
-                <img id="preview-${name}" src="${value||''}" class="${value ? '' : 'hidden'} w-32 h-32 object-cover rounded-xl mx-auto mb-2 border">
-                <div id="upload-hint-${name}" class="${value ? 'hidden' : ''}">
-                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-300 mb-2 block"></i>
-                    <p class="text-sm text-gray-400">クリックして写真を選択</p>
-                    <p class="text-xs text-gray-300 mt-1">JPG・PNG・GIF対応</p>
-                </div>
-                <p id="file-name-${name}" class="text-xs text-gray-400 mt-2"></p>
-            </div>
-            <input type="file" id="file-input-${name}" accept="image/*" class="hidden"
-                onchange="previewPhoto(this, '${name}')">
-            <input type="hidden" name="${name}" id="hidden-${name}" value="${value||''}">
-        </div>`;
-    }
-    return `<div class="mb-5">
-        <label class="block text-sm font-bold text-gray-700 mb-1">${label}</label>
-        ${note ? `<p class="text-xs text-gray-400 mb-1">${note}</p>` : ""}
-        <input type="${type}" name="${name}" value="${value||''}" placeholder="${placeholder}"
-               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 text-base">
-    </div>`;
+function textareaField(name, label, value, placeholder) {
+    return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">' + label + '</label>' +
+        '<textarea name="' + name + '" rows="4" placeholder="' + (placeholder || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 resize-none">' + (value || "") + '</textarea></div>';
 }
-
-function previewPhoto(input, fieldName) {
+function toggleField(name, label, checked) {
+    return '<div class="mb-5 flex items-center gap-3 bg-gray-50 rounded-xl p-4">' +
+        '<input type="checkbox" name="' + name + '" id="chk_' + name + '" ' + (checked !== false ? "checked" : "") + ' class="w-5 h-5 accent-orange-500">' +
+        '<label for="chk_' + name + '" class="font-bold text-gray-700 cursor-pointer">' + label + '</label>' +
+        '<span class="text-xs text-gray-400 ml-auto">オフで非公開</span></div>';
+}
+function photoField(name, label, value) {
+    return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">' + label + '</label>' +
+        '<div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center bg-gray-50 hover:border-orange-400 cursor-pointer" onclick="document.getElementById(\'file-' + name + '\').click()">' +
+        '<img id="preview-' + name + '" src="' + (value || "") + '" class="w-24 h-24 object-cover rounded-xl mx-auto mb-2 border ' + (value ? "" : "hidden") + '">' +
+        '<div id="hint-' + name + '" class="' + (value ? "hidden" : "") + '"><i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-300 mb-2 block"></i><p class="text-sm text-gray-400">クリックして写真を選択</p></div>' +
+        '</div>' +
+        '<input type="file" id="file-' + name + '" accept="image/*" class="hidden" onchange="previewImg(this,\'' + name + '\')">' +
+        '<input type="hidden" id="hidden-' + name + '" name="' + name + '" value="' + (value || "") + '"></div>';
+}
+function previewImg(input, name) {
     const file = input.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = e => {
-        const preview = document.getElementById("preview-" + fieldName);
-        const hint = document.getElementById("upload-hint-" + fieldName);
-        const fname = document.getElementById("file-name-" + fieldName);
-        preview.src = e.target.result;
-        preview.classList.remove("hidden");
+    reader.onload = function(e) {
+        const prev = document.getElementById("preview-" + name);
+        const hint = document.getElementById("hint-" + name);
+        prev.src = e.target.result; prev.classList.remove("hidden");
         if (hint) hint.classList.add("hidden");
-        if (fname) fname.textContent = file.name;
     };
     reader.readAsDataURL(file);
 }
-function textareaField(name, label, value = "", placeholder = "") {
-    return `<div class="mb-5">
-        <label class="block text-sm font-bold text-gray-700 mb-1">${label}</label>
-        <textarea name="${name}" rows="4" placeholder="${placeholder}"
-                  class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 text-base resize-none">${value||''}</textarea>
-    </div>`;
-}
-function toggleField(name, label, checked = true) {
-    return `<div class="mb-5 flex items-center gap-3 bg-gray-50 rounded-xl p-4">
-        <input type="checkbox" name="${name}" id="chk_${name}" ${checked?"checked":""} class="w-5 h-5 accent-orange-500">
-        <label for="chk_${name}" class="font-bold text-gray-700 cursor-pointer">${label}</label>
-        <span class="text-xs text-gray-400 ml-auto">オフにすると非公開になります</span>
-    </div>`;
-}
 
-function buildForm(type, d = {}) {
+function buildForm(type, d) {
     d = d || {};
     let f = "";
-    if (type === "events") {
-        const targetOptions = ["党員","サポーター","一般","その他"];
-        const selectedTargets = d.target ? d.target.split(",") : [];
-        const targetCheckboxes = targetOptions.map(t => `
-            <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" name="target_cb" value="${t}" ${selectedTargets.includes(t)?"checked":""} class="w-4 h-4 accent-orange-500">
-                <span class="text-sm font-medium text-gray-700">${t}</span>
-            </label>`).join("");
-        f = field("title","イベント名 ※必須","text",d.title,"例：街頭演説会") +
-            field("event_date","実施日 ※必須","date",d.event_date) +
-            `<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">時間</label>
-            <div class="grid grid-cols-3 gap-3">
-                <div><p class="text-xs text-gray-500 mb-1">受付開始</p><input type="time" name="reception_start" value="${d.reception_start||'}" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>
-                <div><p class="text-xs text-gray-500 mb-1">開始時間</p><input type="time" name="start_time" value="${d.start_time||'}" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>
-                <div><p class="text-xs text-gray-500 mb-1">終了時間</p><input type="time" name="end_time" value="${d.end_time||'}" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>
-            </div></div>` +
-            field("venue_name","会場名","text",d.venue_name,"例：高知市文化プラザかるぽーと") +
-            field("address","住所","text",d.address,"例：高知県高知市九反田2-1") +
-            `<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">対象（複数選択可）</label>
-            <div class="flex flex-wrap gap-4 bg-gray-50 rounded-xl p-4">${targetCheckboxes}</div></div>` +
-            field("sender","発信者（肩書＋名前）","text",d.sender,"例：参政党高知県連 代表 山田太郎") +
-            `<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">カテゴリ</label>
-            <select name="category" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">
-                <option value="イベント" ${d.category==="イベント"||!d.category?"selected":""}>📅 イベント</option>
-                <option value="活動報告" ${d.category==="活動報告"?"selected":""}>📋 活動報告</option>
-                <option value="重要" ${d.category==="重要"?"selected":""}>🔴 重要</option>
-                <option value="その他" ${d.category==="その他"?"selected":""}>📌 その他</option>
-            </select></div>` +
-            textareaField("content","本文",d.content,"イベントの詳細を入力してください") +
-            toggleField("is_published","サイトに公開する",d.is_published!==false);
-        return `<form onsubmit="saveEventItem(event)">${f}<div class="flex gap-3 mt-2"><button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600 transition"><i class="fa-solid fa-floppy-disk mr-2"></i>保存する</button><button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button></div></form>`;
-    }
-    if (type === "greeting") {
-        f = field("photo_url","写真","text",d.photo_url,"https://") +
-            `<input type="hidden" name="position_label" value="${d.position_label||""}">` +
-            `<input type="hidden" name="sort_order" value="${d.sort_order||0}">` +
-            field("name","名前 ※必須","text",d.name,"例：山田 太郎") +
-            field("role","役職・肩書き","text",d.role,"例：参政党 高知県連 代表") +
-            textareaField("content","ご挨拶文",d.content,"挨拶文を入力してください");
-        return `<form onsubmit="saveGreeting(event)">${f}<div class="flex gap-3 mt-2"><button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl"><i class="fa-solid fa-floppy-disk mr-2"></i>保存する</button><button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button></div></form>`;
-    }
     if (type === "members") {
-        f = field("name","氏名 ※必須","text",d.name,"例：山田 太郎") +
-            field("role","役職・肩書き","text",d.role,"例：高知市議会議員") +
-            field("photo_url","写真のURL","text",d.photo_url,"https://...","写真をGoogleドライブ等にアップロードしてURLを貼り付けてください") +
-            textareaField("bio","紹介文",d.bio,"経歴や活動方針などを入力してください") +
-            field("sort_order","表示順（数字が小さいほど左に表示）","number",d.sort_order??0,"","1、2、3...の順に表示されます");
+        f = photoField("photo_url", "写真", d.photo_url) +
+            inputField("name", "氏名 ※必須", "text", d.name, "例：山田 太郎") +
+            inputField("role", "役職・肩書き", "text", d.role, "例：高知市議会議員") +
+            textareaField("bio", "紹介文", d.bio, "経歴や活動方針などを入力してください") +
+            inputField("sort_order", "表示順", "number", d.sort_order || 0, "");
     } else if (type === "events") {
-        f = field("title","イベント名 ※必須","text",d.title,"例：高知市内での街頭演説会") +
-            field("event_date","開催日 ※必須","date",d.event_date) +
-            field("location","開催場所","text",d.location,"例：高知駅前広場") +
-            textareaField("description","イベントの詳細",d.description,"参加方法や持ち物などを入力してください") +
-            toggleField("is_published","サイトに公開する",d.is_published!==false);
+        const targetOpts = ["党員", "サポーター", "一般", "その他"];
+        const selTargets = d.target ? d.target.split(",") : [];
+        let targetHTML = '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">対象（複数選択可）</label><div class="flex flex-wrap gap-4 bg-gray-50 rounded-xl p-4">';
+        targetOpts.forEach(function(t) {
+            targetHTML += '<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" name="target_cb" value="' + t + '" ' + (selTargets.indexOf(t) >= 0 ? "checked" : "") + ' class="w-4 h-4 accent-orange-500"><span class="text-sm font-medium">' + t + '</span></label>';
+        });
+        targetHTML += '</div></div>';
+        const catOpts = ["イベント", "活動報告", "重要", "その他"];
+        let catHTML = '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">カテゴリ</label><select name="category" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">';
+        catOpts.forEach(function(c) { catHTML += '<option value="' + c + '" ' + (d.category === c ? "selected" : "") + '>' + c + '</option>'; });
+        catHTML += '</select></div>';
+        f = inputField("title", "イベント名 ※必須", "text", d.title, "例：街頭演説会") +
+            inputField("event_date", "実施日 ※必須", "date", d.event_date, "") +
+            '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">時間</label>' +
+            '<div class="grid grid-cols-3 gap-3">' +
+            '<div><p class="text-xs text-gray-500 mb-1">受付開始</p><input type="time" name="reception_start" value="' + (d.reception_start || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+            '<div><p class="text-xs text-gray-500 mb-1">開始時間</p><input type="time" name="start_time" value="' + (d.start_time || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+            '<div><p class="text-xs text-gray-500 mb-1">終了時間</p><input type="time" name="end_time" value="' + (d.end_time || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+            '</div></div>' +
+            inputField("venue_name", "会場名", "text", d.venue_name, "例：高知市文化プラザかるぽーと") +
+            inputField("address", "住所", "text", d.address, "例：高知県高知市九反田2-1") +
+            targetHTML +
+            inputField("sender", "発信者（肩書＋名前）", "text", d.sender, "例：参政党高知県連 代表 山田太郎") +
+            catHTML +
+            textareaField("content", "本文", d.content, "イベントの詳細を入力してください") +
+            toggleField("is_published", "サイトに公開する", d.is_published !== false);
     } else if (type === "activities") {
-        f = field("title","タイトル ※必須","text",d.title,"例：高知駅前での街頭活動") +
-            field("activity_date","活動日 ※必須","date",d.activity_date) +
-            field("photo_url","写真のURL","text",d.photo_url,"https://...","写真をGoogleドライブ等にアップロードしてURLを貼り付けてください") +
-            textareaField("content","活動内容",d.content,"活動の様子・成果などを入力してください") +
-            toggleField("is_published","サイトに公開する",d.is_published!==false);
+        f = photoField("photo_url", "写真", d.photo_url) +
+            inputField("title", "タイトル ※必須", "text", d.title, "例：高知駅前での街頭活動") +
+            inputField("activity_date", "活動日 ※必須", "date", d.activity_date, "") +
+            textareaField("content", "活動内容", d.content, "活動の様子・成果などを入力してください") +
+            toggleField("is_published", "サイトに公開する", d.is_published !== false);
     } else if (type === "news") {
-        f = field("title","タイトル ※必須","text",d.title,"例：ホームページをリニューアルしました") +
-            field("published_date","掲載日 ※必須","date",d.published_date) +
-            `<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">カテゴリ</label>
-            <select name="category" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 text-base">
-                <option value="イベント" ${d.category==="イベント"?"selected":""}>📅 イベント</option>
-                <option value="活動報告" ${d.category==="活動報告"?"selected":""}>📋 活動報告</option>
-                <option value="重要" ${d.category==="重要"?"selected":""}>🔴 重要</option>
-                <option value="その他" ${d.category==="その他"?"selected":""}>📌 その他</option>
-            </select></div>` +
-            textareaField("content","本文",d.content) +
-            toggleField("is_published","サイトに公開する",d.is_published!==false);
+        const catOpts2 = ["イベント", "活動報告", "重要", "その他"];
+        let catHTML2 = '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">カテゴリ</label><select name="category" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">';
+        catOpts2.forEach(function(c) { catHTML2 += '<option value="' + c + '" ' + (d.category === c ? "selected" : "") + '>' + c + '</option>'; });
+        catHTML2 += '</select></div>';
+        f = inputField("title", "タイトル ※必須", "text", d.title, "例：ホームページをリニューアルしました") +
+            inputField("published_date", "掲載日 ※必須", "date", d.published_date, "") +
+            catHTML2 +
+            textareaField("content", "本文", d.content, "") +
+            toggleField("is_published", "サイトに公開する", d.is_published !== false);
     }
-    return `<form onsubmit="saveItem(event,'${type}')">${f}
-        <div class="flex gap-3 mt-2">
-            <button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600 transition text-base">
-                <i class="fa-solid fa-floppy-disk mr-2"></i>保存する
-            </button>
-            <button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl hover:bg-gray-200 transition text-base">
-                キャンセル
-            </button>
-        </div>
-    </form>`;
+    return '<form onsubmit="saveItem(event,\'' + type + '\')">' + f +
+        '<div class="flex gap-3 mt-4">' +
+        '<button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600"><i class="fa-solid fa-floppy-disk mr-2"></i>保存する</button>' +
+        '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+        '</div></form>';
 }
 
-// ========== 保存 ==========
 async function saveItem(e, type) {
     e.preventDefault();
     const data = {};
-    e.target.querySelectorAll("input,textarea,select").forEach(el => {
+    const fi = e.target.querySelector("input[type=file]");
+    if (fi && fi.files && fi.files[0]) {
+        showToast("写真をアップロード中...");
+        const url = await uploadPhoto(fi.files[0]);
+        if (url) { const hid = document.getElementById("hidden-photo_url"); if (hid) hid.value = url; }
+    }
+    if (type === "events") {
+        const checked = Array.from(e.target.querySelectorAll("input[name=target_cb]:checked")).map(function(el) { return el.value; });
+        if (checked.length > 0) data.target = checked.join(",");
+    }
+    e.target.querySelectorAll("input,textarea,select").forEach(function(el) {
+        if (el.name === "target_cb" || el.type === "file") return;
         if (el.type === "checkbox") data[el.name] = el.checked;
         else if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
     });
     const ok = editingId ? await dbUpdate(type, editingId, data) : await dbInsert(type, data);
-    if (ok) { closeModal(); loadSection(type); showToast(editingId ? "✅ 更新しました" : "✅ 追加しました"); }
-    else alert("保存に失敗しました。もう一度お試しください。");
+    if (ok) { closeModal(); loadSection(type); showToast(editingId ? "更新しました" : "追加しました"); }
+    else alert("保存に失敗しました。");
 }
 
-// ========== 編集 ==========
 async function editItem(type, id) {
-    const data = await dbFetch(type, `id=eq.${id}`);
+    const data = await dbFetch(type, "id=eq." + id);
     if (data && data[0]) openModal(type, data[0]);
 }
-
-// ========== 削除 ==========
 async function deleteItem(type, id, name) {
-    if (!confirm(`「${name}」を削除しますか？\n\nこの操作は元に戻せません。`)) return;
+    if (!confirm("「" + name + "」を削除しますか？")) return;
     const ok = await dbDelete(type, id);
-    if (ok) { loadSection(type); showToast("🗑 削除しました"); }
-    else alert("削除に失敗しました。");
+    if (ok) { loadSection(type); showToast("削除しました"); }
 }
 
-// ========== トースト通知 ==========
 function showToast(msg) {
     const t = document.getElementById("toast");
     document.getElementById("toast-msg").textContent = msg;
     t.classList.remove("hidden");
-    setTimeout(() => t.classList.add("hidden"), 3000);
+    setTimeout(function() { t.classList.add("hidden"); }, 3000);
 }
 </script>
 </body>
