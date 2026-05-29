@@ -11,6 +11,16 @@ async function fetchDB(table, query = "") {
     return res.json();
 }
 
+// ヒーロー画像を表示
+async function loadHeroImage() {
+    const data = await fetchDB("settings", "key=eq.hero_image");
+    if (!data || data.length === 0) return;
+    const url = data[0].value;
+    if (!url) return;
+    const hero = document.getElementById("hero-section");
+    if (hero) hero.style.backgroundImage = "url(" + url + ")";
+}
+
 // ご挨拶を表示（3名）
 async function loadGreeting() {
     const data = await fetchDB("greeting", "order=sort_order.asc");
@@ -111,6 +121,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Supabaseからデータ読み込み
+    loadHeroImage();
     loadGreeting();
     loadMembers();
     loadActivities();
