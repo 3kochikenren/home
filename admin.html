@@ -68,10 +68,7 @@
             <div class="p-4">
                 <p class="text-xs font-bold text-gray-400 px-4 mb-3 tracking-widest">コンテンツ管理</p>
                 <nav class="space-y-1">
-                    <button onclick="showSection('members')" id="nav-members"
-                            class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
-                        <i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span>
-                    </button>
+                    <button onclick="showSection('greeting')" id="nav-greeting" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"><i class="fa-solid fa-handshake w-5 text-center"></i><span>ご挨拶</span></button><button onclick="showSection('members')" id="nav-members" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"><i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span></button>
 
                     <button onclick="showSection('activities')" id="nav-activities"
                             class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
@@ -88,6 +85,7 @@
         <!-- メインコンテンツ -->
         <main class="ml-60 flex-1 p-8">
 
+            <section id="section-greeting" class="admin-section hidden"><div class="flex justify-between items-center mb-6"><div><h2 class="text-2xl font-bold text-gray-800">ご挨拶</h2></div><button onclick="openGreetingModal()" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600">編集する</button></div><div id="greeting-preview" class="bg-white rounded-2xl shadow p-8"></div></section>
             <!-- 議員情報 -->
             <section id="section-members" class="admin-section">
                 <div class="flex justify-between items-center mb-6">
@@ -241,7 +239,7 @@ async function dbDelete(table, id) {
 async function loadSection(name) {
     const el = document.getElementById(name + "-list");
     el.innerHTML = `<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>`;
-    const queries = { members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
+    const queries = { greeting: "limit=1", members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
     const data = await dbFetch(name, queries[name]);
     if (!data || data.length === 0) {
         el.innerHTML = `<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">データがありません</p><p class="text-sm mt-1">右上の「追加」ボタンから登録してください</p></div>`;
@@ -286,6 +284,9 @@ function renderCard(type, item) {
     </div>`;
 }
 
+function renderGreetingPreview(d){const p=document.getElementById("greeting-preview");if(!p)return;const g=d&&d.length>0?d[0]:null;p.innerHTML=g?`<div class="flex gap-6"><img src="${g.photo_url||""}" class="w-36 h-36 object-cover rounded-xl border flex-shrink-0"><div><p class="font-bold text-xl mb-2">${g.title||""}</p><p class="text-gray-600 mb-3">${g.content||""}</p><p class="font-bold">${g.role||""}</p><p class="text-orange-500 font-bold">${g.name||""}</p></div></div>`:`<p class="text-center text-gray-400 py-8">未登録です。「編集する」から入力してください</p>`;}
+async function openGreetingModal(){const d=await dbFetch("greeting","limit=1");const g=d&&d.length>0?d[0]:null;editingId=g?g.id:null;document.getElementById("modal-title").textContent="ご挨拶を編集";document.getElementById("modal-body").innerHTML=buildForm("greeting",g);document.getElementById("modal").classList.remove("hidden");}
+async function saveGreeting(e){e.preventDefault();const d={};e.target.querySelectorAll("input,textarea").forEach(el=>{if(el.value)d[el.name]=el.value;});const ok=editingId?await dbUpdate("greeting",editingId,d):await dbInsert("greeting",d);if(ok){closeModal();loadSection("greeting");showToast("保存しました");}else alert("保存に失敗しました。");}
 // ========== モーダル ==========
 function openModal(type, data = null) {
     editingId = data ? data.id : null;
@@ -325,6 +326,7 @@ function toggleField(name, label, checked = true) {
 function buildForm(type, d = {}) {
     d = d || {};
     let f = "";
+    if (type === "greeting") { f=field("photo_url","写真URL","text",d.photo_url,"https://")+field("title","タイトル","text",d.title,"例：県民の声を力に…")+textareaField("content","本文",d.content,"挨拶文を入力")+field("role","役職","text",d.role,"例：参政党 高知県連 代表")+field("name","名前","text",d.name,"例：山田 太郎"); return `<form onsubmit="saveGreeting(event)">${f}<div class="flex gap-3 mt-2"><button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl">保存する</button><button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button></div></form>`; }
     if (type === "members") {
         f = field("name","氏名 ※必須","text",d.name,"例：山田 太郎") +
             field("role","役職・肩書き","text",d.role,"例：高知市議会議員") +
