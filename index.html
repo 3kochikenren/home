@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>参政党高知県連｜公式サイト</title>
+    <title>参政党高知県支部連合会｜公式サイト</title>
     <meta name="description" content="〇〇党高知県連の公式ウェブサイトです。活動報告、政策、イベントなどを掲載しています。">
 
     <!-- CSSフレームワーク (Tailwind CSS) -->
@@ -134,7 +134,6 @@
             <div class="container mx-auto px-4 max-w-6xl">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl font-bold section-title">役員紹介</h2>
-                    <p class="mt-4 text-gray-600">県連会長・第一支部長・第二支部長を表示しています</p>
                 </div>
                 <div id="greeting-container" class="space-y-10">
                     <div class="bg-white rounded-2xl shadow-md p-8 flex flex-col items-center text-center">
@@ -152,7 +151,6 @@
             <div class="container mx-auto px-4 max-w-4xl">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl font-bold section-title">高知県所属議員</h2>
-                    <p class="mt-4 text-gray-600">参政党 高知県連の議員をご紹介します</p>
                 </div>
                 <div id="members-container" class="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div class="hover-card bg-white border border-gray-100 rounded-xl p-8 shadow-md text-center">
@@ -179,7 +177,6 @@
                 <div id="reformers-section" class="mt-16">
                     <div class="text-center mb-10">
                         <h3 class="text-2xl font-bold text-gray-800">改革委員の紹介</h3>
-                        <p class="mt-3 text-gray-600">各地域で地域をよくする活動をしている人を表示します。</p>
                     </div>
                     <div id="reformers-container" class="grid grid-cols-1 md:grid-cols-2 gap-12">
                         <div class="hover-card bg-white border border-gray-100 rounded-xl p-8 shadow-md text-center">
@@ -217,20 +214,25 @@
             <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl"></div>
             <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
             <div class="container mx-auto px-4 max-w-4xl relative z-10 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">あなたの力が、高知を変える。</h2>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">あなたの力が、高知を変え、そして日本を変える</h2>
                 <p class="text-orange-100 text-lg mb-10 leading-relaxed">
                     私たちは、同じ志を持つ仲間を募集しています。<br class="hidden md:block">
                     党員・サポーターとしての参加、ポスター掲示、ボランティア活動、ご寄付など、<br class="hidden md:block">
                     あなたにできる形でのご支援をお願いいたします。
                 </p>
-                <div class="flex flex-col sm:flex-row justify-center gap-6">
-                    <a href="#" class="bg-white text-secondary font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition shadow-lg flex items-center justify-center gap-2 text-lg">
-                        <i class="fa-solid fa-user-plus"></i> 入党・サポーター登録
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="contact.html" class="bg-white text-secondary font-bold px-6 py-4 rounded-lg hover:bg-gray-100 transition shadow-lg flex items-center justify-center gap-2 text-base">
+                        <i class="fa-solid fa-envelope"></i> お問い合わせ
                     </a>
-
+                    <a href="volunteer.html" class="bg-white text-secondary font-bold px-6 py-4 rounded-lg hover:bg-gray-100 transition shadow-lg flex items-center justify-center gap-2 text-base">
+                        <i class="fa-solid fa-handshake-angle"></i> ボランティア募集
+                    </a>
+                    <a href="donation.html" class="bg-white text-secondary font-bold px-6 py-4 rounded-lg hover:bg-gray-100 transition shadow-lg flex items-center justify-center gap-2 text-base">
+                        <i class="fa-solid fa-circle-yen"></i> ご寄付
+                    </a>
                 </div>
                 <div class="mt-8 text-orange-200 text-sm">
-                    <p>※リンク先は外部フォーム等へ遷移します。</p>
+                    <p>※送信内容はDBに保存され、担当者へ通知メールを送信します。</p>
                 </div>
             </div>
         </section>
@@ -243,10 +245,9 @@
             <div class="flex flex-col md:flex-row justify-between gap-10 mb-12">
                 <div class="md:w-1/3">
                     <a href="#" class="flex items-center gap-2 mb-6">
-                        <span class="font-bold text-xl tracking-wider text-white">参政党高知県連</span>
+                        <span class="font-bold text-xl tracking-wider text-white">参政党高知県支部連合会</span>
                     </a>
                     <p class="text-sm mb-4 leading-relaxed">
-                        参政党高知県支部連合会<br>
                         〒781-5106<br>
                         高知市介良乙3137-5　2F
                     </p>
@@ -270,14 +271,14 @@
                         <h4 class="text-white font-bold mb-4 border-b border-gray-700 pb-2">参加・支援</h4>
                         <ul class="space-y-2 text-sm">
                             <li><a href="https://sanseito.jp/participation/" target="_blank" class="hover:text-white transition">入党案内</a></li>
-                            <li><a href="#" class="hover:text-white transition">ボランティア募集</a></li>
-                            <li><a href="#" class="hover:text-white transition">寄付について</a></li>
+                            <li><a href="volunteer.html" class="hover:text-white transition">ボランティア募集</a></li>
+                            <li><a href="donation.html" class="hover:text-white transition">寄付について</a></li>
                         </ul>
                     </div>
                     <div>
                         <h4 class="text-white font-bold mb-4 border-b border-gray-700 pb-2">その他</h4>
                         <ul class="space-y-2 text-sm">
-                            <li><a href="#" class="hover:text-white transition">お問い合わせ</a></li>
+                            <li><a href="contact.html" class="hover:text-white transition">お問い合わせ</a></li>
                             <li><a href="privacy.html" class="hover:text-white transition">プライバシーポリシー</a></li>
                             <li><a href="#" class="hover:text-white transition">サイトマップ</a></li>
                         </ul>
@@ -285,7 +286,7 @@
                 </div>
             </div>
             <div class="border-t border-gray-800 pt-8 text-center text-xs text-gray-500">
-                <p>&copy; 2026 参政党 高知県連 All Rights Reserved.</p>
+                <p>&copy; 2026 参政党高知県支部連合会 All Rights Reserved.</p>
                 <p class="mt-2"><a href="admin.html" class="text-gray-600 hover:text-white transition text-xs"><i class="fa-solid fa-lock mr-1"></i>管理者ログイン</a></p>
             </div>
         </div>

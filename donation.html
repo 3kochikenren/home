@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ご寄付 | 参政党高知県支部連合会</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans JP', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="font-bold text-xl text-gray-800 hover:text-orange-500 transition">参政党高知県支部連合会</a>
+            <a href="index.html" class="text-sm text-orange-500 hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i>トップページへ戻る</a>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-12 max-w-3xl">
+        <div class="bg-white rounded-2xl shadow p-8 md:p-10">
+            <h1 class="text-3xl font-black text-gray-900 mb-3">ご寄付の受付</h1>
+            <p class="text-gray-600 mb-8">いただいた情報はDBに保存され、送信タイミングで担当者へ通知メールが送信されます。</p>
+
+            <form id="donation-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">お名前</label>
+                    <input name="name" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400" placeholder="山田 太郎">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">メールアドレス</label>
+                    <input type="email" name="email" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400" placeholder="example@mail.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">電話番号</label>
+                    <input name="phone" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400" placeholder="090-1234-5678">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">寄付予定金額（円）</label>
+                    <input type="number" min="1" name="amount_yen" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400" placeholder="10000">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">希望する連絡方法</label>
+                    <select name="contact_preference" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">
+                        <option value="">選択してください</option>
+                        <option value="メール">メール</option>
+                        <option value="電話">電話</option>
+                        <option value="どちらでも可">どちらでも可</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">備考</label>
+                    <textarea name="message" rows="5" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400" placeholder="振込予定日やご質問など"></textarea>
+                </div>
+
+                <button id="donation-submit" type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition">寄付の連絡を送る</button>
+                <p id="donation-status" class="hidden text-sm font-bold"></p>
+            </form>
+        </div>
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 text-center py-8 mt-8">
+        <p class="text-sm">&copy; 2026 参政党高知県支部連合会 All Rights Reserved.</p>
+    </footer>
+
+    <script src="forms.js?v=20260530"></script>
+    <script>
+        bindFormSubmit({
+            formId: "donation-form",
+            submitId: "donation-submit",
+            statusId: "donation-status",
+            table: "donation_applications",
+            formType: "donation"
+        });
+    </script>
+</body>
+</html>

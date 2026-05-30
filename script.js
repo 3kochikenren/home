@@ -72,8 +72,8 @@ function renderOfficerCard(g, options = {}) {
     const empty = options.empty === true;
     return `
         <article class="bg-white rounded-xl shadow-sm border border-orange-100 p-3 text-center hover:shadow-md transition ${empty ? "border-dashed bg-gray-50" : ""}">
-            <img src="${g.photo_url || "https://placehold.co/160x160/fdf2e8/f97316?text=写真"}"
-                 alt="${g.name || ""}" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover mx-auto mb-2 border-2 border-orange-100 shadow-sm ${empty ? "opacity-40" : ""}">
+            <img src="${g.photo_url || "https://placehold.co/200x200/fdf2e8/f97316?text=写真"}"
+                 alt="${g.name || ""}" class="w-40 h-40 rounded-full object-cover mx-auto mb-6 border-4 border-orange-100 shadow-sm ${empty ? "opacity-40" : ""}">
             <p class="text-[11px] font-bold text-orange-500 mb-1">${roleText}</p>
             <h3 class="text-sm sm:text-base font-black text-gray-900 leading-tight mb-1">${g.name || (empty ? "未登録" : "")}</h3>
             ${g.content ? `<p class="text-[11px] text-gray-600 leading-relaxed text-left">${g.content}</p>` : empty ? `<p class="text-[11px] text-gray-400">登録されていません</p>` : ""}
@@ -110,9 +110,9 @@ function renderOfficerSummaryTile(data) {
                     const content = p.item && p.item.content ? p.item.content : "";
                     return `
                         <article class="rounded-xl border border-orange-100 bg-orange-50/40 p-2 sm:p-3 text-center">
-                            <img src="${image}" alt="${name}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover mx-auto mb-2 border-2 border-white shadow">
-                            <p class="text-[10px] sm:text-xs font-bold text-orange-600 leading-tight">${p.label}</p>
-                            <p class="text-xs sm:text-sm font-black text-gray-800 mt-1 leading-tight">${name}</p>
+                            <img src="${image}" alt="${name}" class="w-40 h-40 rounded-full object-cover mx-auto mb-6 border-4 border-white shadow">
+                            <p class="text-sm font-medium text-secondary leading-tight">${p.label}</p>
+                            <p class="text-xl font-bold text-gray-800 mt-1 leading-tight">${name}</p>
                             ${content ? `<p class="mt-2 text-[11px] text-gray-700 leading-relaxed text-left whitespace-pre-line">${content}</p>` : ""}
                         </article>
                     `;
