@@ -774,6 +774,11 @@ function buildForm(type, d) {
         f = photoField("photo_url", "写真", d.photo_url) +
             inputField("title", "タイトル ※必須", "text", d.title, "例：高知駅前での街頭活動") +
             inputField("activity_date", "活動日 ※必須", "date", d.activity_date, "") +
+            '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">時間</label>' +
+            '<div class="grid grid-cols-2 gap-3">' +
+            '<div><p class="text-xs text-gray-500 mb-1">開始時間</p><input type="time" name="start_time" value="' + (d.start_time || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+            '<div><p class="text-xs text-gray-500 mb-1">終了時間</p><input type="time" name="end_time" value="' + (d.end_time || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+            '</div></div>' +
             textareaField("content", "活動内容", d.content, "活動の様子・成果などを入力してください") +
             toggleField("is_published", "サイトに公開する", d.is_published !== false);
     } else if (type === "news") {
