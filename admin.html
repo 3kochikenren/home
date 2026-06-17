@@ -52,6 +52,9 @@
                 <a href="index.html" target="_blank" class="text-sm text-orange-500 hover:underline font-medium">
                     <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>サイトを確認
                 </a>
+                <button onclick="openPasswordModal()" class="text-sm text-gray-500 hover:text-gray-800 font-medium">
+                    <i class="fa-solid fa-key mr-1"></i>パスワード変更
+                </button>
                 <button onclick="doLogout()" class="text-sm text-gray-500 hover:text-gray-800 font-medium">
                     <i class="fa-solid fa-right-from-bracket mr-1"></i>ログアウト
                 </button>
@@ -197,6 +200,41 @@
             </button>
         </div>
         <div id="modal-body" class="px-6 py-5"></div>
+    </div>
+</div>
+
+<!-- パスワード変更モーダル -->
+<div id="password-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="flex justify-between items-center px-6 py-5 border-b">
+            <h3 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-key mr-2 text-orange-500"></i>パスワード変更</h3>
+            <button onclick="closePasswordModal()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="px-6 py-5">
+            <div class="mb-5">
+                <label class="block text-sm font-bold text-gray-700 mb-2">新しいパスワード</label>
+                <input type="password" id="new-password"
+                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400"
+                    placeholder="新しいパスワードを入力">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-gray-700 mb-2">新しいパスワード（確認）</label>
+                <input type="password" id="new-password-confirm"
+                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400"
+                    placeholder="もう一度入力してください">
+            </div>
+            <p id="password-error" class="text-red-500 text-sm mb-4 hidden"></p>
+            <div class="flex gap-3">
+                <button onclick="changePassword()" class="flex-1 bg-orange-500 text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i>変更する
+                </button>
+                <button onclick="closePasswordModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
+                    キャンセル
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -916,6 +954,40 @@ async function deleteItem(type, id, name) {
     if (!confirm("「" + name + "」を削除しますか？")) return;
     const ok = await dbDelete(type, id);
     if (ok) { loadSection(type); showToast("削除しました"); }
+}
+
+function openPasswordModal() {
+    document.getElementById("new-password").value = "";
+    document.getElementById("new-password-confirm").value = "";
+    document.getElementById("password-error").classList.add("hidden");
+    document.getElementById("password-modal").classList.remove("hidden");
+}
+function closePasswordModal() {
+    document.getElementById("password-modal").classList.add("hidden");
+}
+async function changePassword() {
+    const newPass = document.getElementById("new-password").value;
+    const confirm = document.getElementById("new-password-confirm").value;
+    const errEl = document.getElementById("password-error");
+    errEl.classList.add("hidden");
+    if (newPass.length < 6) {
+        errEl.textContent = "パスワードは6文字以上で入力してください";
+        errEl.classList.remove("hidden");
+        return;
+    }
+    if (newPass !== confirm) {
+        errEl.textContent = "パスワードが一致しません";
+        errEl.classList.remove("hidden");
+        return;
+    }
+    const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+    if (error) {
+        errEl.textContent = "変更に失敗しました：" + error.message;
+        errEl.classList.remove("hidden");
+        return;
+    }
+    closePasswordModal();
+    showToast("パスワードを変更しました");
 }
 
 function showToast(msg) {
