@@ -70,18 +70,17 @@
                     <button onclick="showSection('settings')" id="nav-settings" data-nav-section="settings" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-sliders w-5 text-center"></i><span>サイト設定</span>
                     </button>
+                    <button onclick="showSection('news')" id="nav-news" data-nav-section="news" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-bell w-5 text-center"></i><span>お知らせ</span>
+                    </button>
                     <button onclick="showSection('greeting')" id="nav-greeting" data-nav-section="greeting" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-handshake w-5 text-center"></i><span>役員</span>
                     </button>
                     <button onclick="showSection('members')" id="nav-members" data-nav-section="members" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span>
                     </button>
-                    
                     <button onclick="showSection('activities')" id="nav-activities" data-nav-section="activities" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-newspaper w-5 text-center"></i><span>活動報告</span>
-                    </button>
-                    <button onclick="showSection('news')" id="nav-news" data-nav-section="news" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
-                        <i class="fa-solid fa-bell w-5 text-center"></i><span>お知らせ</span>
                     </button>
                 </nav>
             </div>
@@ -90,8 +89,9 @@
         <main class="ml-0 md:ml-60 flex-1 p-4 sm:p-6 md:p-8">
             <div class="md:hidden mb-4 -mx-2 px-2 overflow-x-auto">
                 <div class="flex gap-2 min-w-max pb-1">
-                    <button onclick="showSection('greeting')" data-nav-section="greeting" class="nav-btn active px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-orange-200 bg-white">役員</button>
                     <button onclick="showSection('settings')" data-nav-section="settings" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">サイト設定</button>
+                    <button onclick="showSection('news')" data-nav-section="news" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">お知らせ</button>
+                    <button onclick="showSection('greeting')" data-nav-section="greeting" class="nav-btn active px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-orange-200 bg-white">役員</button>
                     <button onclick="showSection('members')" data-nav-section="members" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">議員情報</button>
                     <button onclick="showSection('activities')" data-nav-section="activities" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">活動報告</button>
                     <button onclick="showSection('news')" data-nav-section="news" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">お知らせ</button>
