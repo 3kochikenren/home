@@ -357,7 +357,8 @@ function normalizeGreetingRole(role, group) {
 }
 
 function canWriteGreetingContent(role) {
-    return GREETING_CONTENT_ROLES.includes((role || "").trim());
+    const r = (role || "").trim();
+    return r === "県連会長" || r.includes("支部長");
 }
 
 function greetingGroupOptions(selectedValue) {
@@ -373,13 +374,25 @@ function greetingRoleField(group, selectedRole) {
             '</select><p class="text-xs text-gray-400 mt-2">県連4役は4枠固定です</p></div>';
     }
     if (group.type === "branch") {
-        const branchRole = selectedRole && selectedRole.includes("支部長") ? "支部長" : (selectedRole || "役員");
-        return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">役職</label><select name="role" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
-            '<option value="支部長" ' + (branchRole === "支部長" ? 'selected' : '') + '>支部長</option>' +
-            '<option value="役員" ' + (branchRole !== "支部長" ? 'selected' : '') + '>役員</option>' +
-            '</select><p class="text-xs text-gray-400 mt-2">支部長だけが挨拶文を入力できます</p></div>';
+        const isHead = selectedRole && selectedRole.includes("支部長");
+        const otherRole = isHead ? "" : (selectedRole && selectedRole !== "役員" ? selectedRole : "");
+        return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">役職</label>' +
+            '<div class="flex gap-6 bg-gray-50 rounded-xl px-4 py-3 mb-2">' +
+            '<label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="branch_role_type" value="head" ' + (isHead ? 'checked' : '') + ' onchange="onBranchRoleTypeChange(this)" class="accent-orange-500"> 支部長</label>' +
+            '<label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="branch_role_type" value="other" ' + (!isHead ? 'checked' : '') + ' onchange="onBranchRoleTypeChange(this)" class="accent-orange-500"> その他</label>' +
+            '</div>' +
+            '<input type="hidden" name="role" id="branch-role-value" value="' + (isHead ? '支部長' : (otherRole || '')) + '">' +
+            '<div id="branch-other-input" class="' + (isHead ? 'hidden' : '') + '">' +
+            '<input type="text" id="branch-other-text" value="' + otherRole + '" placeholder="例：副支部長、会計担当" ' +
+            'oninput="document.getElementById(\'branch-role-value\').value=this.value; updateGreetingContentVisibility();" ' +
+            'class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+            '</div>' +
+            '<p class="text-xs text-gray-400 mt-2">支部長だけが挨拶文を入力できます</p></div>';
     }
-    return '<input type="hidden" name="role" value="' + (group.defaultRole || "県連役員") + '"><div class="mb-5 rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-sm font-bold text-gray-700">役職: ' + (group.defaultRole || "県連役員") + '</div>';
+    return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">役職</label>' +
+        '<input type="text" name="role" value="' + (selectedRole || group.defaultRole || "県連役員") + '" placeholder="例：広報担当、会計担当" ' +
+        'class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+        '<p class="text-xs text-gray-400 mt-2">県連役員内の具体的な役職名を入力してください</p></div>';
 }
 
 function greetingPreviewCard(item, group, options) {
@@ -400,8 +413,24 @@ function greetingPreviewCard(item, group, options) {
         '</div>';
 }
 
+function onBranchRoleTypeChange(radio) {
+    const isHead = radio.value === "head";
+    const hiddenRole = document.getElementById("branch-role-value");
+    const otherWrapper = document.getElementById("branch-other-input");
+    const otherText = document.getElementById("branch-other-text");
+    if (isHead) {
+        hiddenRole.value = "支部長";
+        otherWrapper.classList.add("hidden");
+    } else {
+        hiddenRole.value = otherText ? otherText.value : "";
+        otherWrapper.classList.remove("hidden");
+    }
+    updateGreetingContentVisibility();
+}
+
 function updateGreetingContentVisibility() {
-    const roleInput = document.querySelector('#greeting-form [name="role"]');
+    const roleHidden = document.getElementById("branch-role-value");
+    const roleInput = roleHidden || document.querySelector('#greeting-form [name="role"]');
     const wrapper = document.getElementById('greeting-content-wrapper');
     if (!roleInput || !wrapper) return;
     wrapper.classList.toggle('hidden', !canWriteGreetingContent(roleInput.value));
@@ -600,6 +629,8 @@ async function openGreetingModal(groupLabel, greetingItem, presetRole) {
     const roleInput = document.querySelector('#greeting-form [name="role"]');
     if (roleInput && roleInput.tagName === "SELECT") {
         roleInput.addEventListener("change", updateGreetingContentVisibility);
+    } else if (roleInput && roleInput.tagName === "INPUT") {
+        roleInput.addEventListener("input", updateGreetingContentVisibility);
     }
     updateGreetingContentVisibility();
 }
