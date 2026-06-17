@@ -338,7 +338,11 @@ async function loadNews() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const sortedNews = newsList.slice().sort(function(a, b) {
+    const sortedNews = newsList.slice().filter(function(n) {
+        const d = new Date(n.published_date || "");
+        if (Number.isNaN(d.getTime())) return true;
+        return d >= today;
+    }).sort(function(a, b) {
         const da = new Date(a.published_date || "");
         const db = new Date(b.published_date || "");
         const aValid = !Number.isNaN(da.getTime());
@@ -346,12 +350,7 @@ async function loadNews() {
         if (!aValid && !bValid) return 0;
         if (!aValid) return 1;
         if (!bValid) return -1;
-        const aFuture = da >= today;
-        const bFuture = db >= today;
-        if (aFuture && !bFuture) return -1;
-        if (!aFuture && bFuture) return 1;
-        if (aFuture && bFuture) return da - db;
-        return db - da;
+        return da - db;
     });
 
     const categoryColors = {
