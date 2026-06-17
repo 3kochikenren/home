@@ -546,7 +546,7 @@ async function loadSection(name) {
         el.innerHTML = '<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">データがありません</p><p class="text-sm mt-1">右上の追加ボタンから登録してください</p></div>';
         return;
     }
-    const list = name === "news" ? sortByNearestFutureDate(data, "published_date") : data;
+    const list = data;
     el.innerHTML = list.map(function(item) { return renderCard(name, item); }).join("");
 }
 
