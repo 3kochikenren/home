@@ -118,12 +118,6 @@ function renderOfficerSummaryTile(data) {
                     `;
                 }).join("")}
             </div>
-            <div class="text-center mt-4">
-                <button id="officer-detail-toggle" type="button" class="inline-flex items-center gap-2 rounded-full border border-orange-300 bg-white px-5 py-2 text-sm font-bold text-orange-700 hover:bg-orange-100 transition">
-                    詳細表示
-                    <i class="fa-solid fa-chevron-down text-xs"></i>
-                </button>
-            </div>
         </section>
     `;
 }
@@ -206,21 +200,10 @@ async function loadGreeting() {
 
     container.innerHTML = `
         ${renderOfficerSummaryTile(officers)}
-        <div id="officer-detail-panel" class="hidden mt-5 bg-white rounded-2xl border border-orange-200 shadow p-4 sm:p-5">
+        <div class="mt-5 bg-white rounded-2xl border border-orange-200 shadow p-4 sm:p-5">
             ${detailHtml}
         </div>
     `;
-
-    const toggleBtn = document.getElementById("officer-detail-toggle");
-    const detailPanel = document.getElementById("officer-detail-panel");
-    if (!toggleBtn || !detailPanel) return;
-    toggleBtn.addEventListener("click", function() {
-        const isHidden = detailPanel.classList.contains("hidden");
-        detailPanel.classList.toggle("hidden", !isHidden);
-        toggleBtn.innerHTML = isHidden
-            ? '詳細を閉じる <i class="fa-solid fa-chevron-up text-xs"></i>'
-            : '詳細表示 <i class="fa-solid fa-chevron-down text-xs"></i>';
-    });
 }
 
 // 議員情報を表示
