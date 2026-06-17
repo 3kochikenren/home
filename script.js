@@ -195,12 +195,7 @@ async function loadGreeting() {
         return renderOfficerSection(group, officers);
     }).join('<div class="h-6"></div>');
 
-    container.innerHTML = `
-        ${renderOfficerSummaryTile(officers)}
-        <div class="mt-5 bg-white rounded-2xl border border-orange-200 shadow p-4 sm:p-5">
-            ${detailHtml}
-        </div>
-    `;
+    container.innerHTML = renderOfficerSummaryTile(officers);
 }
 
 // 議員情報を表示
