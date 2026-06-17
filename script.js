@@ -93,26 +93,26 @@ function findOfficer(data, groupLabel, roleIncludes) {
 }
 
 function renderOfficerSummaryTile(data) {
-    const chairman = findOfficer(data, "県連4役", "県連会長");
-    const firstBranchHead = findOfficer(data, "第一支部役員", "支部長");
-    const secondBranchHead = findOfficer(data, "第二支部役員", "支部長");
     const picks = [
-        { label: "県連会長", item: chairman },
-        { label: "第一支部長", item: firstBranchHead },
-        { label: "第二支部長", item: secondBranchHead }
+        { label: "県連会長",   item: findOfficer(data, "県連4役",    "県連会長") },
+        { label: "県連副会長", item: findOfficer(data, "県連4役",    "県連副会長") },
+        { label: "事務局長",   item: findOfficer(data, "県連4役",    "事務局長") },
+        { label: "財政局長",   item: findOfficer(data, "県連4役",    "財政局長") },
+        { label: "第一支部長", item: findOfficer(data, "第一支部役員", "支部長") },
+        { label: "第二支部長", item: findOfficer(data, "第二支部役員", "支部長") }
     ];
     return `
         <section class="bg-white rounded-2xl border border-orange-200 shadow p-4 sm:p-6">
-            <div class="grid grid-cols-3 gap-2 sm:gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                 ${picks.map(function(p) {
                     const image = p.item && p.item.photo_url ? p.item.photo_url : "https://placehold.co/120x120/f3f4f6/9ca3af?text=未登録";
                     const name = p.item && p.item.name ? p.item.name : "未登録";
                     const content = p.item && p.item.content ? p.item.content : "";
                     return `
                         <article class="rounded-xl border border-orange-100 bg-orange-50/40 p-2 sm:p-3 text-center">
-                            <img src="${image}" alt="${name}" class="w-40 h-40 rounded-full object-cover mx-auto mb-6 border-4 border-white shadow">
-                            <p class="text-sm font-medium text-secondary leading-tight">${p.label}</p>
-                            <p class="text-xl font-bold text-gray-800 mt-1 leading-tight">${name}</p>
+                            <img src="${image}" alt="${name}" class="w-24 h-24 rounded-full object-cover mx-auto mb-3 border-4 border-white shadow">
+                            <p class="text-xs font-medium text-secondary leading-tight">${p.label}</p>
+                            <p class="text-sm font-bold text-gray-800 mt-1 leading-tight">${name}</p>
                             ${content ? `<p class="mt-2 text-[11px] text-gray-700 leading-relaxed text-left whitespace-pre-line">${content}</p>` : ""}
                         </article>
                     `;
