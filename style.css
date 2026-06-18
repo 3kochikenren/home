@@ -30,7 +30,6 @@ html {
 /* ヒーローエリアの画像プレースホルダー用背景 */
 .hero-bg {
     background-color: #d1d5db;
-    background-image: url('https://placehold.co/1920x800/d1d5db/a3a8b4?text=Main+Visual');
     background-size: cover;
     background-position: center;
 }
