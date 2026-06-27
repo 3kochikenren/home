@@ -301,9 +301,28 @@ async function loadActivities() {
     `).join("");
 }
 
+const NEWS_DEFAULT_COUNT = 3;
+let allSortedNews = [];
+
+function toggleNewsList(e) {
+    e.preventDefault();
+    const container = document.getElementById("news-container");
+    const link = document.getElementById("news-toggle-link");
+    const isExpanded = container.dataset.expanded === "true";
+    if (isExpanded) {
+        renderNewsList(allSortedNews.slice(0, NEWS_DEFAULT_COUNT));
+        container.dataset.expanded = "false";
+        link.innerHTML = 'イベント一覧を見る <i class="fa-solid fa-angle-right"></i>';
+    } else {
+        renderNewsList(allSortedNews);
+        container.dataset.expanded = "true";
+        link.innerHTML = '閉じる <i class="fa-solid fa-angle-up"></i>';
+    }
+}
+
 // お知らせ・イベントを表示（統合）
 async function loadNews() {
-    const newsList = await fetchDB("news", "is_published=eq.true&order=published_date.asc&limit=10");
+    const newsList = await fetchDB("news", "is_published=eq.true&order=published_date.asc&limit=200");
     const container = document.getElementById("news-container");
     if (!container) return;
     if (!newsList || newsList.length === 0) {
@@ -327,6 +346,20 @@ async function loadNews() {
         if (!bValid) return -1;
         return da - db;
     });
+
+    allSortedNews = sortedNews;
+
+    const link = document.getElementById("news-toggle-link");
+    if (link) {
+        link.classList.toggle("hidden", sortedNews.length <= NEWS_DEFAULT_COUNT);
+    }
+
+    renderNewsList(sortedNews.slice(0, NEWS_DEFAULT_COUNT));
+}
+
+function renderNewsList(list) {
+    const container = document.getElementById("news-container");
+    if (!container) return;
 
     const categoryColors = {
         "イベント": "bg-orange-100 text-orange-700",
@@ -356,7 +389,7 @@ async function loadNews() {
         return rows.join("");
     };
 
-    container.innerHTML = sortedNews.map((n, idx) => {
+    container.innerHTML = list.map((n, idx) => {
         const color = categoryColors[n.category] || "bg-gray-100 text-gray-600";
         const detailRows = renderDetailRows(n);
         const detailContent = (n.content || "").trim();
