@@ -273,14 +273,14 @@ async function loadMembers() {
                         voteDateLabel = `${d.getMonth() + 1}月${d.getDate()}日（${days[d.getDay()]}）`;
                     }
                 }
+                const electionLabel = [m.election_district, m.election_type].filter(Boolean).join(" ");
                 return `
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-red-200 text-center">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-red-200 text-center w-72">
                     ${m.photo_url ? `<img src="${m.photo_url}" alt="${m.name}" class="w-full h-56 object-cover object-top">` : `<div class="w-full h-56 bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-user text-5xl text-gray-300"></i></div>`}
                     <div class="p-5">
-                        ${voteDateLabel ? `<div class="inline-block bg-red-600 text-white text-sm font-bold px-4 py-1 rounded-full mb-3">投開票日　${voteDateLabel}</div>` : ""}
-                        ${m.election_district ? `<p class="text-gray-600 font-bold text-sm mb-2">${m.election_district}</p>` : ""}
+                        ${voteDateLabel ? `<div class="inline-block bg-red-600 text-white text-sm font-bold px-4 py-2 rounded-lg mb-3">投票日　${voteDateLabel}</div>` : ""}
+                        ${electionLabel ? `<p class="text-gray-600 font-bold text-sm mb-2">${electionLabel}</p>` : ""}
                         <h3 class="text-xl font-black text-gray-800">${m.name}</h3>
-                        ${m.role ? `<p class="text-red-600 text-sm font-medium mt-1">${m.role}</p>` : ""}
                     </div>
                 </div>`;
             }).join("");
