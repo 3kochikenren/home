@@ -288,17 +288,46 @@ async function loadActivities() {
         return;
     }
     section.classList.remove("hidden");
-    container.innerHTML = activities.map(a => `
-        <div class="bg-white rounded-lg shadow overflow-hidden hover-card">
-            <img src="${a.photo_url || 'https://placehold.co/400x250/e5e7eb/6b7280?text=Activity+Image'}"
-                 alt="${a.title}" class="w-full h-48 object-cover">
-            <div class="p-6">
+    container.innerHTML = activities.map(a => {
+        const thumb = a.photo_url || a.photo_url2 || a.photo_url3 || "";
+        const imgHtml = thumb
+            ? `<img src="${thumb}" alt="${a.title}" class="w-full h-48 object-cover">`
+            : `<div class="w-full h-48 bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-image text-4xl text-gray-300"></i></div>`;
+        const dataAttr = encodeURIComponent(JSON.stringify(a));
+        return `
+        <div class="bg-white rounded-lg shadow overflow-hidden hover-card cursor-pointer" onclick="openActivityModal(decodeURIComponent('${dataAttr}'))">
+            ${imgHtml}
+            <div class="p-5">
                 <span class="text-xs text-gray-500 font-mono mb-2 block">${a.activity_date}</span>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">${a.title}</h3>
-                <p class="text-gray-600 text-sm line-clamp-3">${a.content || ""}</p>
+                <h3 class="text-base font-bold text-gray-800 line-clamp-2">${a.title}</h3>
             </div>
-        </div>
-    `).join("");
+        </div>`;
+    }).join("");
+}
+
+function openActivityModal(jsonStr) {
+    const a = typeof jsonStr === "string" ? JSON.parse(jsonStr) : jsonStr;
+    const photos = [a.photo_url, a.photo_url2, a.photo_url3].filter(Boolean);
+    let photosHtml = "";
+    if (photos.length === 1) {
+        photosHtml = `<img src="${photos[0]}" alt="" class="w-full max-h-72 object-cover rounded-xl mb-1">`;
+    } else if (photos.length === 2) {
+        photosHtml = `<div class="grid grid-cols-2 gap-2">${photos.map(u => `<img src="${u}" alt="" class="w-full h-44 object-cover rounded-xl">`).join("")}</div>`;
+    } else if (photos.length >= 3) {
+        photosHtml = `<div class="grid grid-cols-3 gap-2">${photos.slice(0,3).map(u => `<img src="${u}" alt="" class="w-full h-32 object-cover rounded-xl">`).join("")}</div>`;
+    }
+    document.getElementById("activity-modal-date").textContent = a.activity_date || "";
+    document.getElementById("activity-modal-title").textContent = a.title || "";
+    document.getElementById("activity-modal-photos").innerHTML = photosHtml;
+    document.getElementById("activity-modal-content").innerHTML =
+        `<p class="whitespace-pre-line text-gray-700 text-sm leading-relaxed">${a.content || ""}</p>`;
+    document.getElementById("activity-modal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+}
+
+function closeActivityModal() {
+    document.getElementById("activity-modal").classList.add("hidden");
+    document.body.style.overflow = "";
 }
 
 const NEWS_DEFAULT_COUNT = 3;

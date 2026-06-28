@@ -292,6 +292,22 @@
         </div>
     </footer>
 
+    <!-- 活動報告モーダル -->
+    <div id="activity-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeActivityModal()">
+        <div class="absolute inset-0 bg-black/60"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <button onclick="closeActivityModal()" class="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 z-10">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="p-6 pt-5">
+                <p id="activity-modal-date" class="text-xs text-gray-500 font-mono mb-1"></p>
+                <h3 id="activity-modal-title" class="text-lg font-bold text-gray-800 mb-4 pr-8"></h3>
+                <div id="activity-modal-photos" class="mb-4"></div>
+                <div id="activity-modal-content"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- 独自のJavaScript (script.js) を読み込む -->
     <script src="script.js"></script>
 </body>

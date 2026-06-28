@@ -871,7 +871,12 @@ function buildForm(type, d) {
             textareaField("content", "本文", d.content, "イベントの詳細を入力してください") +
             toggleField("is_published", "サイトに公開する", d.is_published !== false);
     } else if (type === "activities") {
-        f = photoField("photo_url", "写真", d.photo_url) +
+        f = '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">写真（最大3枚）</label>' +
+            '<div class="grid grid-cols-3 gap-3">' +
+            photoField("photo_url", "写真①", d.photo_url) +
+            photoField("photo_url2", "写真②", d.photo_url2) +
+            photoField("photo_url3", "写真③", d.photo_url3) +
+            '</div></div>' +
             inputField("title", "タイトル ※必須", "text", d.title, "例：高知駅前での街頭活動") +
             inputField("activity_date", "活動日 ※必須", "date", d.activity_date, "") +
             '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-2">時間</label>' +
@@ -913,11 +918,22 @@ function buildForm(type, d) {
 async function saveItem(e, type) {
     e.preventDefault();
     const data = {};
-    const fi = e.target.querySelector("input[type=file]");
-    if (fi && fi.files && fi.files[0]) {
-        showToast("写真をアップロード中...");
-        const url = await uploadPhoto(fi.files[0]);
-        if (url) { const hid = document.getElementById("hidden-photo_url"); if (hid) hid.value = url; }
+    if (type === "activities") {
+        for (const name of ["photo_url", "photo_url2", "photo_url3"]) {
+            const fi = document.getElementById("file-" + name);
+            if (fi && fi.files && fi.files[0]) {
+                showToast("写真をアップロード中...");
+                const url = await uploadPhoto(fi.files[0]);
+                if (url) { const hid = document.getElementById("hidden-" + name); if (hid) hid.value = url; }
+            }
+        }
+    } else {
+        const fi = e.target.querySelector("input[type=file]");
+        if (fi && fi.files && fi.files[0]) {
+            showToast("写真をアップロード中...");
+            const url = await uploadPhoto(fi.files[0]);
+            if (url) { const hid = document.getElementById("hidden-photo_url"); if (hid) hid.value = url; }
+        }
     }
     if (type === "events") {
         const checked = Array.from(e.target.querySelectorAll("input[name=target_cb]:checked")).map(function(el) { return el.value; });
