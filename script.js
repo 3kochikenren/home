@@ -321,14 +321,9 @@ async function loadActivities() {
 function openActivityModal(jsonStr) {
     const a = typeof jsonStr === "string" ? JSON.parse(jsonStr) : jsonStr;
     const photos = [a.photo_url, a.photo_url2, a.photo_url3].filter(Boolean);
-    let photosHtml = "";
-    if (photos.length === 1) {
-        photosHtml = `<img src="${photos[0]}" alt="" class="w-full max-h-72 object-cover rounded-xl mb-1">`;
-    } else if (photos.length === 2) {
-        photosHtml = `<div class="grid grid-cols-2 gap-2">${photos.map(u => `<img src="${u}" alt="" class="w-full h-44 object-cover rounded-xl">`).join("")}</div>`;
-    } else if (photos.length >= 3) {
-        photosHtml = `<div class="grid grid-cols-3 gap-2">${photos.slice(0,3).map(u => `<img src="${u}" alt="" class="w-full h-32 object-cover rounded-xl">`).join("")}</div>`;
-    }
+    const photosHtml = photos.length > 0
+        ? `<div class="flex flex-col gap-3">${photos.map(u => `<img src="${u}" alt="" class="w-full rounded-xl object-cover">`).join("")}</div>`
+        : "";
     document.getElementById("activity-modal-date").textContent = formatActivityDate(a.activity_date);
     document.getElementById("activity-modal-title").textContent = a.title || "";
     document.getElementById("activity-modal-photos").innerHTML = photosHtml;
