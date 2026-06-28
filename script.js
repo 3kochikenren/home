@@ -319,8 +319,13 @@ function openActivityModal(jsonStr) {
     document.getElementById("activity-modal-date").textContent = a.activity_date || "";
     document.getElementById("activity-modal-title").textContent = a.title || "";
     document.getElementById("activity-modal-photos").innerHTML = photosHtml;
+    const videoHtml = a.video_url
+        ? `<a href="${a.video_url}" target="_blank" rel="noopener noreferrer" class="mt-4 flex items-center gap-2 text-sm font-bold text-orange-500 hover:text-orange-600 underline underline-offset-2">
+               <i class="fa-solid fa-circle-play text-lg"></i>動画を見る
+           </a>`
+        : "";
     document.getElementById("activity-modal-content").innerHTML =
-        `<p class="whitespace-pre-line text-gray-700 text-sm leading-relaxed">${a.content || ""}</p>`;
+        `<p class="whitespace-pre-line text-gray-700 text-sm leading-relaxed">${a.content || ""}</p>${videoHtml}`;
     document.getElementById("activity-modal").classList.remove("hidden");
     document.body.style.overflow = "hidden";
 }

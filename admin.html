@@ -885,6 +885,7 @@ function buildForm(type, d) {
             '<div><p class="text-xs text-gray-500 mb-1">終了時間</p><input type="time" name="end_time" value="' + (d.end_time || "") + '" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
             '</div></div>' +
             textareaField("content", "活動内容", d.content, "活動の様子・成果などを入力してください") +
+            inputField("video_url", "動画URL", "url", d.video_url, "https://www.youtube.com/watch?v=...") +
             toggleField("is_published", "サイトに公開する", d.is_published !== false);
     } else if (type === "news") {
         const catOpts2 = ["イベント", "活動報告", "重要", "その他"];
