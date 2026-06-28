@@ -277,6 +277,19 @@ async function loadMembers() {
 // イベント（削除済み - お知らせに統合）
 
 // 活動報告を表示
+function formatActivityDate(dateStr) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr + "T00:00:00");
+    if (Number.isNaN(d.getTime())) return dateStr;
+    const days = ["日", "月", "火", "水", "木", "金", "土"];
+    const toFull = function(n) {
+        return String(n).replace(/[0-9]/g, function(c) {
+            return String.fromCharCode(c.charCodeAt(0) + 0xFEE0);
+        });
+    };
+    return toFull(d.getFullYear()) + "年" + toFull(d.getMonth() + 1) + "月" + toFull(d.getDate()) + "日（" + days[d.getDay()] + "）";
+}
+
 async function loadActivities() {
     const activities = await fetchDB("activities", "is_published=eq.true&order=activity_date.desc&limit=21");
     const section = document.getElementById("activity");
@@ -298,7 +311,7 @@ async function loadActivities() {
         <div class="bg-white rounded-lg shadow overflow-hidden hover-card cursor-pointer" onclick="openActivityModal(decodeURIComponent('${dataAttr}'))">
             ${imgHtml}
             <div class="p-5">
-                <span class="text-xs text-gray-500 font-mono mb-2 block">${a.activity_date}</span>
+                <span class="text-sm text-gray-500 mb-2 block">${formatActivityDate(a.activity_date)}</span>
                 <h3 class="text-base font-bold text-gray-800 line-clamp-2">${a.title}</h3>
             </div>
         </div>`;
@@ -316,7 +329,7 @@ function openActivityModal(jsonStr) {
     } else if (photos.length >= 3) {
         photosHtml = `<div class="grid grid-cols-3 gap-2">${photos.slice(0,3).map(u => `<img src="${u}" alt="" class="w-full h-32 object-cover rounded-xl">`).join("")}</div>`;
     }
-    document.getElementById("activity-modal-date").textContent = a.activity_date || "";
+    document.getElementById("activity-modal-date").textContent = formatActivityDate(a.activity_date);
     document.getElementById("activity-modal-title").textContent = a.title || "";
     document.getElementById("activity-modal-photos").innerHTML = photosHtml;
     const videoHtml = a.video_url
