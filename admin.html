@@ -71,7 +71,10 @@
                         <i class="fa-solid fa-sliders w-5 text-center"></i><span>サイト設定</span>
                     </button>
                     <button onclick="showSection('news')" id="nav-news" data-nav-section="news" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
-                        <i class="fa-solid fa-bell w-5 text-center"></i><span>お知らせ</span>
+                        <i class="fa-solid fa-calendar-days w-5 text-center"></i><span>イベント情報</span>
+                    </button>
+                    <button onclick="showSection('announcements')" id="nav-announcements" data-nav-section="announcements" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-bullhorn w-5 text-center"></i><span>お知らせ情報</span>
                     </button>
                     <button onclick="showSection('greeting')" id="nav-greeting" data-nav-section="greeting" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-handshake w-5 text-center"></i><span>役員</span>
@@ -90,11 +93,11 @@
             <div class="md:hidden mb-4 -mx-2 px-2 overflow-x-auto">
                 <div class="flex gap-2 min-w-max pb-1">
                     <button onclick="showSection('settings')" data-nav-section="settings" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">サイト設定</button>
-                    <button onclick="showSection('news')" data-nav-section="news" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">お知らせ</button>
+                    <button onclick="showSection('news')" data-nav-section="news" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">イベント情報</button>
+                    <button onclick="showSection('announcements')" data-nav-section="announcements" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">お知らせ情報</button>
                     <button onclick="showSection('greeting')" data-nav-section="greeting" class="nav-btn active px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-orange-200 bg-white">役員</button>
                     <button onclick="showSection('members')" data-nav-section="members" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">議員情報</button>
                     <button onclick="showSection('activities')" data-nav-section="activities" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">活動報告</button>
-                    <button onclick="showSection('news')" data-nav-section="news" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">お知らせ</button>
                 </div>
             </div>
             <section id="section-settings" class="admin-section hidden">
@@ -178,14 +181,27 @@
             <section id="section-news" class="admin-section hidden">
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-bell mr-2 text-orange-500"></i>お知らせ</h2>
-                        <p class="text-gray-500 text-sm mt-1">サイトに表示するお知らせを管理します</p>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-calendar-days mr-2 text-orange-500"></i>イベント情報</h2>
+                        <p class="text-gray-500 text-sm mt-1">サイトに表示するイベント情報を管理します</p>
                     </div>
                     <button onclick="openModal('news')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
-                        <i class="fa-solid fa-plus mr-1"></i>お知らせを追加
+                        <i class="fa-solid fa-plus mr-1"></i>イベントを追加
                     </button>
                 </div>
                 <div id="news-list"></div>
+            </section>
+
+            <section id="section-announcements" class="admin-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-orange-500"></i>お知らせ情報</h2>
+                        <p class="text-gray-500 text-sm mt-1">トップページに表示するお知らせを管理します</p>
+                    </div>
+                    <button onclick="openModal('announcements')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                        <i class="fa-solid fa-plus mr-1"></i>お知らせを追加
+                    </button>
+                </div>
+                <div id="announcements-list"></div>
             </section>
         </main>
     </div>
@@ -540,7 +556,7 @@ async function loadSection(name) {
     const el = document.getElementById(name + "-list");
     if (!el) return;
     el.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>';
-    const queries = { members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc" };
+    const queries = { members: "order=sort_order.asc", events: "order=event_date.desc", activities: "order=activity_date.desc", news: "order=published_date.desc", announcements: "order=published_date.desc" };
     const data = await dbFetch(name, queries[name]);
     if (!data || data.length === 0) {
         el.innerHTML = '<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">データがありません</p><p class="text-sm mt-1">右上の追加ボタンから登録してください</p></div>';
@@ -551,13 +567,14 @@ async function loadSection(name) {
 }
 
 function renderCard(type, item) {
-    const icons = { members: "fa-user", events: "fa-calendar-days", activities: "fa-newspaper", news: "fa-bell" };
+    const icons = { members: "fa-user", events: "fa-calendar-days", activities: "fa-newspaper", news: "fa-bell", announcements: "fa-bullhorn" };
     const statusBadge = type !== "members" ? (item.is_published === false ? '<span class="bg-gray-100 text-gray-500 text-xs px-3 py-1 rounded-full font-bold">非公開</span>' : '<span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">公開中</span>') : "";
     const title = type === "members" ? item.name : item.title;
     const memberCategory = type === "members" ? (item.member_type || "議員") : "";
     const sub = type === "members" ? ("区分: " + memberCategory + " / " + (item.role || "役職未設定")) :
                 type === "events" ? "📅 " + item.event_date + "　📍 " + (item.venue_name || "会場未定") :
                 type === "activities" ? "📅 " + item.activity_date :
+                type === "announcements" ? "📅 掲載日: " + item.published_date + "　⏰ 終了日: " + (item.end_date || "") :
                 "📅 " + item.published_date + "　🏷 " + (item.category || "");
     const thumb = (type === "members" && item.photo_url) ?
         '<img src="' + item.photo_url + '" class="w-14 h-14 rounded-full object-cover border-2 border-orange-200 flex-shrink-0">' :
@@ -915,6 +932,28 @@ function buildForm(type, d) {
             inputField("participation_fee", "参加費", "text", d.participation_fee, "例：無料") +
             inputField("application_url", "申込のURL", "url", d.application_url, "https://") +
             toggleField("is_published", "サイトに公開する", d.is_published !== false);
+    } else if (type === "announcements") {
+        const titleSizes = [["sm","小"],["base","中"],["lg","大（標準）"],["xl","特大"],["2xl","最大"]];
+        const contentSizes = [["xs","極小"],["sm","小（標準）"],["base","中"],["lg","大"]];
+        let tSizeHTML = '<select name="title_size" class="border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400">';
+        titleSizes.forEach(function(s){ tSizeHTML += '<option value="'+s[0]+'" '+(( d.title_size||"lg")===s[0]?"selected":"")+'>'+s[1]+'</option>'; });
+        tSizeHTML += '</select>';
+        let cSizeHTML = '<select name="content_size" class="border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400">';
+        contentSizes.forEach(function(s){ cSizeHTML += '<option value="'+s[0]+'" '+((d.content_size||"sm")===s[0]?"selected":"")+'>'+s[1]+'</option>'; });
+        cSizeHTML += '</select>';
+        f = '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">タイトル ※必須</label>' +
+            '<input type="text" name="title" value="'+(d.title||'')+'" placeholder="お知らせタイトルを入力" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 mb-2">' +
+            '<div class="flex items-center gap-4 mt-2"><label class="text-xs text-gray-500 shrink-0">文字色</label><input type="color" name="title_color" value="'+(d.title_color||'#1f2937')+'" class="w-10 h-10 rounded cursor-pointer border border-gray-200">' +
+            '<label class="text-xs text-gray-500 shrink-0">サイズ</label>'+tSizeHTML+'</div></div>' +
+            inputField("published_date", "掲載日 ※必須", "date", d.published_date, "") +
+            inputField("end_date", "掲載終了日 ※必須", "date", d.end_date, "") +
+            '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">内容</label>' +
+            '<textarea name="content" rows="4" placeholder="お知らせ内容を入力してください" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400 mb-2">'+(d.content||'')+'</textarea>' +
+            '<div class="flex items-center gap-4 mt-2"><label class="text-xs text-gray-500 shrink-0">文字色</label><input type="color" name="content_color" value="'+(d.content_color||'#4b5563')+'" class="w-10 h-10 rounded cursor-pointer border border-gray-200">' +
+            '<label class="text-xs text-gray-500 shrink-0">サイズ</label>'+cSizeHTML+'</div></div>' +
+            photoField("image_url", "画像", d.image_url) +
+            inputField("link_url", "URL", "url", d.link_url, "https://") +
+            toggleField("is_published", "サイトに公開する", d.is_published !== false);
     }
     return '<form onsubmit="saveItem(event,\'' + type + '\')">' + f +
         '<div class="flex gap-3 mt-4">' +
@@ -926,7 +965,14 @@ function buildForm(type, d) {
 async function saveItem(e, type) {
     e.preventDefault();
     const data = {};
-    if (type === "activities") {
+    if (type === "announcements") {
+        const fi = document.getElementById("file-image_url");
+        if (fi && fi.files && fi.files[0]) {
+            showToast("画像をアップロード中...");
+            const url = await uploadPhoto(fi.files[0]);
+            if (url) { const hid = document.getElementById("hidden-image_url"); if (hid) hid.value = url; }
+        }
+    } else if (type === "activities") {
         for (const name of ["photo_url", "photo_url2", "photo_url3"]) {
             const fi = document.getElementById("file-" + name);
             if (fi && fi.files && fi.files[0]) {

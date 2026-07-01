@@ -396,6 +396,30 @@ function closeActivityModal() {
     document.body.style.overflow = "";
 }
 
+async function loadAnnouncements() {
+    const today = new Date().toISOString().slice(0, 10);
+    const data = await fetchDB("announcements", "is_published=eq.true&end_date=gte." + today + "&order=published_date.desc");
+    const section = document.getElementById("announcements-section");
+    const container = document.getElementById("announcements-container");
+    if (!section || !container) return;
+    if (!data || data.length === 0) { section.classList.add("hidden"); return; }
+    section.classList.remove("hidden");
+    const sizeMap = { xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem", xl: "1.25rem", "2xl": "1.5rem" };
+    container.innerHTML = data.map(function(a) {
+        const titleStyle = 'color:' + (a.title_color || '#1f2937') + ';font-size:' + (sizeMap[a.title_size] || '1.125rem');
+        const contentStyle = 'color:' + (a.content_color || '#4b5563') + ';font-size:' + (sizeMap[a.content_size] || '0.875rem');
+        return `<div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden flex flex-col">
+            ${a.image_url ? `<img src="${a.image_url}" alt="${a.title}" class="w-full h-44 object-cover">` : ""}
+            <div class="p-5 flex flex-col flex-1">
+                <p class="text-xs text-gray-400 mb-2">${a.published_date}</p>
+                <h3 class="font-bold mb-3 leading-snug" style="${titleStyle}">${a.title}</h3>
+                ${a.content ? `<p class="leading-relaxed whitespace-pre-line flex-1" style="${contentStyle}">${a.content}</p>` : ""}
+                ${a.link_url ? `<a href="${a.link_url}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center gap-1 text-primary font-bold text-sm hover:underline">詳しくはこちら <i class="fa-solid fa-angle-right"></i></a>` : ""}
+            </div>
+        </div>`;
+    }).join("");
+}
+
 const NEWS_DEFAULT_COUNT = 3;
 let allSortedNews = [];
 
@@ -540,5 +564,6 @@ document.addEventListener("DOMContentLoaded", function () {
     loadGreeting();
     loadMembers();
     loadActivities();
+    loadAnnouncements();
     loadNews();
 });
