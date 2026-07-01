@@ -952,6 +952,7 @@ function buildForm(type, d) {
             '<div class="flex items-center gap-4 mt-2"><label class="text-xs text-gray-500 shrink-0">文字色</label><input type="color" name="content_color" value="'+(d.content_color||'#4b5563')+'" class="w-10 h-10 rounded cursor-pointer border border-gray-200">' +
             '<label class="text-xs text-gray-500 shrink-0">サイズ</label>'+cSizeHTML+'</div></div>' +
             photoField("image_url", "画像", d.image_url) +
+            inputField("link_title", "URLタイトル", "text", d.link_title, "例：詳細ページはこちら") +
             inputField("link_url", "URL", "url", d.link_url, "https://") +
             toggleField("is_published", "サイトに公開する", d.is_published !== false);
     }

@@ -396,6 +396,8 @@ function closeActivityModal() {
     document.body.style.overflow = "";
 }
 
+let allAnnouncements = [];
+
 async function loadAnnouncements() {
     const today = new Date().toISOString().slice(0, 10);
     const data = await fetchDB("announcements", "is_published=eq.true&end_date=gte." + today + "&order=published_date.desc");
@@ -404,20 +406,56 @@ async function loadAnnouncements() {
     if (!section || !container) return;
     if (!data || data.length === 0) { section.classList.add("hidden"); return; }
     section.classList.remove("hidden");
+    allAnnouncements = data;
     const sizeMap = { xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem", xl: "1.25rem", "2xl": "1.5rem" };
-    container.innerHTML = data.map(function(a) {
-        const titleStyle = 'color:' + (a.title_color || '#1f2937') + ';font-size:' + (sizeMap[a.title_size] || '1.125rem');
-        const contentStyle = 'color:' + (a.content_color || '#4b5563') + ';font-size:' + (sizeMap[a.content_size] || '0.875rem');
+    const LINE_LIMIT = 8;
+    container.innerHTML = data.map(function(a, idx) {
+        const titleStyle = "color:" + (a.title_color || "#1f2937") + ";font-size:" + (sizeMap[a.title_size] || "1.125rem");
+        const contentStyle = "color:" + (a.content_color || "#4b5563") + ";font-size:" + (sizeMap[a.content_size] || "0.875rem");
+        const lines = (a.content || "").split("\n");
+        const truncated = lines.slice(0, LINE_LIMIT).join("\n");
+        const needsMore = lines.length > LINE_LIMIT;
         return `<div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden flex flex-col">
             ${a.image_url ? `<img src="${a.image_url}" alt="${a.title}" class="w-full h-44 object-cover">` : ""}
             <div class="p-5 flex flex-col flex-1">
                 <p class="text-xs text-gray-400 mb-2">${a.published_date}</p>
                 <h3 class="font-bold mb-3 leading-snug" style="${titleStyle}">${a.title}</h3>
-                ${a.content ? `<p class="leading-relaxed whitespace-pre-line flex-1" style="${contentStyle}">${a.content}</p>` : ""}
-                ${a.link_url ? `<a href="${a.link_url}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center gap-1 text-primary font-bold text-sm hover:underline">詳しくはこちら <i class="fa-solid fa-angle-right"></i></a>` : ""}
+                ${a.content ? `<p class="leading-relaxed whitespace-pre-line" style="${contentStyle}">${truncated}</p>` : ""}
+                ${needsMore ? `<button onclick="openAnnouncementModal(${idx})" class="mt-3 text-left text-primary font-bold text-sm hover:underline inline-flex items-center gap-1">詳しくはこちら <i class="fa-solid fa-angle-right"></i></button>` : ""}
             </div>
         </div>`;
     }).join("");
+}
+
+function openAnnouncementModal(idx) {
+    const a = allAnnouncements[idx];
+    if (!a) return;
+    const sizeMap = { xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem", xl: "1.25rem", "2xl": "1.5rem" };
+    const titleEl = document.getElementById("announcement-modal-title");
+    titleEl.textContent = a.title;
+    titleEl.style.color = a.title_color || "#1f2937";
+    titleEl.style.fontSize = sizeMap[a.title_size] || "1.125rem";
+    document.getElementById("announcement-modal-date").textContent = a.published_date || "";
+    const contentEl = document.getElementById("announcement-modal-content");
+    contentEl.textContent = a.content || "";
+    contentEl.style.color = a.content_color || "#4b5563";
+    contentEl.style.fontSize = sizeMap[a.content_size] || "0.875rem";
+    const imgEl = document.getElementById("announcement-modal-image");
+    if (a.image_url) { imgEl.src = a.image_url; imgEl.classList.remove("hidden"); }
+    else { imgEl.classList.add("hidden"); }
+    const linkEl = document.getElementById("announcement-modal-link");
+    if (a.link_url && a.link_title) {
+        linkEl.href = a.link_url;
+        linkEl.textContent = a.link_title;
+        linkEl.classList.remove("hidden");
+    } else { linkEl.classList.add("hidden"); }
+    document.getElementById("announcement-modal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+}
+
+function closeAnnouncementModal() {
+    document.getElementById("announcement-modal").classList.add("hidden");
+    document.body.style.overflow = "";
 }
 
 const NEWS_DEFAULT_COUNT = 3;

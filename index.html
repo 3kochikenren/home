@@ -309,6 +309,23 @@
         </div>
     </footer>
 
+    <!-- お知らせ情報モーダル -->
+    <div id="announcement-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeAnnouncementModal()">
+        <div class="absolute inset-0 bg-black/60"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <button onclick="closeAnnouncementModal()" class="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 z-10">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="p-6">
+                <p id="announcement-modal-date" class="text-xs text-gray-400 mb-2"></p>
+                <h3 id="announcement-modal-title" class="font-bold mb-4 pr-8 leading-snug"></h3>
+                <img id="announcement-modal-image" src="" alt="" class="hidden w-full rounded-xl object-cover mb-4 max-h-56">
+                <div id="announcement-modal-content" class="text-sm text-gray-700 leading-relaxed whitespace-pre-line mb-4"></div>
+                <a id="announcement-modal-link" href="#" target="_blank" rel="noopener noreferrer" class="hidden inline-flex items-center gap-1 text-primary font-bold text-sm hover:underline"></a>
+            </div>
+        </div>
+    </div>
+
     <!-- 議員・改革委員モーダル -->
     <div id="member-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeMemberModal()">
         <div class="absolute inset-0 bg-black/60"></div>
