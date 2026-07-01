@@ -408,7 +408,7 @@ async function loadAnnouncements() {
     section.classList.remove("hidden");
     allAnnouncements = data;
     const sizeMap = { xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem", xl: "1.25rem", "2xl": "1.5rem" };
-    const LINE_LIMIT = 8;
+    const LINE_LIMIT = 5;
     container.innerHTML = data.map(function(a, idx) {
         const titleStyle = "color:" + (a.title_color || "#1f2937") + ";font-size:" + (sizeMap[a.title_size] || "1.125rem");
         const contentStyle = "color:" + (a.content_color || "#4b5563") + ";font-size:" + (sizeMap[a.content_size] || "0.875rem");
