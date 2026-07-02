@@ -85,6 +85,9 @@
                     <button onclick="showSection('activities')" id="nav-activities" data-nav-section="activities" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-newspaper w-5 text-center"></i><span>活動報告</span>
                     </button>
+                    <button onclick="showSection('tabloid')" id="nav-tabloid" data-nav-section="tabloid" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-map-location-dot w-5 text-center"></i><span>タブロイド判管理</span>
+                    </button>
                 </nav>
             </div>
         </aside>
@@ -98,6 +101,7 @@
                     <button onclick="showSection('greeting')" data-nav-section="greeting" class="nav-btn active px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-orange-200 bg-white">役員</button>
                     <button onclick="showSection('members')" data-nav-section="members" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">議員情報</button>
                     <button onclick="showSection('activities')" data-nav-section="activities" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">活動報告</button>
+                    <button onclick="showSection('tabloid')" data-nav-section="tabloid" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">タブロイド判</button>
                 </div>
             </div>
             <section id="section-settings" class="admin-section hidden">
@@ -203,7 +207,117 @@
                 </div>
                 <div id="announcements-list"></div>
             </section>
+            <section id="section-tabloid" class="admin-section hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-map-location-dot mr-2 text-orange-500"></i>タブロイド判管理</h2>
+                    <p class="text-gray-500 text-sm mt-1">施設への配置状況を管理します</p>
+                </div>
+                <!-- 切り替えボタン -->
+                <div class="flex gap-3 mb-6">
+                    <button id="tab-facilities" onclick="switchTabloidTab('facilities')" class="px-5 py-2 rounded-xl font-bold text-sm bg-orange-500 text-white shadow">施設一覧</button>
+                    <button id="tab-placements" onclick="switchTabloidTab('placements')" class="px-5 py-2 rounded-xl font-bold text-sm bg-white text-gray-600 border border-gray-200">配置状況一覧</button>
+                </div>
+
+                <!-- 施設一覧 -->
+                <div id="tabloid-facilities-view">
+                    <div class="flex justify-end mb-4">
+                        <button onclick="openFacilityModal(null)" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                            <i class="fa-solid fa-plus mr-1"></i>施設を追加
+                        </button>
+                    </div>
+                    <div id="facilities-list-container" class="overflow-x-auto">
+                        <table class="w-full text-sm bg-white rounded-2xl shadow overflow-hidden">
+                            <thead class="bg-orange-50 text-gray-600 font-bold">
+                                <tr>
+                                    <th class="px-3 py-3 text-left">配置</th>
+                                    <th class="px-3 py-3 text-left">施設名</th>
+                                    <th class="px-3 py-3 text-left">区分</th>
+                                    <th class="px-3 py-3 text-left">住所</th>
+                                    <th class="px-3 py-3 text-left">電話</th>
+                                    <th class="px-3 py-3 text-left">担当者</th>
+                                    <th class="px-3 py-3 text-left">状況</th>
+                                    <th class="px-3 py-3 text-left">接触党員</th>
+                                    <th class="px-3 py-3 text-left">備考</th>
+                                    <th class="px-3 py-3 text-left"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="facilities-table-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 配置状況一覧 -->
+                <div id="tabloid-placements-view" class="hidden">
+                    <div class="flex justify-end mb-4">
+                        <button onclick="openIssueModal()" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                            <i class="fa-solid fa-plus mr-1"></i>配置登録を作成
+                        </button>
+                    </div>
+                    <div id="placement-form-area" class="hidden mb-6 bg-white rounded-2xl shadow p-6">
+                        <h3 id="placement-form-title" class="text-lg font-bold text-gray-800 mb-4"></h3>
+                        <div id="placement-table-wrap" class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-orange-50 text-gray-600 font-bold">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">配置可否</th>
+                                        <th class="px-3 py-2 text-left">施設名</th>
+                                        <th class="px-3 py-2 text-left">区分</th>
+                                        <th class="px-3 py-2 text-left">〒</th>
+                                        <th class="px-3 py-2 text-left">配置</th>
+                                        <th class="px-3 py-2 text-left">備考</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="placement-form-body" class="divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex gap-3">
+                            <button onclick="savePlacements()" class="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600">保存する</button>
+                            <button onclick="document.getElementById('placement-form-area').classList.add('hidden')" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold">キャンセル</button>
+                        </div>
+                    </div>
+                    <div id="placement-matrix-wrap" class="overflow-x-auto bg-white rounded-2xl shadow">
+                        <table class="text-sm w-full">
+                            <thead id="placement-matrix-head" class="bg-orange-50 text-gray-600 font-bold"></thead>
+                            <tbody id="placement-matrix-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
         </main>
+    </div>
+</div>
+
+<!-- 施設登録モーダル -->
+<div id="facility-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center px-6 py-5 border-b sticky top-0 bg-white rounded-t-2xl">
+            <h3 id="facility-modal-title" class="text-xl font-bold text-gray-800">施設登録</h3>
+            <button onclick="closeFacilityModal()" class="text-gray-400 hover:text-gray-600 text-2xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="facility-modal-body" class="px-6 py-5"></div>
+    </div>
+</div>
+
+<!-- 配置登録作成モーダル -->
+<div id="issue-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="flex justify-between items-center px-6 py-5 border-b">
+            <h3 class="text-xl font-bold text-gray-800">配置登録を作成</h3>
+            <button onclick="closeIssueModal()" class="text-gray-400 hover:text-gray-600 text-2xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-6 py-5">
+            <form onsubmit="createIssue(event)">
+                <div class="mb-4"><label class="block text-sm font-bold text-gray-700 mb-1">タイトル名 ※必須（例：19号）</label>
+                    <input type="text" id="issue-title" required placeholder="例：19号" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400"></div>
+                <div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">日付 ※必須</label>
+                    <input type="date" id="issue-date" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400"></div>
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-3 rounded-xl hover:bg-orange-600">作成して配置入力へ</button>
+                    <button type="button" onclick="closeIssueModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">キャンセル</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -549,10 +663,227 @@ function sortByNearestFutureDate(items, fieldName) {
     });
 }
 
+// ===== タブロイド判管理 =====
+let currentIssueId = null;
+let allFacilitiesCache = [];
+
+function switchTabloidTab(tab) {
+    const fv = document.getElementById("tabloid-facilities-view");
+    const pv = document.getElementById("tabloid-placements-view");
+    const tf = document.getElementById("tab-facilities");
+    const tp = document.getElementById("tab-placements");
+    if (tab === "facilities") {
+        fv.classList.remove("hidden"); pv.classList.add("hidden");
+        tf.className = "px-5 py-2 rounded-xl font-bold text-sm bg-orange-500 text-white shadow";
+        tp.className = "px-5 py-2 rounded-xl font-bold text-sm bg-white text-gray-600 border border-gray-200";
+        loadFacilitiesTable();
+    } else {
+        fv.classList.add("hidden"); pv.classList.remove("hidden");
+        tf.className = "px-5 py-2 rounded-xl font-bold text-sm bg-white text-gray-600 border border-gray-200";
+        tp.className = "px-5 py-2 rounded-xl font-bold text-sm bg-orange-500 text-white shadow";
+        loadPlacementMatrix();
+    }
+}
+
+async function loadFacilitiesTable() {
+    const tbody = document.getElementById("facilities-table-body");
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</td></tr>';
+    const data = await dbFetch("tabloid_facilities", "order=can_place.desc,category.asc,postal_code.asc");
+    allFacilitiesCache = data || [];
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-gray-400">施設が登録されていません</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(function(f) {
+        const badge = f.can_place
+            ? '<span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">Yes</span>'
+            : '<span class="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-full">No</span>';
+        const addr = [f.address_pref, f.address_city, f.address_other].filter(Boolean).join(" ");
+        return '<tr class="hover:bg-gray-50">' +
+            '<td class="px-3 py-2">' + badge + '</td>' +
+            '<td class="px-3 py-2 font-medium text-gray-800 whitespace-nowrap">' + (f.facility_name || "") + '</td>' +
+            '<td class="px-3 py-2 text-gray-600 whitespace-nowrap">' + (f.category || "") + '</td>' +
+            '<td class="px-3 py-2 text-gray-600 text-xs">' + addr + '</td>' +
+            '<td class="px-3 py-2 text-gray-600 whitespace-nowrap">' + (f.phone || "") + '</td>' +
+            '<td class="px-3 py-2 text-gray-600 whitespace-nowrap">' + (f.contact_person || "") + '</td>' +
+            '<td class="px-3 py-2 text-gray-600 whitespace-nowrap">' + (f.status || "") + '</td>' +
+            '<td class="px-3 py-2 text-gray-600 whitespace-nowrap">' + (f.contact_member || "") + '</td>' +
+            '<td class="px-3 py-2 text-gray-500 text-xs max-w-xs truncate">' + (f.notes || "") + '</td>' +
+            '<td class="px-3 py-2 whitespace-nowrap">' +
+                '<button onclick="openFacilityModal(' + f.id + ')" class="text-blue-600 hover:text-blue-800 text-xs font-bold mr-2"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
+                '<button onclick="deleteFacility(' + f.id + ',\'' + (f.facility_name||"").replace(/'/g,"") + '\')" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash mr-1"></i>削除</button>' +
+            '</td></tr>';
+    }).join("");
+}
+
+async function openFacilityModal(id) {
+    const modal = document.getElementById("facility-modal");
+    const body = document.getElementById("facility-modal-body");
+    document.getElementById("facility-modal-title").textContent = id ? "施設編集" : "施設追加";
+    let d = {};
+    if (id) {
+        const res = await dbFetch("tabloid_facilities", "id=eq." + id);
+        d = (res && res[0]) ? res[0] : {};
+    }
+    const cats = ["図書館", "飲食店", "会社", "その他"];
+    let catOpts = cats.map(function(c){ return '<option value="'+c+'" '+(d.category===c?"selected":"")+'>'+c+'</option>'; }).join("");
+    body.innerHTML = '<form onsubmit="saveFacility(event,' + (id||"null") + ')">' +
+        '<div class="grid grid-cols-2 gap-4">' +
+        '<div class="mb-4"><label class="block text-sm font-bold text-gray-700 mb-1">配置可否</label>' +
+        '<select name="can_place" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400">' +
+        '<option value="true" '+(d.can_place!==false?"selected":"")+'>Yes</option>' +
+        '<option value="false" '+(d.can_place===false?"selected":"")+'>No</option>' +
+        '</select></div>' +
+        '<div class="mb-4"><label class="block text-sm font-bold text-gray-700 mb-1">区分</label>' +
+        '<select name="category" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400">' + catOpts + '</select></div></div>' +
+        '<div class="mb-4"><label class="block text-sm font-bold text-gray-700 mb-1">施設名 ※必須</label>' +
+        '<input type="text" name="facility_name" value="'+(d.facility_name||"")+'" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400"></div>' +
+        '<div class="grid grid-cols-3 gap-3 mb-4">' +
+        '<div><label class="block text-sm font-bold text-gray-700 mb-1">〒</label><input type="text" name="postal_code" value="'+(d.postal_code||"")+'" placeholder="000-0000" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+        '<div><label class="block text-sm font-bold text-gray-700 mb-1">県名</label><input type="text" name="address_pref" value="'+(d.address_pref||"")+'" placeholder="高知県" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+        '<div><label class="block text-sm font-bold text-gray-700 mb-1">市区郡名</label><input type="text" name="address_city" value="'+(d.address_city||"")+'" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div></div>' +
+        '<div class="mb-4"><label class="block text-sm font-bold text-gray-700 mb-1">住所他</label>' +
+        '<input type="text" name="address_other" value="'+(d.address_other||"")+'" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400"></div>' +
+        '<div class="grid grid-cols-2 gap-4 mb-4">' +
+        '<div><label class="block text-sm font-bold text-gray-700 mb-1">電話番号</label><input type="text" name="phone" value="'+(d.phone||"")+'" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+        '<div><label class="block text-sm font-bold text-gray-700 mb-1">担当者</label><input type="text" name="contact_person" value="'+(d.contact_person||"")+'" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div></div>' +
+        '<div class="grid grid-cols-2 gap-4 mb-4">' +
+        '<div><label class="block text-sm font-bold text-gray-700 mb-1">状況</label><input type="text" name="status" value="'+(d.status||"")+'" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div>' +
+        '<div><label class="block text-sm font-bold text-gray-700 mb-1">接触党員</label><input type="text" name="contact_member" value="'+(d.contact_member||"")+'" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400"></div></div>' +
+        '<div class="mb-4"><label class="block text-sm font-bold text-gray-700 mb-1">拒否理由</label>' +
+        '<input type="text" name="rejection_reason" value="'+(d.rejection_reason||"")+'" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400"></div>' +
+        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">備考</label>' +
+        '<textarea name="notes" rows="2" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">'+(d.notes||"")+'</textarea></div>' +
+        '<div class="flex gap-3"><button type="submit" class="flex-1 bg-orange-500 text-white font-bold py-3 rounded-xl hover:bg-orange-600">保存する</button>' +
+        '<button type="button" onclick="closeFacilityModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">キャンセル</button></div>' +
+        '</form>';
+    modal.classList.remove("hidden");
+}
+
+function closeFacilityModal() { document.getElementById("facility-modal").classList.add("hidden"); }
+
+async function saveFacility(e, id) {
+    e.preventDefault();
+    const data = {};
+    e.target.querySelectorAll("input,textarea,select").forEach(function(el) {
+        if (el.name === "can_place") data.can_place = el.value === "true";
+        else if (el.value !== "") data[el.name] = el.value;
+    });
+    const ok = id ? await dbUpdate("tabloid_facilities", id, data) : await dbInsert("tabloid_facilities", data);
+    if (ok) { closeFacilityModal(); loadFacilitiesTable(); showToast(id ? "更新しました" : "追加しました"); }
+    else alert("保存に失敗しました。");
+}
+
+async function deleteFacility(id, name) {
+    if (!confirm("「" + name + "」を削除しますか？")) return;
+    const ok = await dbDelete("tabloid_facilities", id);
+    if (ok) { loadFacilitiesTable(); showToast("削除しました"); }
+}
+
+function openIssueModal() { document.getElementById("issue-modal").classList.remove("hidden"); }
+function closeIssueModal() { document.getElementById("issue-modal").classList.add("hidden"); }
+
+async function createIssue(e) {
+    e.preventDefault();
+    const hdrs = await getHdrs();
+    const session = await supabaseClient.auth.getSession();
+    const email = session?.data?.session?.user?.email || "";
+    const data = { title: document.getElementById("issue-title").value, issue_date: document.getElementById("issue-date").value, created_by: email };
+    const res = await dbInsert("tabloid_issues", data);
+    if (!res) { alert("作成に失敗しました。"); return; }
+    closeIssueModal();
+    document.getElementById("issue-title").value = "";
+    document.getElementById("issue-date").value = "";
+    const issues = await dbFetch("tabloid_issues", "title=eq." + encodeURIComponent(data.title) + "&order=id.desc&limit=1");
+    if (issues && issues[0]) await loadPlacementForm(issues[0].id, issues[0].title, issues[0].issue_date);
+}
+
+async function loadPlacementForm(issueId, title, date) {
+    currentIssueId = issueId;
+    const facilities = await dbFetch("tabloid_facilities", "order=can_place.desc,category.asc,postal_code.asc");
+    const existing = await dbFetch("tabloid_placements", "issue_id=eq." + issueId);
+    const placedMap = {};
+    (existing || []).forEach(function(p) { placedMap[p.facility_id] = p; });
+    const formArea = document.getElementById("placement-form-area");
+    document.getElementById("placement-form-title").textContent = title + "　" + (date || "") + "　配置入力";
+    const tbody = document.getElementById("placement-form-body");
+    tbody.innerHTML = (facilities || []).map(function(f) {
+        const p = placedMap[f.id];
+        const checked = p && p.placed ? "checked" : "";
+        const notes = p ? (p.notes || "") : "";
+        const badge = f.can_place
+            ? '<span class="text-green-600 font-bold text-xs">Yes</span>'
+            : '<span class="text-red-500 font-bold text-xs">No</span>';
+        return '<tr class="hover:bg-gray-50">' +
+            '<td class="px-3 py-2">' + badge + '</td>' +
+            '<td class="px-3 py-2 font-medium text-gray-800">' + (f.facility_name||"") + '</td>' +
+            '<td class="px-3 py-2 text-gray-500 text-xs">' + (f.category||"") + '</td>' +
+            '<td class="px-3 py-2 text-gray-500 text-xs">' + (f.postal_code||"") + '</td>' +
+            '<td class="px-3 py-2"><input type="checkbox" data-fid="'+f.id+'" class="placement-check w-5 h-5 accent-orange-500" '+checked+'></td>' +
+            '<td class="px-3 py-2"><input type="text" data-fid="'+f.id+'" class="placement-note border border-gray-200 rounded px-2 py-1 text-xs w-32" value="'+notes+'" placeholder="備考"></td>' +
+            '</tr>';
+    }).join("");
+    formArea.classList.remove("hidden");
+    formArea.scrollIntoView({ behavior: "smooth" });
+}
+
+async function savePlacements() {
+    if (!currentIssueId) return;
+    const checks = document.querySelectorAll(".placement-check");
+    const notes = document.querySelectorAll(".placement-note");
+    const rows = [];
+    checks.forEach(function(cb, i) {
+        rows.push({ issue_id: currentIssueId, facility_id: Number(cb.dataset.fid), placed: cb.checked, notes: notes[i] ? notes[i].value : "" });
+    });
+    const hdrs = await getHdrs();
+    const res = await fetch(SUPABASE_URL + "/rest/v1/tabloid_placements", {
+        method: "POST",
+        headers: Object.assign({}, hdrs, { "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates" }),
+        body: JSON.stringify(rows)
+    });
+    if (res.ok) { showToast("保存しました"); document.getElementById("placement-form-area").classList.add("hidden"); loadPlacementMatrix(); }
+    else alert("保存に失敗しました。");
+}
+
+async function loadPlacementMatrix() {
+    const matHead = document.getElementById("placement-matrix-head");
+    const matBody = document.getElementById("placement-matrix-body");
+    if (!matHead || !matBody) return;
+    matHead.innerHTML = '<tr><td class="px-3 py-2 text-center text-gray-400" colspan="99"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</td></tr>';
+    matBody.innerHTML = "";
+    const [facilities, issues, placements] = await Promise.all([
+        dbFetch("tabloid_facilities", "order=can_place.desc,category.asc,postal_code.asc"),
+        dbFetch("tabloid_issues", "order=issue_date.asc"),
+        dbFetch("tabloid_placements", "select=*")
+    ]);
+    if (!facilities || !issues) return;
+    const pMap = {};
+    (placements || []).forEach(function(p) { pMap[p.facility_id + "_" + p.issue_id] = p.placed; });
+    matHead.innerHTML = '<tr class="bg-orange-50">' +
+        '<th class="px-3 py-2 text-left text-gray-600 font-bold">施設名</th>' +
+        '<th class="px-3 py-2 text-left text-gray-600 font-bold">区分</th>' +
+        issues.map(function(iss) { return '<th class="px-3 py-2 text-center text-gray-600 font-bold whitespace-nowrap"><div>' + iss.title + '</div><div class="text-xs font-normal text-gray-400">' + (iss.issue_date||"") + '</div><button onclick="loadPlacementForm('+iss.id+',\''+iss.title+'\',\''+iss.issue_date+'\')" class="text-xs text-orange-500 hover:underline mt-1">編集</button></th>'; }).join("") +
+        '</tr>';
+    matBody.innerHTML = facilities.map(function(f) {
+        return '<tr class="hover:bg-gray-50">' +
+            '<td class="px-3 py-2 font-medium text-gray-800 whitespace-nowrap">' + (f.facility_name||"") + '</td>' +
+            '<td class="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">' + (f.category||"") + '</td>' +
+            issues.map(function(iss) {
+                const placed = pMap[f.id + "_" + iss.id];
+                return '<td class="px-3 py-2 text-center">' + (placed === true ? '<span class="text-green-600 font-bold text-lg">✓</span>' : placed === false ? '<span class="text-red-400 text-sm">―</span>' : '<span class="text-gray-300 text-sm">―</span>') + '</td>';
+            }).join("") +
+            '</tr>';
+    }).join("");
+}
+
+// ===== タブロイド判管理ここまで =====
+
 async function loadSection(name) {
     if (name === "settings") { loadSettings(); return; }
     if (name === "greeting") { loadGreeting(); return; }
     if (name === "members") { loadMembersAdmin(); return; }
+    if (name === "tabloid") { switchTabloidTab("facilities"); return; }
     const el = document.getElementById(name + "-list");
     if (!el) return;
     el.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>';
