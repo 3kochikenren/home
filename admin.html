@@ -1081,8 +1081,11 @@ async function saveGreeting() {
         const hid = document.getElementById("hidden-photo_url");
         if (hid) hid.value = url;
     }
+    // greeting テーブルに実在する列だけを送る（branch_role_type 等のUI専用フィールドは除外）
+    const GREETING_COLUMNS = ["photo_url", "position_label", "name", "role", "content", "sort_order"];
     form.querySelectorAll("input,textarea,select").forEach(function(el) {
         if (el.type === "file") return;
+        if (GREETING_COLUMNS.indexOf(el.name) === -1) return;
         if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
     });
     if (!data.role) data.role = getGreetingGroup(data.position_label || GREETING_GROUPS[0].label).defaultRole || "県連役員";
