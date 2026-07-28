@@ -377,7 +377,9 @@
 const SUPABASE_URL = "https://yaimsonvxpujfupstpsd.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaW1zb252eHB1amZ1cHN0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODEwMjksImV4cCI6MjA5NTA1NzAyOX0.2PAKyBs8z44Ft4TXigKAsRfh6zEQwdVl2KNRZojxwzk";
 const STORAGE_URL = "https://yaimsonvxpujfupstpsd.supabase.co/storage/v1";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+});
 const POSITIONS = [
     { label: "県連会長", order: 1 },
     { label: "第一支部長", order: 2 },
@@ -395,6 +397,7 @@ async function doLogin() {
         errEl.classList.remove("hidden");
         return;
     }
+    sessionExpiredNotified = false;
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("admin-screen").classList.remove("hidden");
     loadSection("greeting");
@@ -429,10 +432,50 @@ function showSection(name) {
 
 let showDeletedMembers = false;
 
-async function getHdrs() {
+// 有効なセッションを返す。期限が近ければ更新を試み、更新もできなければ null。
+async function getValidSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return null;
+    const now = Math.floor(Date.now() / 1000);
+    // 有効期限まで2分を切っていたらリフレッシュ
+    if (session.expires_at && session.expires_at - now < 120) {
+        const { data, error } = await supabaseClient.auth.refreshSession();
+        if (error || !data || !data.session) return null;
+        return data.session;
+    }
+    return session;
+}
+
+// 読み取り用ヘッダ（未ログインでも anon で読める）
+async function getHdrs() {
+    const session = await getValidSession();
     const token = session ? session.access_token : SUPABASE_KEY;
     return { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + token };
+}
+
+// 書き込み用ヘッダ。有効なログインが無ければ null を返し、再ログインを促す。
+async function getAuthHdrs() {
+    const session = await getValidSession();
+    if (!session) { handleSessionExpired(); return null; }
+    return { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + session.access_token };
+}
+
+let sessionExpiredNotified = false;
+function handleSessionExpired() {
+    if (sessionExpiredNotified) return;
+    sessionExpiredNotified = true;
+    alert("ログインの有効期限が切れました。お手数ですが、もう一度ログインしてから操作してください。");
+    doLogout();
+}
+
+// レスポンスの失敗を解析して原因を表示する（401/403 は再ログイン誘導）
+async function reportError(r, prefix) {
+    let msg = "";
+    try { const e = await r.json(); msg = e.message || e.error || JSON.stringify(e); }
+    catch (_) { msg = "HTTP " + r.status; }
+    console.error((prefix || "エラー") + ":", r.status, msg);
+    if (r.status === 401 || r.status === 403) { handleSessionExpired(); return; }
+    alert((prefix || "エラー") + ": " + msg);
 }
 
 async function dbFetch(table, q) {
@@ -444,29 +487,35 @@ async function dbFetch(table, q) {
     } catch(e) { return []; }
 }
 async function dbInsert(table, data) {
-    const hdrs = await getHdrs();
+    const hdrs = await getAuthHdrs();
+    if (!hdrs) return false;
     const r = await fetch(SUPABASE_URL + "/rest/v1/" + table, {
         method: "POST", body: JSON.stringify(data),
         headers: Object.assign({}, hdrs, { "Content-Type": "application/json", "Prefer": "return=minimal" })
     });
-    if (!r.ok) { const e = await r.json(); console.error(e); alert("エラー: " + (e.message || JSON.stringify(e))); }
-    return r.ok;
+    if (!r.ok) { await reportError(r, "保存エラー"); return false; }
+    return true;
 }
 async function dbUpdate(table, id, data) {
-    const hdrs = await getHdrs();
+    const hdrs = await getAuthHdrs();
+    if (!hdrs) return false;
     const r = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?id=eq." + id, {
         method: "PATCH", body: JSON.stringify(data),
         headers: Object.assign({}, hdrs, { "Content-Type": "application/json", "Prefer": "return=minimal" })
     });
-    return r.ok;
+    if (!r.ok) { await reportError(r, "更新エラー"); return false; }
+    return true;
 }
 async function dbDelete(table, id) {
-    const hdrs = await getHdrs();
+    const hdrs = await getAuthHdrs();
+    if (!hdrs) return false;
     const r = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?id=eq." + id, { method: "DELETE", headers: hdrs });
-    return r.ok;
+    if (!r.ok) { await reportError(r, "削除エラー"); return false; }
+    return true;
 }
 async function uploadPhoto(file) {
-    const hdrs = await getHdrs();
+    const hdrs = await getAuthHdrs();
+    if (!hdrs) return null;
     const ext = file.name.split(".").pop();
     const fileName = Date.now() + "." + ext;
     const r = await fetch(STORAGE_URL + "/object/images/" + fileName, {
@@ -474,7 +523,7 @@ async function uploadPhoto(file) {
         headers: Object.assign({}, hdrs, { "Content-Type": file.type }),
         body: file
     });
-    if (!r.ok) return null;
+    if (!r.ok) { await reportError(r, "画像アップロード失敗"); return null; }
     return STORAGE_URL + "/object/public/images/" + fileName;
 }
 
@@ -1028,10 +1077,9 @@ async function saveGreeting() {
     if (fi && fi.files && fi.files[0]) {
         showToast("写真をアップロード中...");
         const url = await uploadPhoto(fi.files[0]);
-        if (url) {
-            const hid = document.getElementById("hidden-photo_url");
-            if (hid) hid.value = url;
-        }
+        if (!url) return; // アップロード失敗（原因は表示済み）。保存を中断。
+        const hid = document.getElementById("hidden-photo_url");
+        if (hid) hid.value = url;
     }
     form.querySelectorAll("input,textarea,select").forEach(function(el) {
         if (el.type === "file") return;
@@ -1302,7 +1350,8 @@ async function saveItem(e, type) {
         if (fi && fi.files && fi.files[0]) {
             showToast("画像をアップロード中...");
             const url = await uploadPhoto(fi.files[0]);
-            if (url) { const hid = document.getElementById("hidden-image_url"); if (hid) hid.value = url; }
+            if (!url) return; // アップロード失敗。保存を中断。
+            const hid = document.getElementById("hidden-image_url"); if (hid) hid.value = url;
         }
     } else if (type === "activities") {
         for (const name of ["photo_url", "photo_url2", "photo_url3"]) {
@@ -1310,7 +1359,8 @@ async function saveItem(e, type) {
             if (fi && fi.files && fi.files[0]) {
                 showToast("写真をアップロード中...");
                 const url = await uploadPhoto(fi.files[0]);
-                if (url) { const hid = document.getElementById("hidden-" + name); if (hid) hid.value = url; }
+                if (!url) return; // アップロード失敗。保存を中断。
+                const hid = document.getElementById("hidden-" + name); if (hid) hid.value = url;
             }
         }
     } else {
@@ -1318,7 +1368,8 @@ async function saveItem(e, type) {
         if (fi && fi.files && fi.files[0]) {
             showToast("写真をアップロード中...");
             const url = await uploadPhoto(fi.files[0]);
-            if (url) { const hid = document.getElementById("hidden-photo_url"); if (hid) hid.value = url; }
+            if (!url) return; // アップロード失敗。保存を中断。
+            const hid = document.getElementById("hidden-photo_url"); if (hid) hid.value = url;
         }
     }
     if (type === "events") {
