@@ -1,6 +1,18 @@
 const SUPABASE_URL = "https://yaimsonvxpujfupstpsd.supabase.co";
 const SUPABASE_KEY = "sb_publishable_vsx3v5xQggFsT-btyToaKg_OF2CzV7o";
 const SUPABASE_ANON_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaW1zb252eHB1amZ1cHN0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODEwMjksImV4cCI6MjA5NTA1NzAyOX0.2PAKyBs8z44Ft4TXigKAsRfh6zEQwdVl2KNRZojxwzk";
+const KENREN_SLUG = "kochi";
+
+let cachedKenrenId = null;
+async function getKenrenId() {
+    if (cachedKenrenId) return cachedKenrenId;
+    const url = `${SUPABASE_URL}/rest/v1/kenren?slug=eq.${KENREN_SLUG}&select=id&limit=1`;
+    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY } });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    cachedKenrenId = (Array.isArray(rows) && rows[0] && rows[0].id) || null;
+    return cachedKenrenId;
+}
 
 async function getSettingValue(key) {
     const url = `${SUPABASE_URL}/rest/v1/settings?key=eq.${encodeURIComponent(key)}&select=value&limit=1`;
@@ -101,6 +113,9 @@ function bindFormSubmit(config) {
 
         try {
             const payload = collectFormPayload(form);
+            const kenrenId = await getKenrenId();
+            if (!kenrenId) throw new Error("県連情報の取得に失敗しました。時間をおいて再度お試しください。");
+            payload.kenren_id = kenrenId;
             const record = await insertRecord(config.table, payload);
 
             try {

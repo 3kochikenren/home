@@ -486,11 +486,26 @@ async function dbFetch(table, q) {
         return Array.isArray(d) ? d : [];
     } catch(e) { return []; }
 }
+const KENREN_SLUG = "kochi";
+let cachedKenrenId = null;
+async function getCurrentKenrenId() {
+    if (cachedKenrenId) return cachedKenrenId;
+    const rows = await dbFetch("kenren", "slug=eq." + KENREN_SLUG + "&select=id&limit=1");
+    cachedKenrenId = (rows && rows[0] && rows[0].id) || null;
+    return cachedKenrenId;
+}
+
 async function dbInsert(table, data) {
     const hdrs = await getAuthHdrs();
     if (!hdrs) return false;
+    let payload = data;
+    if (table !== "kenren") {
+        const kenrenId = await getCurrentKenrenId();
+        if (!kenrenId) { alert("県連情報の取得に失敗しました。"); return false; }
+        payload = Object.assign({ kenren_id: kenrenId }, data);
+    }
     const r = await fetch(SUPABASE_URL + "/rest/v1/" + table, {
-        method: "POST", body: JSON.stringify(data),
+        method: "POST", body: JSON.stringify(payload),
         headers: Object.assign({}, hdrs, { "Content-Type": "application/json", "Prefer": "return=minimal" })
     });
     if (!r.ok) { await reportError(r, "保存エラー"); return false; }
@@ -879,11 +894,13 @@ async function loadPlacementForm(issueId, title, date) {
 
 async function savePlacements() {
     if (!currentIssueId) return;
+    const kenrenId = await getCurrentKenrenId();
+    if (!kenrenId) { alert("県連情報の取得に失敗しました。"); return; }
     const checks = document.querySelectorAll(".placement-check");
     const notes = document.querySelectorAll(".placement-note");
     const rows = [];
     checks.forEach(function(cb, i) {
-        rows.push({ issue_id: currentIssueId, facility_id: Number(cb.dataset.fid), placed: cb.checked, notes: notes[i] ? notes[i].value : "" });
+        rows.push({ issue_id: currentIssueId, facility_id: Number(cb.dataset.fid), placed: cb.checked, notes: notes[i] ? notes[i].value : "", kenren_id: kenrenId });
     });
     const hdrs = await getHdrs();
     const res = await fetch(SUPABASE_URL + "/rest/v1/tabloid_placements", {
