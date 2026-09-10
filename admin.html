@@ -79,6 +79,9 @@
                     <button onclick="showSection('greeting')" id="nav-greeting" data-nav-section="greeting" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-handshake w-5 text-center"></i><span>役員</span>
                     </button>
+                    <button onclick="showSection('orggroups')" id="nav-orggroups" data-nav-section="orggroups" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-sitemap w-5 text-center"></i><span>組織構造</span>
+                    </button>
                     <button onclick="showSection('members')" id="nav-members" data-nav-section="members" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span>
                     </button>
@@ -99,6 +102,7 @@
                     <button onclick="showSection('news')" data-nav-section="news" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">イベント情報</button>
                     <button onclick="showSection('announcements')" data-nav-section="announcements" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">お知らせ情報</button>
                     <button onclick="showSection('greeting')" data-nav-section="greeting" class="nav-btn active px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-orange-200 bg-white">役員</button>
+                    <button onclick="showSection('orggroups')" data-nav-section="orggroups" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">組織構造</button>
                     <button onclick="showSection('members')" data-nav-section="members" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">議員情報</button>
                     <button onclick="showSection('activities')" data-nav-section="activities" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">活動報告</button>
                     <button onclick="showSection('tabloid')" data-nav-section="tabloid" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">タブロイド判</button>
@@ -147,6 +151,17 @@
                     <p class="text-gray-500 text-sm mt-1">トップページの「県連及び支部役員の組織図」を管理します</p>
                 </div>
                 <div id="greeting-preview" class="bg-white rounded-2xl shadow p-6"></div>
+            </section>
+
+            <section id="section-orggroups" class="admin-section hidden">
+                <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-sitemap mr-2 text-orange-500"></i>組織構造</h2>
+                        <p class="text-gray-500 text-sm mt-1">支部の追加・改名や、県連4役の役職名を編集します（「役員」タブの表示単位になります）</p>
+                    </div>
+                    <button onclick="openOrgGroupModal(null)" class="bg-orange-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-orange-600 whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i>グループを追加</button>
+                </div>
+                <div id="orggroups-list" class="space-y-4"></div>
             </section>
 
             <section id="section-members" class="admin-section hidden">
@@ -565,64 +580,60 @@ function updateDeletedMembersToggleButton() {
     }
 }
 
-const GREETING_GROUPS = [
-    { label: "県連4役", type: "fixed", slots: ["県連会長", "県連副会長", "事務局長", "財政局長"], note: "固定役職の4枠です" },
-    { label: "県連役員", type: "multi", note: "複数名を順番に表示します", defaultRole: "県連役員" },
-    { label: "第一支部役員", type: "branch", headRole: "支部長", note: "支部長を先頭に、残りを順番に表示します" },
-    { label: "第二支部役員", type: "branch", headRole: "支部長", note: "支部長を先頭に、残りを順番に表示します" }
-];
-
-const GREETING_CONTENT_ROLES = ["県連会長", "支部長", "第一支部長", "第二支部長"];
-
-function getGreetingGroup(label) {
-    return GREETING_GROUPS.find(function(group) { return group.label === label; }) || GREETING_GROUPS[0];
-}
+// 役員グループ（県連4役・県連役員・各支部）は org_officer_groups から動的に読み込む
+let greetingGroupsCache = [];
+let currentGreetingGroupForModal = null;
 
 function normalizeGreetingRole(role, group) {
     const text = (role || "").trim();
-    if (group.type === "fixed") return text;
-    if (group.type === "branch") {
-        if (text.includes("支部長")) return group.headRole;
-        return text || "役員";
+    if (group.group_type === "fixed") return text;
+    if (group.group_type === "branch") {
+        const headRole = group.head_role_label || "支部長";
+        return text === headRole ? headRole : (text || "役員");
     }
-    return text || group.defaultRole || "県連役員";
+    return text || "県連役員";
 }
 
-function canWriteGreetingContent(role) {
+function canWriteGreetingContent(role, group) {
+    if (!group) return false;
     const r = (role || "").trim();
-    return r === "県連会長" || r.includes("支部長");
+    if (group.group_type === "fixed") return !!(group.fixed_slots && group.fixed_slots[0] === r);
+    if (group.group_type === "branch") return r === (group.head_role_label || "支部長");
+    return false;
 }
 
-function greetingGroupOptions(selectedValue) {
-    return GREETING_GROUPS.map(function(group) {
-        return '<option value="' + group.label + '" ' + (selectedValue === group.label ? 'selected' : '') + '>' + group.label + '</option>';
+function greetingGroupOptions(selectedId) {
+    return greetingGroupsCache.map(function(group) {
+        return '<option value="' + group.id + '" ' + (selectedId === group.id ? 'selected' : '') + '>' + group.label + '</option>';
     }).join("");
 }
 
 function greetingRoleField(group, selectedRole) {
-    if (group.type === "fixed") {
+    if (group.group_type === "fixed") {
+        const slots = group.fixed_slots || [];
         return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">役職</label><select name="role" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
-            group.slots.map(function(slot) { return '<option value="' + slot + '" ' + (selectedRole === slot ? 'selected' : '') + '>' + slot + '</option>'; }).join("") +
-            '</select><p class="text-xs text-gray-400 mt-2">県連4役は4枠固定です</p></div>';
+            slots.map(function(slot) { return '<option value="' + slot + '" ' + (selectedRole === slot ? 'selected' : '') + '>' + slot + '</option>'; }).join("") +
+            '</select><p class="text-xs text-gray-400 mt-2">役職の一覧は「組織構造」タブで編集できます</p></div>';
     }
-    if (group.type === "branch") {
-        const isHead = selectedRole && selectedRole.includes("支部長");
+    if (group.group_type === "branch") {
+        const headRole = group.head_role_label || "支部長";
+        const isHead = selectedRole === headRole;
         const otherRole = isHead ? "" : (selectedRole && selectedRole !== "役員" ? selectedRole : "");
         return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">役職</label>' +
             '<div class="flex gap-6 bg-gray-50 rounded-xl px-4 py-3 mb-2">' +
-            '<label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="branch_role_type" value="head" ' + (isHead ? 'checked' : '') + ' onchange="onBranchRoleTypeChange(this)" class="accent-orange-500"> 支部長</label>' +
+            '<label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="branch_role_type" value="head" ' + (isHead ? 'checked' : '') + ' onchange="onBranchRoleTypeChange(this)" class="accent-orange-500"> ' + headRole + '</label>' +
             '<label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="branch_role_type" value="other" ' + (!isHead ? 'checked' : '') + ' onchange="onBranchRoleTypeChange(this)" class="accent-orange-500"> その他</label>' +
             '</div>' +
-            '<input type="hidden" name="role" id="branch-role-value" value="' + (isHead ? '支部長' : (otherRole || '')) + '">' +
+            '<input type="hidden" name="role" id="branch-role-value" data-head-role="' + headRole + '" value="' + (isHead ? headRole : (otherRole || '')) + '">' +
             '<div id="branch-other-input" class="' + (isHead ? 'hidden' : '') + '">' +
             '<input type="text" id="branch-other-text" value="' + otherRole + '" placeholder="例：副支部長、会計担当" ' +
             'oninput="document.getElementById(\'branch-role-value\').value=this.value; updateGreetingContentVisibility();" ' +
             'class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
             '</div>' +
-            '<p class="text-xs text-gray-400 mt-2">支部長だけが挨拶文を入力できます</p></div>';
+            '<p class="text-xs text-gray-400 mt-2">' + headRole + 'だけが挨拶文を入力できます</p></div>';
     }
     return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">役職</label>' +
-        '<input type="text" name="role" value="' + (selectedRole || group.defaultRole || "県連役員") + '" placeholder="例：広報担当、会計担当" ' +
+        '<input type="text" name="role" value="' + (selectedRole || "県連役員") + '" placeholder="例：広報担当、会計担当" ' +
         'class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
         '<p class="text-xs text-gray-400 mt-2">県連役員内の具体的な役職名を入力してください</p></div>';
 }
@@ -634,7 +645,7 @@ function greetingPreviewCard(item, group, options) {
     const nameText = isPlaceholder ? '未登録' : (item.name || '');
     const photoUrl = isPlaceholder ? 'https://placehold.co/120x120/f3f4f6/9ca3af?text=未登録' : (item.photo_url || 'https://placehold.co/120x120/fff7ed/f97316?text=写真');
     const actionButtons = isPlaceholder
-        ? '<button onclick="openGreetingModal(\'' + group.label + '\', null, \'' + roleText + '\')" class="w-full bg-orange-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-orange-600">追加する</button>'
+        ? '<button onclick="openGreetingModal(\'' + group.id + '\', null, \'' + roleText + '\')" class="w-full bg-orange-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-orange-600">追加する</button>'
         : '<div class="flex gap-2 mt-3 w-full"><button onclick="editGreeting(\'' + item.id + '\')" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded-lg hover:bg-blue-100">編集</button><button onclick="deleteGreeting(\'' + item.id + '\')" class="flex-1 bg-red-50 text-red-500 text-xs font-bold py-2 rounded-lg hover:bg-red-100">削除</button></div>';
     return '<div class="bg-' + (isPlaceholder ? 'gray-50' : 'gray-50') + ' rounded-2xl border ' + (isPlaceholder ? 'border-dashed border-gray-200' : 'border-orange-100') + ' p-4 flex flex-col items-center text-center shadow-sm">' +
         '<img src="' + photoUrl + '" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow mb-3 ' + (isPlaceholder ? 'opacity-40' : '') + '">' +
@@ -650,8 +661,9 @@ function onBranchRoleTypeChange(radio) {
     const hiddenRole = document.getElementById("branch-role-value");
     const otherWrapper = document.getElementById("branch-other-input");
     const otherText = document.getElementById("branch-other-text");
+    const headRole = hiddenRole.getAttribute("data-head-role") || "支部長";
     if (isHead) {
-        hiddenRole.value = "支部長";
+        hiddenRole.value = headRole;
         otherWrapper.classList.add("hidden");
     } else {
         hiddenRole.value = otherText ? otherText.value : "";
@@ -664,8 +676,8 @@ function updateGreetingContentVisibility() {
     const roleHidden = document.getElementById("branch-role-value");
     const roleInput = roleHidden || document.querySelector('#greeting-form [name="role"]');
     const wrapper = document.getElementById('greeting-content-wrapper');
-    if (!roleInput || !wrapper) return;
-    wrapper.classList.toggle('hidden', !canWriteGreetingContent(roleInput.value));
+    if (!roleInput || !wrapper || !currentGreetingGroupForModal) return;
+    wrapper.classList.toggle('hidden', !canWriteGreetingContent(roleInput.value, currentGreetingGroupForModal));
 }
 
 function toggleDeletedMembersView() {
@@ -948,6 +960,7 @@ async function loadPlacementMatrix() {
 async function loadSection(name) {
     if (name === "settings") { loadSettings(); return; }
     if (name === "greeting") { loadGreeting(); return; }
+    if (name === "orggroups") { loadOrgGroups(); return; }
     if (name === "members") { loadMembersAdmin(); return; }
     if (name === "tabloid") { switchTabloidTab("facilities"); return; }
     const el = document.getElementById(name + "-list");
@@ -994,34 +1007,44 @@ async function loadGreeting() {
     const preview = document.getElementById("greeting-preview");
     if (!preview) return;
     preview.innerHTML = '<p class="text-center text-gray-400 py-8"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>';
-    const data = await dbFetch("greeting", "order=sort_order.asc");
-    preview.innerHTML = GREETING_GROUPS.map(function(group) {
-        const items = (data || []).filter(function(d) { return (d.position_label || "県連役員") === group.label; });
-        const addRole = group.type === "fixed" ? group.slots[0] : (group.type === "branch" ? "役員" : (group.defaultRole || "県連役員"));
+    const kenrenId = await getCurrentKenrenId();
+    const [groups, data] = await Promise.all([
+        dbFetch("org_officer_groups", "kenren_id=eq." + kenrenId + "&order=sort_order.asc"),
+        dbFetch("greeting", "kenren_id=eq." + kenrenId + "&order=sort_order.asc")
+    ]);
+    greetingGroupsCache = groups || [];
+    if (greetingGroupsCache.length === 0) {
+        preview.innerHTML = '<div class="bg-white rounded-2xl p-8 text-center text-gray-400 shadow">組織グループが未設定です。先に「組織構造」タブでグループを作成してください。</div>';
+        return;
+    }
+    preview.innerHTML = greetingGroupsCache.map(function(group) {
+        const items = (data || []).filter(function(d) { return d.group_id === group.id; });
+        const addRole = group.group_type === "fixed" ? (group.fixed_slots && group.fixed_slots[0]) : (group.group_type === "branch" ? (group.head_role_label || "支部長") : "県連役員");
         let sectionHtml = '<div class="mb-8 last:mb-0">';
         sectionHtml += '<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">';
-        sectionHtml += '<div><h3 class="text-lg font-black text-gray-800">' + group.label + '</h3><p class="text-xs text-gray-400 mt-1">' + group.note + '</p></div>';
-        sectionHtml += '<button onclick="openGreetingModal(\'' + group.label + '\', null, \'' + addRole + '\')" class="bg-orange-500 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-600">追加する</button>';
+        sectionHtml += '<div><h3 class="text-lg font-black text-gray-800">' + group.label + '</h3></div>';
+        sectionHtml += '<button onclick="openGreetingModal(\'' + group.id + '\', null, \'' + addRole + '\')" class="bg-orange-500 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-600">追加する</button>';
         sectionHtml += '</div>';
 
-        if (group.type === "fixed") {
+        if (group.group_type === "fixed") {
             const byRole = new Map();
             items.forEach(function(item) { byRole.set(normalizeGreetingRole(item.role, group), item); });
             sectionHtml += '<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">';
-            group.slots.forEach(function(slot) {
+            (group.fixed_slots || []).forEach(function(slot) {
                 const item = byRole.get(slot);
                 sectionHtml += item
                     ? greetingPreviewCard(item, group, { roleText: slot })
                     : greetingPreviewCard({ role: slot }, group, { roleText: slot, placeholder: true });
             });
             sectionHtml += '</div>';
-        } else if (group.type === "branch") {
-            const head = items.find(function(item) { return normalizeGreetingRole(item.role, group) === group.headRole; }) || null;
-            const others = items.filter(function(item) { return normalizeGreetingRole(item.role, group) !== group.headRole; }).sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); });
+        } else if (group.group_type === "branch") {
+            const headRole = group.head_role_label || "支部長";
+            const head = items.find(function(item) { return normalizeGreetingRole(item.role, group) === headRole; }) || null;
+            const others = items.filter(function(item) { return normalizeGreetingRole(item.role, group) !== headRole; }).sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); });
             sectionHtml += '<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">';
             sectionHtml += head
-                ? greetingPreviewCard(head, group, { roleText: group.headRole })
-                : greetingPreviewCard({ role: group.headRole }, group, { roleText: group.headRole, placeholder: true });
+                ? greetingPreviewCard(head, group, { roleText: headRole })
+                : greetingPreviewCard({ role: headRole }, group, { roleText: headRole, placeholder: true });
             others.forEach(function(item) {
                 sectionHtml += greetingPreviewCard(item, group, { roleText: normalizeGreetingRole(item.role, group) });
             });
@@ -1029,7 +1052,7 @@ async function loadGreeting() {
         } else {
             if (items.length > 0) {
                 sectionHtml += '<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">';
-                items.sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); }).forEach(function(item) {
+                items.slice().sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); }).forEach(function(item) {
                     sectionHtml += greetingPreviewCard(item, group, { roleText: normalizeGreetingRole(item.role, group) });
                 });
                 sectionHtml += '</div>';
@@ -1050,27 +1073,33 @@ async function editGreeting(id) {
     const data = await dbFetch("greeting", "id=eq." + encodeURIComponent(id));
     const g = data && data.length > 0 ? data[0] : null;
     if (!g) return;
-    openGreetingModal(g.position_label || GREETING_GROUPS[0].label, g, g.role);
+    const group = greetingGroupsCache.find(function(x) { return x.id === g.group_id; }) || greetingGroupsCache[0];
+    openGreetingModal(group ? group.id : null, g, g.role);
 }
 
-async function openGreetingModal(groupLabel, greetingItem, presetRole) {
-    const group = getGreetingGroup(groupLabel);
+async function openGreetingModal(groupId, greetingItem, presetRole) {
+    const group = greetingGroupsCache.find(function(x) { return x.id === groupId; }) || greetingGroupsCache[0];
+    if (!group) { alert("組織グループが未設定です。先に「組織構造」タブでグループを作成してください。"); return; }
+    currentGreetingGroupForModal = group;
     const g = greetingItem || null;
     editingId = g ? g.id : null;
-    const selectedGroup = g && g.position_label ? g.position_label : group.label;
-    const selectedRole = g ? normalizeGreetingRole(g.role, group) : (presetRole || (group.defaultRole || (group.slots && group.slots[0]) || ""));
+    const selectedGroupId = g && g.group_id ? g.group_id : group.id;
+    const defaultRole = group.group_type === "fixed" ? (group.fixed_slots && group.fixed_slots[0])
+        : group.group_type === "branch" ? (group.head_role_label || "支部長")
+        : "県連役員";
+    const selectedRole = g ? normalizeGreetingRole(g.role, group) : (presetRole || defaultRole);
     document.getElementById("modal-title").textContent = (g ? "編集：" : "追加：") + group.label;
     document.getElementById("modal-body").innerHTML =
         '<form id="greeting-form">' +
         photoField("photo_url", "写真", g && g.photo_url ? g.photo_url : "") +
-        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">区分</label><select name="position_label" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
-        greetingGroupOptions(selectedGroup) +
+        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">区分</label><select name="group_id" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+        greetingGroupOptions(selectedGroupId) +
         '</select></div>' +
         inputField("name", "名前 ※必須", "text", g && g.name ? g.name : "", "例：山田 太郎") +
         greetingRoleField(group, selectedRole) +
         '<div id="greeting-content-wrapper" class="mb-5">' +
-        textareaField("content", "あいさつ文", g && g.content ? g.content : "", "県連会長、第一支部長、第二支部長のみ入力できます") +
-        '<p class="text-xs text-gray-400 -mt-3">県連会長、第一支部長、第二支部長のみ入力できます</p>' +
+        textareaField("content", "あいさつ文", g && g.content ? g.content : "", "代表者のみ入力できます") +
+        '<p class="text-xs text-gray-400 -mt-3">代表者のみ入力できます</p>' +
         '</div>' +
         inputField("sort_order", "表示順", "number", g && g.sort_order !== undefined ? g.sort_order : 0, "") +
         '<div class="flex gap-3 mt-4">' +
@@ -1099,14 +1128,19 @@ async function saveGreeting() {
         if (hid) hid.value = url;
     }
     // greeting テーブルに実在する列だけを送る（branch_role_type 等のUI専用フィールドは除外）
-    const GREETING_COLUMNS = ["photo_url", "position_label", "name", "role", "content", "sort_order"];
+    const GREETING_COLUMNS = ["photo_url", "group_id", "name", "role", "content", "sort_order"];
     form.querySelectorAll("input,textarea,select").forEach(function(el) {
         if (el.type === "file") return;
         if (GREETING_COLUMNS.indexOf(el.name) === -1) return;
         if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
     });
-    if (!data.role) data.role = getGreetingGroup(data.position_label || GREETING_GROUPS[0].label).defaultRole || "県連役員";
-    if (!canWriteGreetingContent(data.role)) {
+    const group = greetingGroupsCache.find(function(x) { return x.id === data.group_id; }) || currentGreetingGroupForModal;
+    if (!data.role) {
+        data.role = group.group_type === "fixed" ? (group.fixed_slots && group.fixed_slots[0])
+            : group.group_type === "branch" ? (group.head_role_label || "支部長")
+            : "県連役員";
+    }
+    if (!canWriteGreetingContent(data.role, group)) {
         delete data.content;
     }
     const ok = editingId ? await dbUpdate("greeting", editingId, data) : await dbInsert("greeting", data);
@@ -1118,6 +1152,132 @@ async function deleteGreeting(id) {
     if (!confirm("削除しますか？")) return;
     const ok = await dbDelete("greeting", id);
     if (ok) { loadGreeting(); showToast("削除しました"); }
+}
+
+// ===== 組織構造（org_officer_groups）管理 =====
+let orgGroupsCache = [];
+let editingOrgGroupId = null;
+
+async function loadOrgGroups() {
+    const el = document.getElementById("orggroups-list");
+    if (!el) return;
+    el.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>';
+    const kenrenId = await getCurrentKenrenId();
+    const groups = await dbFetch("org_officer_groups", "kenren_id=eq." + kenrenId + "&order=sort_order.asc");
+    orgGroupsCache = groups || [];
+    if (orgGroupsCache.length === 0) {
+        el.innerHTML = '<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-sitemap text-5xl mb-4 block"></i><p class="font-bold text-lg">グループがありません</p><p class="text-sm mt-1">右上の「グループを追加」から作成してください</p></div>';
+        return;
+    }
+    const typeLabels = { fixed: "固定役職", multi: "自由人数", branch: "支部" };
+    el.innerHTML = orgGroupsCache.map(function(g) {
+        const detail = g.group_type === "fixed"
+            ? '<p class="text-xs text-gray-500 mt-1">役職: ' + (g.fixed_slots || []).join(" / ") + '</p>'
+            : g.group_type === "branch"
+            ? '<p class="text-xs text-gray-500 mt-1">代表者の役職名: ' + (g.head_role_label || "支部長") + '</p>'
+            : '<p class="text-xs text-gray-500 mt-1">役職名は各メンバーが個別に入力します</p>';
+        return '<div class="bg-white rounded-2xl shadow p-5 flex flex-col sm:flex-row sm:items-center gap-3">' +
+            '<span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full self-start">' + (typeLabels[g.group_type] || g.group_type) + '</span>' +
+            '<div class="flex-1 min-w-0"><div class="font-bold text-gray-800">' + g.label + '</div>' + detail + '<div class="text-xs text-gray-400 mt-1">表示順: ' + g.sort_order + '</div></div>' +
+            '<div class="flex items-center gap-2 flex-shrink-0">' +
+            '<button onclick="openOrgGroupModal(\'' + g.id + '\')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
+            '<button onclick="deleteOrgGroup(this, \'' + g.id + '\')" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>' +
+            '</div></div>';
+    }).join("");
+}
+
+function openOrgGroupModal(id) {
+    const g = id ? orgGroupsCache.find(function(x) { return x.id === id; }) : null;
+    editingOrgGroupId = g ? g.id : null;
+    const type = g ? g.group_type : "branch";
+    document.getElementById("modal-title").textContent = (g ? "編集：" : "追加：") + "組織グループ";
+    document.getElementById("modal-body").innerHTML = orgGroupForm(g, type);
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+function orgGroupForm(g, type) {
+    g = g || {};
+    const isFixed = type === "fixed";
+    const isBranch = type === "branch";
+    const typeOptions = [["branch", "支部"], ["multi", "自由人数"], ["fixed", "固定役職（通常は追加不要です）"]];
+    const typeSelect = '<select name="group_type" onchange="onOrgGroupTypeChange(this)" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+        typeOptions.map(function(t) { return '<option value="' + t[0] + '" ' + (type === t[0] ? "selected" : "") + '>' + t[1] + '</option>'; }).join("") +
+        '</select>';
+    return '<form id="orggroup-form">' +
+        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">種類</label>' + typeSelect + '</div>' +
+        inputField("label", "表示名 ※必須", "text", g.label, "例：第三支部役員") +
+        '<div id="orggroup-branch-fields" class="' + (isBranch ? "" : "hidden") + '">' +
+        inputField("head_role_label", "代表者の役職名", "text", g.head_role_label || "支部長", "例：支部長") +
+        '</div>' +
+        '<div id="orggroup-fixed-fields" class="' + (isFixed ? "" : "hidden") + '">' +
+        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">役職一覧（カンマ区切り・表示順通り）</label>' +
+        '<input type="text" name="fixed_slots" value="' + ((g.fixed_slots || []).join(",")) + '" placeholder="県連会長,県連副会長,事務局長,財政局長" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+        '<p class="text-xs text-gray-400 mt-2">カンマ区切りで役職名を入力してください</p></div>' +
+        '</div>' +
+        inputField("sort_order", "表示順", "number", g.sort_order !== undefined ? g.sort_order : orgGroupsCache.length + 1, "") +
+        '<div class="flex gap-3 mt-4">' +
+        '<button type="button" onclick="saveOrgGroup()" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600"><i class="fa-solid fa-floppy-disk mr-2"></i>保存する</button>' +
+        '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+        '</div></form>';
+}
+
+function onOrgGroupTypeChange(sel) {
+    const type = sel.value;
+    document.getElementById("orggroup-branch-fields").classList.toggle("hidden", type !== "branch");
+    document.getElementById("orggroup-fixed-fields").classList.toggle("hidden", type !== "fixed");
+}
+
+async function saveOrgGroup() {
+    const form = document.getElementById("orggroup-form");
+    const data = {};
+    form.querySelectorAll("input,select").forEach(function(el) {
+        if (el.name === "fixed_slots") return;
+        if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
+    });
+    if (data.group_type === "fixed") {
+        const raw = (form.querySelector('[name="fixed_slots"]') || {}).value || "";
+        data.fixed_slots = raw.split(",").map(function(s) { return s.trim(); }).filter(Boolean);
+        data.head_role_label = null;
+    } else if (data.group_type === "branch") {
+        data.fixed_slots = null;
+    } else {
+        data.fixed_slots = null;
+        data.head_role_label = null;
+    }
+    const ok = editingOrgGroupId ? await dbUpdate("org_officer_groups", editingOrgGroupId, data) : await dbInsert("org_officer_groups", data);
+    if (ok) { closeModal(); loadOrgGroups(); showToast("保存しました"); }
+    else alert("保存に失敗しました。");
+}
+
+// 2段階確認（1回目クリックで「本当に削除しますか？」に変化し、10秒以内の再クリックで実行。復元系には使わない）
+function confirmStepDelete(btn, onConfirm) {
+    if (btn.dataset.confirming === "1") {
+        clearTimeout(Number(btn.dataset.timer));
+        btn.dataset.confirming = "";
+        btn.disabled = true;
+        onConfirm();
+        return;
+    }
+    btn.dataset.confirming = "1";
+    btn.dataset.original = btn.innerHTML;
+    btn.innerHTML = "本当に削除しますか？";
+    btn.classList.add("bg-red-500", "text-white");
+    btn.classList.remove("bg-red-50", "text-red-500");
+    const timer = setTimeout(function() {
+        btn.dataset.confirming = "";
+        btn.innerHTML = btn.dataset.original;
+        btn.classList.remove("bg-red-500", "text-white");
+        btn.classList.add("bg-red-50", "text-red-500");
+    }, 10000);
+    btn.dataset.timer = String(timer);
+}
+
+function deleteOrgGroup(btn, id) {
+    confirmStepDelete(btn, async function() {
+        const ok = await dbDelete("org_officer_groups", id);
+        if (ok) { showToast("削除しました"); loadOrgGroups(); }
+        else { btn.disabled = false; }
+    });
 }
 
 async function loadSettings() {

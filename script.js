@@ -22,85 +22,50 @@ function formatVoteDateJa(dateValue) {
     return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-const OFFICER_GROUPS = [
-    {
-        label: "県連4役",
-        columns: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4",
-        type: "fixed",
-        slots: ["県連会長", "県連副会長", "事務局長", "財政局長"],
-        note: "4人の固定役職を順番どおりに表示します"
-    },
-    {
-        label: "県連役員",
-        columns: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4",
-        type: "multi",
-        note: "複数名を順番に表示します"
-    },
-    {
-        label: "第一支部役員",
-        columns: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4",
-        type: "branch",
-        headRole: "支部長",
-        note: "支部長を先頭に、他の役員を順番に表示します"
-    },
-    {
-        label: "第二支部役員",
-        columns: "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4",
-        type: "branch",
-        headRole: "支部長",
-        note: "支部長を先頭に、他の役員を順番に表示します"
-    }
-];
-
-function getOfficerGroup(label) {
-    return OFFICER_GROUPS.find(group => group.label === label) || OFFICER_GROUPS[0];
+const KENREN_SLUG = "kochi";
+let CURRENT_KENREN_ID = null;
+async function getKenrenId() {
+    if (CURRENT_KENREN_ID) return CURRENT_KENREN_ID;
+    const rows = await fetchDB("kenren", "slug=eq." + KENREN_SLUG + "&select=id&limit=1");
+    CURRENT_KENREN_ID = (rows && rows[0] && rows[0].id) || null;
+    return CURRENT_KENREN_ID;
 }
 
+// 役員の役職名を、所属グループ（org_officer_groups）の定義に沿って正規化する
 function normalizeOfficerRole(role, group) {
     const text = (role || "").trim();
-    if (group.type === "fixed") return text || "";
-    if (group.type === "branch") {
-        if (text.includes("支部長")) return group.headRole;
-        return text || "役員";
+    if (group.group_type === "fixed") return text;
+    if (group.group_type === "branch") {
+        const headRole = group.head_role_label || "支部長";
+        return text === headRole ? headRole : (text || "役員");
     }
-    if (text === "県連役員") return text;
     return text || "県連役員";
 }
 
-function renderOfficerCard(g, options = {}) {
-    const roleText = options.roleText !== undefined ? options.roleText : (g.role || "");
-    const empty = options.empty === true;
-    return `
-        <article class="bg-white rounded-xl shadow-sm border border-orange-100 p-3 text-center hover:shadow-md transition ${empty ? "border-dashed bg-gray-50" : ""}">
-            <img src="${g.photo_url || "https://placehold.co/200x200/fdf2e8/f97316?text=写真"}"
-                 alt="${g.name || ""}" class="w-40 h-40 rounded-full object-cover mx-auto mb-6 border-4 border-orange-100 shadow-sm ${empty ? "opacity-40" : ""}">
-            <p class="text-[11px] font-bold text-orange-500 mb-1">${roleText}</p>
-            <h3 class="text-sm sm:text-base font-black text-gray-900 leading-tight mb-1">${g.name || (empty ? "未登録" : "")}</h3>
-            ${g.content ? `<p class="text-[11px] text-gray-600 leading-relaxed text-left">${g.content}</p>` : empty ? `<p class="text-[11px] text-gray-400">登録されていません</p>` : ""}
-        </article>
-    `;
-}
+// 役員紹介の要約タイル（県連会長＋各支部代表）を、組織構造マスターから動的に組み立てる
+function renderOfficerSummaryTile(officers, groups) {
+    const picks = [];
+    const fixedGroup = (groups || []).find(function(g) { return g.group_type === "fixed"; });
+    if (fixedGroup && fixedGroup.fixed_slots && fixedGroup.fixed_slots.length > 0) {
+        const chairSlot = fixedGroup.fixed_slots[0];
+        const item = (officers || []).find(function(o) {
+            return o.group_id === fixedGroup.id && normalizeOfficerRole(o.role, fixedGroup) === chairSlot;
+        }) || null;
+        picks.push({ label: chairSlot, item: item });
+    }
+    (groups || []).filter(function(g) { return g.group_type === "branch"; })
+        .sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); })
+        .forEach(function(g) {
+            const headRole = g.head_role_label || "支部長";
+            const item = (officers || []).find(function(o) {
+                return o.group_id === g.id && normalizeOfficerRole(o.role, g) === headRole;
+            }) || null;
+            picks.push({ label: g.label, item: item });
+        });
 
-function findOfficer(data, groupLabel, roleIncludes) {
-    const roleText = (roleIncludes || "").trim();
-    return (data || []).find(function(item) {
-        const group = (item.position_label || "県連役員") === groupLabel;
-        if (!group) return false;
-        const role = (item.role || "").trim();
-        if (!roleText) return true;
-        return role.indexOf(roleText) >= 0;
-    }) || null;
-}
-
-function renderOfficerSummaryTile(data) {
-    const picks = [
-        { label: "県連会長",   item: findOfficer(data, "県連4役",    "県連会長") },
-        { label: "第一支部長", item: findOfficer(data, "第一支部役員", "支部長") },
-        { label: "第二支部長", item: findOfficer(data, "第二支部役員", "支部長") }
-    ];
     return `
         <section class="bg-white rounded-2xl border border-orange-200 shadow p-4 sm:p-6">
-            <div class="grid grid-cols-3 gap-2 sm:gap-4">
+            <div class="grid gap-2 sm:gap-4" style="grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));">
                 ${picks.map(function(p) {
                     const image = p.item && p.item.photo_url ? p.item.photo_url : "https://placehold.co/120x120/f3f4f6/9ca3af?text=未登録";
                     const name = p.item && p.item.name ? p.item.name : "未登録";
@@ -119,65 +84,10 @@ function renderOfficerSummaryTile(data) {
     `;
 }
 
-function renderOfficerSection(group, data) {
-    const items = (data || []).filter(item => (item.position_label || "県連役員") === group.label);
-    if (group.type === "fixed") {
-        const byRole = new Map();
-        items.forEach(item => byRole.set(normalizeOfficerRole(item.role, group), item));
-        return `
-            <section class="space-y-4">
-                <div class="flex items-center justify-center gap-3">
-                    <div class="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
-                    <h3 class="text-base sm:text-lg font-black text-gray-800 whitespace-nowrap">${group.label}</h3>
-                    <div class="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
-                </div>
-                <div class="grid ${group.columns} gap-4 sm:gap-5">
-                    ${group.slots.map(function(slot) {
-                        const item = byRole.get(slot);
-                        return item ? renderOfficerCard(item, { roleText: slot }) : renderOfficerCard({ role: slot, name: "未登録" }, { roleText: slot, empty: true });
-                    }).join("")}
-                </div>
-            </section>
-        `;
-    }
-
-    if (group.type === "branch") {
-        const head = items.find(item => normalizeOfficerRole(item.role, group) === group.headRole) || null;
-        const others = items.filter(item => normalizeOfficerRole(item.role, group) !== group.headRole)
-            .sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
-        return `
-            <section class="space-y-4">
-                <div class="flex items-center justify-center gap-3">
-                    <div class="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
-                    <h3 class="text-base sm:text-lg font-black text-gray-800 whitespace-nowrap">${group.label}</h3>
-                    <div class="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                    ${head ? renderOfficerCard(head, { roleText: group.headRole }) : renderOfficerCard({ role: group.headRole, name: "未登録" }, { roleText: group.headRole, empty: true })}
-                    ${others.map(function(item) { return renderOfficerCard(item, { roleText: normalizeOfficerRole(item.role, group) }); }).join("")}
-                </div>
-            </section>
-        `;
-    }
-
-    const sortedItems = items.slice().sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
-    return `
-        <section class="space-y-4">
-            <div class="flex items-center justify-center gap-3">
-                <div class="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
-                <h3 class="text-base sm:text-lg font-black text-gray-800 whitespace-nowrap">${group.label}</h3>
-                <div class="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
-            </div>
-            <div class="grid ${group.columns} gap-4 sm:gap-5">
-                ${sortedItems.map(function(item) { return renderOfficerCard(item, { roleText: normalizeOfficerRole(item.role, group) }); }).join("")}
-            </div>
-        </section>
-    `;
-}
-
 // ヒーロー画像を表示
 async function loadHeroImage() {
-    const data = await fetchDB("settings", "key=eq.hero_image");
+    const kenrenId = await getKenrenId();
+    const data = await fetchDB("settings", "key=eq.hero_image&kenren_id=eq." + kenrenId);
     if (!data || data.length === 0) return;
     const url = data[0].value;
     if (!url) return;
@@ -185,22 +95,22 @@ async function loadHeroImage() {
     if (hero) hero.style.backgroundImage = "url(" + url + ")";
 }
 
-// 役員組織図を表示
+// 役員紹介を表示（組織構造マスターに沿って県連会長＋各支部代表を表示）
 async function loadGreeting() {
-    const data = await fetchDB("greeting", "order=sort_order.asc");
     const container = document.getElementById("greeting-container");
     if (!container) return;
-    const officers = data || [];
-    const detailHtml = OFFICER_GROUPS.map(function(group) {
-        return renderOfficerSection(group, officers);
-    }).join('<div class="h-6"></div>');
-
-    container.innerHTML = renderOfficerSummaryTile(officers);
+    const kenrenId = await getKenrenId();
+    const [groups, officers] = await Promise.all([
+        fetchDB("org_officer_groups", "kenren_id=eq." + kenrenId + "&order=sort_order.asc"),
+        fetchDB("greeting", "kenren_id=eq." + kenrenId + "&order=sort_order.asc")
+    ]);
+    container.innerHTML = renderOfficerSummaryTile(officers || [], groups || []);
 }
 
 // 議員情報を表示
 async function loadMembers() {
-    const members = await fetchDB("members", "order=sort_order.asc");
+    const kenrenId = await getKenrenId();
+    const members = await fetchDB("members", "kenren_id=eq." + kenrenId + "&order=sort_order.asc");
     const membersContainer = document.getElementById("members-container");
     const candidatesSection = document.getElementById("candidates-section");
     const candidatesContainer = document.getElementById("candidates-container");
@@ -327,7 +237,8 @@ function formatActivityDate(dateStr) {
 }
 
 async function loadActivities() {
-    const activities = await fetchDB("activities", "is_published=eq.true&order=activity_date.desc&limit=21");
+    const kenrenId = await getKenrenId();
+    const activities = await fetchDB("activities", "kenren_id=eq." + kenrenId + "&is_published=eq.true&order=activity_date.desc&limit=21");
     const section = document.getElementById("activity");
     const container = document.getElementById("activities-container");
     if (!container || !section) return;
@@ -400,7 +311,8 @@ let allAnnouncements = [];
 
 async function loadAnnouncements() {
     const today = new Date().toISOString().slice(0, 10);
-    const data = await fetchDB("announcements", "is_published=eq.true&end_date=gte." + today + "&order=published_date.desc");
+    const kenrenId = await getKenrenId();
+    const data = await fetchDB("announcements", "kenren_id=eq." + kenrenId + "&is_published=eq.true&end_date=gte." + today + "&order=published_date.desc");
     const section = document.getElementById("announcements-section");
     const container = document.getElementById("announcements-container");
     if (!section || !container) return;
@@ -479,7 +391,8 @@ function toggleNewsList(e) {
 
 // お知らせ・イベントを表示（統合）
 async function loadNews() {
-    const newsList = await fetchDB("news", "is_published=eq.true&order=published_date.asc&limit=200");
+    const kenrenId = await getKenrenId();
+    const newsList = await fetchDB("news", "kenren_id=eq." + kenrenId + "&is_published=eq.true&order=published_date.asc&limit=200");
     const container = document.getElementById("news-container");
     if (!container) return;
     if (!newsList || newsList.length === 0) {
