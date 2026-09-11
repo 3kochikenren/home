@@ -87,6 +87,9 @@
                     <button onclick="showSection('orggroups')" id="nav-orggroups" data-nav-section="orggroups" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-sitemap w-5 text-center"></i><span>組織構造</span>
                     </button>
+                    <button onclick="showSection('staff')" id="nav-staff" data-nav-section="staff" class="kenren-admin-only hidden nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-user-group w-5 text-center"></i><span>スタッフ管理</span>
+                    </button>
                     <button onclick="showSection('members')" id="nav-members" data-nav-section="members" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-users w-5 text-center"></i><span>議員情報</span>
                     </button>
@@ -112,6 +115,7 @@
                     <button onclick="showSection('announcements')" data-nav-section="announcements" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">お知らせ情報</button>
                     <button onclick="showSection('greeting')" data-nav-section="greeting" class="nav-btn active px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-orange-200 bg-white">役員</button>
                     <button onclick="showSection('orggroups')" data-nav-section="orggroups" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">組織構造</button>
+                    <button onclick="showSection('staff')" data-nav-section="staff" class="kenren-admin-only hidden nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">スタッフ管理</button>
                     <button onclick="showSection('members')" data-nav-section="members" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">議員情報</button>
                     <button onclick="showSection('activities')" data-nav-section="activities" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">活動報告</button>
                     <button onclick="showSection('tabloid')" data-nav-section="tabloid" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">タブロイド判</button>
@@ -192,6 +196,18 @@
                     <button onclick="openOrgGroupModal(null)" class="viewer-hide bg-orange-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-orange-600 whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i>グループを追加</button>
                 </div>
                 <div id="orggroups-list" class="space-y-4"></div>
+            </section>
+
+            <section id="section-staff" class="admin-section hidden">
+                <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-user-group mr-2 text-orange-500"></i>スタッフ管理</h2>
+                        <p class="text-gray-500 text-sm mt-1">自分の県連の管理画面に入れるアカウントを管理します</p>
+                    </div>
+                    <button onclick="openStaffAssignModal()" class="bg-orange-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-orange-600 whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i>権限を付与</button>
+                </div>
+                <p class="text-xs text-gray-400 mb-4">アカウント自体（メールアドレス・パスワード）は、先にSupabaseダッシュボードの Authentication → Users で作成しておいてください。ここではそのアカウントへの役割（ロール）の割り当てのみ行います。</p>
+                <div id="staff-list" class="bg-white rounded-2xl shadow p-6"></div>
             </section>
 
             <section id="section-members" class="admin-section hidden">
@@ -499,6 +515,7 @@ async function doLogout() {
 // 自分の admin_users 行（ロール・所属県連）を取得する。権限が無ければ null。
 let CURRENT_ADMIN_ROLE = null;
 let CURRENT_ADMIN_KENREN_ID = null;
+let CURRENT_ADMIN_ID = null;
 async function loadCurrentAdminProfile() {
     const session = await getValidSession();
     if (!session) return null;
@@ -506,6 +523,7 @@ async function loadCurrentAdminProfile() {
     const profile = rows && rows[0] ? rows[0] : null;
     CURRENT_ADMIN_ROLE = profile ? profile.role : null;
     CURRENT_ADMIN_KENREN_ID = profile ? profile.kenren_id : null;
+    CURRENT_ADMIN_ID = profile ? profile.id : null;
     return profile;
 }
 
@@ -526,6 +544,9 @@ function applyRoleUI() {
     });
     document.querySelectorAll(".super-admin-only").forEach(function(el) {
         el.classList.toggle("hidden", CURRENT_ADMIN_ROLE !== "super_admin");
+    });
+    document.querySelectorAll(".kenren-admin-only").forEach(function(el) {
+        el.classList.toggle("hidden", CURRENT_ADMIN_ROLE !== "kenren_admin");
     });
 }
 
@@ -1106,6 +1127,7 @@ async function loadSection(name) {
     if (name === "hometiles") { loadHomeTilesAdmin(); return; }
     if (name === "greeting") { loadGreeting(); return; }
     if (name === "orggroups") { loadOrgGroups(); return; }
+    if (name === "staff") { loadStaffAdmin(); return; }
     if (name === "members") { loadMembersAdmin(); return; }
     if (name === "tabloid") { switchTabloidTab("facilities"); return; }
     if (name === "system") { loadSystemAdmin(); return; }
@@ -1741,6 +1763,62 @@ function removeAdminUser(btn, id) {
     confirmStepDelete(btn, async function() {
         const ok = await dbDelete("admin_users", id);
         if (ok) { showToast("削除しました"); loadAdminUsersList(); }
+        else { btn.disabled = false; }
+    });
+}
+
+// ===== スタッフ管理（kenren_admin専用: 自分の県連のアカウント管理） =====
+async function loadStaffAdmin() {
+    const el = document.getElementById("staff-list");
+    if (!el) return;
+    el.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+    const res = await callRpc("kenren_admin_list_users", {});
+    if (!res.ok) { el.innerHTML = '<p class="text-center text-red-400 py-6">' + res.error + '</p>'; return; }
+    const rows = res.data || [];
+    const roleLabels = { kenren_admin: "県連管理者", viewer: "閲覧専用" };
+    if (rows.length === 0) { el.innerHTML = '<p class="text-center text-gray-400 py-6">スタッフが登録されていません</p>'; return; }
+    el.innerHTML = '<div class="divide-y divide-gray-100">' + rows.map(function(u) {
+        const isSelf = u.id === CURRENT_ADMIN_ID;
+        return '<div class="py-3 flex items-center justify-between gap-3">' +
+            '<div><span class="font-bold text-gray-800">' + u.email + '</span>' +
+            '<span class="text-xs bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-full ml-2">' + (roleLabels[u.role] || u.role) + '</span>' +
+            (isSelf ? '<span class="text-xs text-gray-400 ml-2">（自分）</span>' : '') + '</div>' +
+            (isSelf ? '' : '<button onclick="removeStaffUser(this, \'' + u.id + '\')" class="bg-red-50 text-red-500 px-3 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash"></i></button>') +
+            '</div>';
+    }).join("") + '</div>';
+}
+
+function openStaffAssignModal() {
+    document.getElementById("modal-title").textContent = "権限を付与";
+    document.getElementById("modal-body").innerHTML =
+        '<form id="staff-assign-form">' +
+        inputField("email", "メールアドレス ※必須（先にダッシュボードでアカウント作成済みであること）", "email", "", "example@mail.com") +
+        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">ロール</label>' +
+        '<select name="role" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+        '<option value="kenren_admin">県連管理者（kenren_admin）</option>' +
+        '<option value="viewer">閲覧専用（viewer）</option>' +
+        '</select></div>' +
+        '<div class="flex gap-3 mt-4">' +
+        '<button type="button" onclick="saveStaffAssign()" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">付与する</button>' +
+        '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+        '</div></form>';
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+async function saveStaffAssign() {
+    const form = document.getElementById("staff-assign-form");
+    const email = form.querySelector('[name="email"]').value.trim();
+    const role = form.querySelector('[name="role"]').value;
+    if (!email) { alert("メールアドレスを入力してください。"); return; }
+    const res = await callRpc("kenren_admin_assign_role", { target_email: email, target_role: role });
+    if (res.ok) { closeModal(); loadStaffAdmin(); showToast("権限を付与しました"); }
+    else alert(res.error);
+}
+
+function removeStaffUser(btn, id) {
+    confirmStepDelete(btn, async function() {
+        const ok = await dbDelete("admin_users", id);
+        if (ok) { showToast("削除しました"); loadStaffAdmin(); }
         else { btn.disabled = false; }
     });
 }
