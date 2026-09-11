@@ -48,6 +48,7 @@
                 </div>
                 <span class="font-bold text-gray-800 text-lg">管理画面｜参政党 高知県連</span>
                 <span id="admin-role-badge" class="hidden text-xs font-bold px-3 py-1 rounded-full"></span>
+                <select id="kenren-switcher" class="hidden text-sm border-2 border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-orange-400" onchange="switchKenren(this.value)"></select>
             </div>
             <div class="flex items-center gap-6">
                 <a href="index.html" target="_blank" class="text-sm text-orange-500 hover:underline font-medium">
@@ -468,8 +469,26 @@ async function enterAdminScreenIfAuthorized() {
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("admin-screen").classList.remove("hidden");
     applyRoleUI();
+    await setupKenrenSwitcher();
     loadSection("greeting");
     return true;
+}
+
+// super_admin のみ、管理対象の県連を切り替えるドロップダウンを表示する。
+async function setupKenrenSwitcher() {
+    const sel = document.getElementById("kenren-switcher");
+    if (!sel) return;
+    if (CURRENT_ADMIN_ROLE !== "super_admin") { sel.classList.add("hidden"); return; }
+    const rows = await dbFetch("kenren", "order=prefecture_name.asc&select=slug,display_name");
+    sel.innerHTML = (rows || []).map(function(k) {
+        return '<option value="' + k.slug + '" ' + (k.slug === KENREN_SLUG ? "selected" : "") + '>' + k.display_name + '</option>';
+    }).join("");
+    sel.classList.remove("hidden");
+}
+function switchKenren(slug) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("k", slug);
+    window.location.href = url.toString();
 }
 document.addEventListener("keydown", function(e) {
     if (e.key === "Enter" && !document.getElementById("login-screen").classList.contains("hidden")) doLogin();
@@ -547,11 +566,17 @@ async function dbFetch(table, q) {
         return Array.isArray(d) ? d : [];
     } catch(e) { return []; }
 }
-const KENREN_SLUG = "kochi";
+// 県連の切り替えはURLの ?k=<スラッグ> で行う（例: admin.html?k=tokyo）。
+// 省略時は高知（既存のURLをそのまま使い続けられるようにするため）。
+const DEFAULT_KENREN_SLUG = "kochi";
+function resolveKenrenSlug() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("k") || DEFAULT_KENREN_SLUG;
+}
+const KENREN_SLUG = resolveKenrenSlug();
 let cachedKenrenId = null;
-// kenren_admin/viewer は自分の所属県連(admin_users.kenren_id)を使う。
-// super_admin は kenren_id が無いため、今のところ高知をデフォルトにする
-// （複数県連の切り替えUIは未実装。将来のフェーズで対応予定）。
+// kenren_admin/viewer は自分の所属県連(admin_users.kenren_id)を使う（URLのkを無視）。
+// super_admin は kenren_id を持たないため、URLの ?k= で管理対象の県連を選ぶ。
 async function getCurrentKenrenId() {
     if (CURRENT_ADMIN_KENREN_ID) return CURRENT_ADMIN_KENREN_ID;
     if (cachedKenrenId) return cachedKenrenId;

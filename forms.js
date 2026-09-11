@@ -1,12 +1,19 @@
 const SUPABASE_URL = "https://yaimsonvxpujfupstpsd.supabase.co";
 const SUPABASE_KEY = "sb_publishable_vsx3v5xQggFsT-btyToaKg_OF2CzV7o";
 const SUPABASE_ANON_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaW1zb252eHB1amZ1cHN0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODEwMjksImV4cCI6MjA5NTA1NzAyOX0.2PAKyBs8z44Ft4TXigKAsRfh6zEQwdVl2KNRZojxwzk";
-const KENREN_SLUG = "kochi";
+// 県連の切り替えはURLの ?k=<スラッグ> で行う（例: ?k=tokyo）。
+// 省略時は高知（既存のURLをそのまま使い続けられるようにするため）。
+const DEFAULT_KENREN_SLUG = "kochi";
+function resolveKenrenSlug() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("k") || DEFAULT_KENREN_SLUG;
+}
+const KENREN_SLUG = resolveKenrenSlug();
 
 let cachedKenrenId = null;
 async function getKenrenId() {
     if (cachedKenrenId) return cachedKenrenId;
-    const url = `${SUPABASE_URL}/rest/v1/kenren?slug=eq.${KENREN_SLUG}&select=id&limit=1`;
+    const url = `${SUPABASE_URL}/rest/v1/kenren?slug=eq.${encodeURIComponent(KENREN_SLUG)}&select=id&limit=1`;
     const res = await fetch(url, { headers: { apikey: SUPABASE_KEY } });
     if (!res.ok) return null;
     const rows = await res.json();

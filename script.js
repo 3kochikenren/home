@@ -8,7 +8,9 @@ async function fetchDB(table, query = "") {
             "Authorization": `Bearer ${SUPABASE_KEY}`
         }
     });
-    return res.json();
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
 }
 
 function formatVoteDateJa(dateValue) {
@@ -22,11 +24,18 @@ function formatVoteDateJa(dateValue) {
     return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-const KENREN_SLUG = "kochi";
+// 県連の切り替えはURLの ?k=<スラッグ> で行う（例: ?k=tokyo）。
+// 省略時は高知（既存のURLをそのまま使い続けられるようにするため）。
+const DEFAULT_KENREN_SLUG = "kochi";
+function resolveKenrenSlug() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("k") || DEFAULT_KENREN_SLUG;
+}
+const KENREN_SLUG = resolveKenrenSlug();
 let CURRENT_KENREN_ID = null;
 async function getKenrenId() {
     if (CURRENT_KENREN_ID) return CURRENT_KENREN_ID;
-    const rows = await fetchDB("kenren", "slug=eq." + KENREN_SLUG + "&select=id&limit=1");
+    const rows = await fetchDB("kenren", "slug=eq." + encodeURIComponent(KENREN_SLUG) + "&select=id&limit=1");
     CURRENT_KENREN_ID = (rows && rows[0] && rows[0].id) || null;
     return CURRENT_KENREN_ID;
 }
