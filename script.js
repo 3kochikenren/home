@@ -23,10 +23,13 @@ function formatVoteDateJa(dateValue) {
 }
 
 let CURRENT_KENREN_ID = null;
+let CURRENT_KENREN_PREFECTURE_NAME = null;
 async function getKenrenId() {
     if (CURRENT_KENREN_ID) return CURRENT_KENREN_ID;
-    const rows = await fetchDB("kenren", "slug=eq." + encodeURIComponent(KENREN_SLUG) + "&select=id&limit=1");
-    CURRENT_KENREN_ID = (rows && rows[0] && rows[0].id) || null;
+    const rows = await fetchDB("kenren", "slug=eq." + encodeURIComponent(KENREN_SLUG) + "&select=id,prefecture_name&limit=1");
+    const row = rows && rows[0];
+    CURRENT_KENREN_ID = row ? row.id : null;
+    CURRENT_KENREN_PREFECTURE_NAME = row ? row.prefecture_name : null;
     return CURRENT_KENREN_ID;
 }
 
@@ -547,11 +550,12 @@ const TILE_SECTIONS = {
         </section>`;
     },
     members: function() {
+        const membersHeading = (CURRENT_KENREN_PREFECTURE_NAME || "") + "所属議員";
         return `
         <section id="policy" class="py-20 bg-white">
             <div class="container mx-auto px-4 max-w-4xl">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl font-bold section-title">高知県所属議員</h2>
+                    <h2 class="text-3xl font-bold section-title">${membersHeading}</h2>
                 </div>
                 <div id="members-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     <p class="md:col-span-2 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>
