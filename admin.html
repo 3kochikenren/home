@@ -72,6 +72,9 @@
                     <button onclick="showSection('settings')" id="nav-settings" data-nav-section="settings" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-sliders w-5 text-center"></i><span>サイト設定</span>
                     </button>
+                    <button onclick="showSection('hometiles')" id="nav-hometiles" data-nav-section="hometiles" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-table-cells-large w-5 text-center"></i><span>ホーム画面構成</span>
+                    </button>
                     <button onclick="showSection('news')" id="nav-news" data-nav-section="news" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-calendar-days w-5 text-center"></i><span>イベント情報</span>
                     </button>
@@ -101,6 +104,7 @@
             <div class="md:hidden mb-4 -mx-2 px-2 overflow-x-auto">
                 <div class="flex gap-2 min-w-max pb-1">
                     <button onclick="showSection('settings')" data-nav-section="settings" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">サイト設定</button>
+                    <button onclick="showSection('hometiles')" data-nav-section="hometiles" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">ホーム画面構成</button>
                     <button onclick="showSection('news')" data-nav-section="news" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">イベント情報</button>
                     <button onclick="showSection('announcements')" data-nav-section="announcements" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">お知らせ情報</button>
                     <button onclick="showSection('greeting')" data-nav-section="greeting" class="nav-btn active px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-orange-200 bg-white">役員</button>
@@ -145,6 +149,17 @@
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <section id="section-hometiles" class="admin-section hidden">
+                <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-table-cells-large mr-2 text-orange-500"></i>ホーム画面構成</h2>
+                        <p class="text-gray-500 text-sm mt-1">トップページに表示するコンポーネント（タイル）の選択・表示順・表示/非表示を設定します</p>
+                    </div>
+                    <button onclick="openAddTileModal()" class="viewer-hide bg-orange-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-orange-600 whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i>タイルを追加</button>
+                </div>
+                <div id="hometiles-list" class="space-y-3"></div>
             </section>
 
             <section id="section-greeting" class="admin-section">
@@ -1036,6 +1051,7 @@ async function loadPlacementMatrix() {
 
 async function loadSection(name) {
     if (name === "settings") { loadSettings(); return; }
+    if (name === "hometiles") { loadHomeTilesAdmin(); return; }
     if (name === "greeting") { loadGreeting(); return; }
     if (name === "orggroups") { loadOrgGroups(); return; }
     if (name === "members") { loadMembersAdmin(); return; }
@@ -1358,6 +1374,86 @@ function deleteOrgGroup(btn, id) {
         if (ok) { showToast("削除しました"); loadOrgGroups(); }
         else { btn.disabled = false; }
     });
+}
+
+// ===== ホーム画面構成（kenren_home_tiles）管理 =====
+let tileTypesCache = [];
+let homeTilesCache = [];
+
+async function loadHomeTilesAdmin() {
+    const el = document.getElementById("hometiles-list");
+    if (!el) return;
+    el.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>';
+    const kenrenId = await getCurrentKenrenId();
+    const [types, tiles] = await Promise.all([
+        dbFetch("tile_types", "order=sort_order.asc"),
+        dbFetch("kenren_home_tiles", "kenren_id=eq." + kenrenId + "&order=sort_order.asc")
+    ]);
+    tileTypesCache = types || [];
+    homeTilesCache = tiles || [];
+    if (homeTilesCache.length === 0) {
+        el.innerHTML = '<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-table-cells-large text-5xl mb-4 block"></i><p class="font-bold text-lg">タイルがまだありません</p><p class="text-sm mt-1">右上の「タイルを追加」から選択してください</p></div>';
+        return;
+    }
+    const typeById = {};
+    tileTypesCache.forEach(function(t) { typeById[t.id] = t; });
+    el.innerHTML = homeTilesCache.map(function(tile) {
+        const type = typeById[tile.tile_type] || { label: tile.tile_type, icon: "fa-square" };
+        return '<div class="bg-white rounded-2xl shadow p-4 flex flex-col sm:flex-row sm:items-center gap-3">' +
+            '<div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-500 flex-shrink-0"><i class="fa-solid ' + (type.icon || "fa-square") + '"></i></div>' +
+            '<div class="flex-1 min-w-0"><div class="font-bold text-gray-800">' + type.label + '</div>' + (type.description ? '<div class="text-xs text-gray-400 mt-0.5">' + type.description + '</div>' : '') + '</div>' +
+            '<div class="viewer-hide flex items-center gap-4 flex-shrink-0">' +
+            '<label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" ' + (tile.is_visible ? "checked" : "") + ' onchange="toggleTileVisible(\'' + tile.id + '\', this.checked)" class="w-5 h-5 accent-orange-500">表示</label>' +
+            '<label class="flex items-center gap-2 text-sm text-gray-600"><span class="whitespace-nowrap">表示順</span><input type="number" value="' + tile.sort_order + '" onchange="updateTileSortOrder(\'' + tile.id + '\', this.value)" class="w-16 border-2 border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-orange-400"></label>' +
+            '<button onclick="deleteHomeTile(this, \'' + tile.id + '\')" class="bg-red-50 text-red-500 px-3 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash"></i></button>' +
+            '</div></div>';
+    }).join("");
+    applyRoleUI();
+}
+
+async function toggleTileVisible(id, visible) {
+    const ok = await dbUpdate("kenren_home_tiles", id, { is_visible: visible });
+    if (ok) showToast("更新しました");
+    else loadHomeTilesAdmin();
+}
+
+async function updateTileSortOrder(id, value) {
+    const ok = await dbUpdate("kenren_home_tiles", id, { sort_order: Number(value) || 0 });
+    if (ok) { showToast("更新しました"); loadHomeTilesAdmin(); }
+}
+
+function deleteHomeTile(btn, id) {
+    confirmStepDelete(btn, async function() {
+        const ok = await dbDelete("kenren_home_tiles", id);
+        if (ok) { showToast("削除しました"); loadHomeTilesAdmin(); }
+        else { btn.disabled = false; }
+    });
+}
+
+function openAddTileModal() {
+    const usedTypes = homeTilesCache.map(function(t) { return t.tile_type; });
+    const available = tileTypesCache.filter(function(t) { return t.is_active; });
+    if (available.length === 0) { alert("追加できるタイル種類がありません。"); return; }
+    document.getElementById("modal-title").textContent = "タイルを追加";
+    document.getElementById("modal-body").innerHTML =
+        '<div class="space-y-3">' +
+        available.map(function(t) {
+            const already = usedTypes.indexOf(t.id) >= 0;
+            return '<button onclick="addTile(\'' + t.id + '\')" class="w-full text-left bg-gray-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-300 rounded-xl p-4 flex items-center gap-3 transition">' +
+                '<div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-500 flex-shrink-0"><i class="fa-solid ' + (t.icon || "fa-square") + '"></i></div>' +
+                '<div class="flex-1"><div class="font-bold text-gray-800">' + t.label + (already ? '　<span class="text-xs font-normal text-gray-400">（追加済み・複数追加可）</span>' : '') + '</div>' +
+                (t.description ? '<div class="text-xs text-gray-500 mt-0.5">' + t.description + '</div>' : '') + '</div>' +
+                '</button>';
+        }).join("") +
+        '</div>';
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+async function addTile(tileType) {
+    const maxOrder = homeTilesCache.reduce(function(max, t) { return Math.max(max, t.sort_order); }, 0);
+    const ok = await dbInsert("kenren_home_tiles", { tile_type: tileType, sort_order: maxOrder + 1, is_visible: true });
+    if (ok) { closeModal(); loadHomeTilesAdmin(); showToast("追加しました"); }
+    else alert("追加に失敗しました。");
 }
 
 async function loadSettings() {

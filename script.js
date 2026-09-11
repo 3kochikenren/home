@@ -51,45 +51,54 @@ function normalizeOfficerRole(role, group) {
     return text || "県連役員";
 }
 
-// 役員紹介の要約タイル（県連会長＋各支部代表）を、組織構造マスターから動的に組み立てる
-function renderOfficerSummaryTile(officers, groups) {
-    const picks = [];
-    const fixedGroup = (groups || []).find(function(g) { return g.group_type === "fixed"; });
-    if (fixedGroup && fixedGroup.fixed_slots && fixedGroup.fixed_slots.length > 0) {
-        const chairSlot = fixedGroup.fixed_slots[0];
-        const item = (officers || []).find(function(o) {
-            return o.group_id === fixedGroup.id && normalizeOfficerRole(o.role, fixedGroup) === chairSlot;
-        }) || null;
-        picks.push({ label: chairSlot, item: item });
-    }
-    (groups || []).filter(function(g) { return g.group_type === "branch"; })
-        .sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); })
-        .forEach(function(g) {
-            const headRole = g.head_role_label || "支部長";
-            const item = (officers || []).find(function(o) {
-                return o.group_id === g.id && normalizeOfficerRole(o.role, g) === headRole;
-            }) || null;
-            picks.push({ label: g.label, item: item });
-        });
-
+// 役員1名分のカード（県連役員タイル・支部役員タイルで共通利用）
+function renderPublicOfficerCard(item, roleText, empty) {
+    const photo = (!empty && item && item.photo_url) ? item.photo_url : "https://placehold.co/200x200/fdf2e8/f97316?text=写真";
+    const name = (!empty && item && item.name) ? item.name : "未登録";
+    const content = (!empty && item && item.content) ? `<p class="text-xs text-gray-600 leading-relaxed mt-2 text-left">${item.content}</p>` : "";
     return `
-        <section class="bg-white rounded-2xl border border-orange-200 shadow p-4 sm:p-6">
-            <div class="grid gap-2 sm:gap-4" style="grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));">
-                ${picks.map(function(p) {
-                    const image = p.item && p.item.photo_url ? p.item.photo_url : "https://placehold.co/120x120/f3f4f6/9ca3af?text=未登録";
-                    const name = p.item && p.item.name ? p.item.name : "未登録";
-                    const content = p.item && p.item.content ? p.item.content : "";
-                    return `
-                        <article class="rounded-xl border border-orange-100 bg-orange-50/40 p-2 sm:p-3 text-center">
-                            <img src="${image}" alt="${name}" class="w-40 h-40 rounded-full object-cover mx-auto mb-6 border-4 border-white shadow">
-                            <p class="text-sm font-medium text-secondary leading-tight">${p.label}</p>
-                            <p class="text-xl font-bold text-gray-800 mt-1 leading-tight">${name}</p>
-                            ${content ? `<p class="mt-2 text-[11px] text-gray-700 leading-relaxed text-left whitespace-pre-line">${content}</p>` : ""}
-                        </article>
-                    `;
-                }).join("")}
+        <article class="bg-white rounded-xl shadow-sm border border-orange-100 p-4 text-center ${empty ? "border-dashed bg-gray-50 opacity-60" : ""}">
+            <img src="${photo}" alt="${name}" class="w-28 h-28 rounded-full object-cover mx-auto mb-3 border-4 border-orange-100 shadow-sm">
+            <p class="text-xs font-bold text-orange-500 mb-1">${roleText}</p>
+            <h3 class="text-base font-black text-gray-900 leading-tight">${name}</h3>
+            ${content}
+        </article>
+    `;
+}
+
+// 1つの役員グループ（県連4役／県連役員／各支部）をカード群として描画する
+function renderOfficerGroupSection(group, officers) {
+    const items = (officers || []).filter(function(o) { return o.group_id === group.id; });
+    let bodyHtml = "";
+    if (group.group_type === "fixed") {
+        const byRole = new Map();
+        items.forEach(function(item) { byRole.set(normalizeOfficerRole(item.role, group), item); });
+        bodyHtml = (group.fixed_slots || []).map(function(slot) {
+            const item = byRole.get(slot);
+            return item ? renderPublicOfficerCard(item, slot, false) : renderPublicOfficerCard(null, slot, true);
+        }).join("");
+    } else if (group.group_type === "branch") {
+        const headRole = group.head_role_label || "支部長";
+        const head = items.find(function(item) { return normalizeOfficerRole(item.role, group) === headRole; }) || null;
+        const others = items.filter(function(item) { return normalizeOfficerRole(item.role, group) !== headRole; })
+            .sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); });
+        bodyHtml = renderPublicOfficerCard(head, headRole, !head) +
+            others.map(function(item) { return renderPublicOfficerCard(item, normalizeOfficerRole(item.role, group), false); }).join("");
+    } else {
+        const sorted = items.slice().sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); });
+        if (sorted.length === 0) return "";
+        bodyHtml = sorted.map(function(item) { return renderPublicOfficerCard(item, normalizeOfficerRole(item.role, group), false); }).join("");
+    }
+    if (!bodyHtml) return "";
+    return `
+        <div>
+            <div class="flex items-center justify-center gap-3 mb-5">
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
+                <h3 class="text-lg font-black text-gray-800 whitespace-nowrap">${group.label}</h3>
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
             </div>
-        </section>
+            <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">${bodyHtml}</div>
+        </div>
     `;
 }
 
@@ -104,16 +113,30 @@ async function loadHeroImage() {
     if (hero) hero.style.backgroundImage = "url(" + url + ")";
 }
 
-// 役員紹介を表示（組織構造マスターに沿って県連会長＋各支部代表を表示）
-async function loadGreeting() {
-    const container = document.getElementById("greeting-container");
+// 県連役員タイル（県連4役＋県連役員）
+async function loadOfficersKenrenTile() {
+    const container = document.getElementById("officers-kenren-container");
     if (!container) return;
     const kenrenId = await getKenrenId();
     const [groups, officers] = await Promise.all([
-        fetchDB("org_officer_groups", "kenren_id=eq." + kenrenId + "&order=sort_order.asc"),
+        fetchDB("org_officer_groups", "kenren_id=eq." + kenrenId + "&group_type=in.(fixed,multi)&order=sort_order.asc"),
         fetchDB("greeting", "kenren_id=eq." + kenrenId + "&order=sort_order.asc")
     ]);
-    container.innerHTML = renderOfficerSummaryTile(officers || [], groups || []);
+    const html = (groups || []).map(function(g) { return renderOfficerGroupSection(g, officers); }).filter(Boolean).join('<div class="h-4"></div>');
+    container.innerHTML = html || '<p class="text-center text-gray-400">役員情報は準備中です。</p>';
+}
+
+// 支部役員タイル（各支部）
+async function loadOfficersBranchTile() {
+    const container = document.getElementById("officers-branch-container");
+    if (!container) return;
+    const kenrenId = await getKenrenId();
+    const [groups, officers] = await Promise.all([
+        fetchDB("org_officer_groups", "kenren_id=eq." + kenrenId + "&group_type=eq.branch&order=sort_order.asc"),
+        fetchDB("greeting", "kenren_id=eq." + kenrenId + "&order=sort_order.asc")
+    ]);
+    const html = (groups || []).map(function(g) { return renderOfficerGroupSection(g, officers); }).filter(Boolean).join('<div class="h-4"></div>');
+    container.innerHTML = html || '<p class="text-center text-gray-400">支部役員情報は準備中です。</p>';
 }
 
 // 議員情報を表示
@@ -501,6 +524,156 @@ function renderNewsList(list) {
     });
 }
 
+// ===== ホーム画面のタイル表示 =====
+// 各タイル種別の外枠HTML（読み込み中プレースホルダー込み）。
+// 実データはこの枠を挿入した後、対応するローダー関数が埋める。
+const TILE_SECTIONS = {
+    events: function() {
+        return `
+        <section id="news" class="py-16 bg-white">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold section-title">イベント</h2>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-6 shadow-inner">
+                    <ul id="news-container" class="divide-y divide-gray-200">
+                        <li class="py-6 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</li>
+                    </ul>
+                </div>
+                <div class="text-center mt-6">
+                    <a id="news-toggle-link" href="#" onclick="toggleNewsList(event)" class="text-primary hover:underline font-medium inline-flex items-center gap-1">
+                        イベント一覧を見る <i class="fa-solid fa-angle-right"></i>
+                    </a>
+                </div>
+            </div>
+        </section>`;
+    },
+    announcements: function() {
+        return `
+        <section id="announcements-section" class="py-14 bg-white border-t border-gray-100">
+            <div class="container mx-auto px-4 max-w-6xl">
+                <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">お知らせ</h2>
+                <div class="w-12 h-1 bg-primary rounded mx-auto mb-10"></div>
+                <div id="announcements-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <p class="col-span-full text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>
+                </div>
+            </div>
+        </section>`;
+    },
+    officers_kenren: function() {
+        return `
+        <section id="about" class="py-20 bg-gray-50">
+            <div class="container mx-auto px-4 max-w-6xl">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold section-title">県連役員</h2>
+                </div>
+                <div id="officers-kenren-container" class="space-y-10">
+                    <p class="text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>
+                </div>
+            </div>
+        </section>`;
+    },
+    officers_branch: function() {
+        return `
+        <section id="branch-officers" class="py-20 bg-white">
+            <div class="container mx-auto px-4 max-w-6xl">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold section-title">支部役員</h2>
+                </div>
+                <div id="officers-branch-container" class="space-y-10">
+                    <p class="text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>
+                </div>
+            </div>
+        </section>`;
+    },
+    members: function() {
+        return `
+        <section id="top-candidates-section" class="hidden py-14 bg-red-50 border-b-4 border-red-400">
+            <div class="container mx-auto px-4 max-w-5xl">
+                <h2 class="text-2xl font-black text-center text-red-700 mb-10">選挙中の公認候補者　応援をお願いします！</h2>
+                <div id="top-candidates-container" class="flex flex-wrap justify-center gap-8"></div>
+            </div>
+        </section>
+        <section id="policy" class="py-20 bg-white">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold section-title">高知県所属議員</h2>
+                </div>
+                <div id="members-container" class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <p class="md:col-span-2 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>
+                </div>
+                <div id="candidates-section" class="mt-16">
+                    <div class="text-center mb-10">
+                        <h3 class="text-2xl font-bold text-gray-800">公認候補者の紹介</h3>
+                        <p class="mt-3 text-gray-600">地域の未来に向けて活動する公認候補者を表示します。</p>
+                    </div>
+                    <div id="candidates-container" class="grid grid-cols-1 md:grid-cols-2 gap-12"></div>
+                </div>
+                <div id="reformers-section" class="mt-16">
+                    <div class="text-center mb-10">
+                        <h3 class="text-2xl font-bold text-gray-800">改革委員の紹介</h3>
+                    </div>
+                    <div id="reformers-container" class="grid grid-cols-1 md:grid-cols-2 gap-12"></div>
+                </div>
+            </div>
+        </section>`;
+    },
+    activities: function() {
+        return `
+        <section id="activity" class="py-20 bg-gray-50">
+            <div class="container mx-auto px-4 max-w-6xl">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold section-title">活動報告</h2>
+                </div>
+                <div id="activities-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-lg shadow overflow-hidden p-6 text-center text-gray-400">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-3"></i>
+                        <p class="text-sm">活動報告を読み込み中です...</p>
+                    </div>
+                </div>
+                <div class="text-center mt-10">
+                    <a href="activities.html" class="inline-block border-2 border-primary text-primary font-bold px-8 py-3 rounded-full hover:bg-primary hover:text-white transition">
+                        活動報告をもっと見る
+                    </a>
+                </div>
+            </div>
+        </section>`;
+    }
+};
+
+const TILE_LOADERS = {
+    events: loadNews,
+    announcements: loadAnnouncements,
+    officers_kenren: loadOfficersKenrenTile,
+    officers_branch: loadOfficersBranchTile,
+    members: loadMembers,
+    activities: loadActivities
+};
+
+// admin.htmlの「ホーム画面構成」で選ばれた順番・表示設定に沿って
+// トップページのコンポーネントを組み立てる
+async function loadHomeTiles() {
+    const container = document.getElementById("home-tiles");
+    if (!container) return;
+    const kenrenId = await getKenrenId();
+    if (!kenrenId) { container.innerHTML = ""; return; }
+    const tiles = await fetchDB("kenren_home_tiles", "kenren_id=eq." + kenrenId + "&is_visible=eq.true&order=sort_order.asc");
+    const knownTiles = (tiles || []).filter(function(t) { return TILE_SECTIONS[t.tile_type]; });
+    if (knownTiles.length === 0) { container.innerHTML = ""; return; }
+
+    const wrapper = document.createElement("div");
+    knownTiles.forEach(function(tile) {
+        wrapper.insertAdjacentHTML("beforeend", TILE_SECTIONS[tile.tile_type]());
+    });
+    container.innerHTML = "";
+    while (wrapper.firstChild) container.appendChild(wrapper.firstChild);
+
+    knownTiles.forEach(function(tile) {
+        const loaderFn = TILE_LOADERS[tile.tile_type];
+        if (loaderFn) loaderFn();
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     // ハンバーガーメニュー
     const btn = document.getElementById("mobile-menu-btn");
@@ -521,9 +694,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Supabaseからデータ読み込み
     loadHeroImage();
-    loadGreeting();
-    loadMembers();
-    loadActivities();
-    loadAnnouncements();
-    loadNews();
+    loadHomeTiles();
 });
