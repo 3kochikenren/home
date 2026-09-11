@@ -2189,7 +2189,8 @@ function buildForm(type, d) {
         let catHTML2 = '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">カテゴリ</label><select name="category" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">';
         catOpts2.forEach(function(c) { catHTML2 += '<option value="' + c + '" ' + (d.category === c ? "selected" : "") + '>' + c + '</option>'; });
         catHTML2 += '</select></div>';
-        f = inputField("title", "タイトル ※必須", "text", d.title, "例：ホームページをリニューアルしました") +
+        f = photoField("photo_url", "写真（任意・イベント一覧タイルには表示されません）", d.photo_url) +
+            inputField("title", "タイトル ※必須", "text", d.title, "例：ホームページをリニューアルしました") +
             inputField("published_date", "掲載日 ※必須", "date", d.published_date, "") +
             catHTML2 +
             inputField("target_audience", "対象者", "text", d.target_audience, "例：党員・サポーター・一般") +
@@ -2205,6 +2206,10 @@ function buildForm(type, d) {
             inputField("participation_fee", "参加費", "text", d.participation_fee, "例：無料") +
             inputField("application_url", "申込のURL", "url", d.application_url, "https://") +
             eventVisibilityFields(d) +
+            '<div class="mb-5 flex items-center gap-3 bg-gray-50 rounded-xl p-4">' +
+            '<input type="checkbox" name="show_in_carousel" id="chk_show_in_carousel" ' + (d.show_in_carousel === true ? "checked" : "") + ' class="w-5 h-5 accent-orange-500">' +
+            '<label for="chk_show_in_carousel" class="font-bold text-gray-700 cursor-pointer">イベントカルーセルに表示</label>' +
+            '<span class="text-xs text-gray-400 ml-auto">写真が必要／開催日翌日に自動終了</span></div>' +
             toggleField("is_published", "サイトに公開する", d.is_published !== false);
     } else if (type === "announcements") {
         const titleSizes = [["sm","小"],["base","中"],["lg","大（標準）"],["xl","特大"],["2xl","最大"]];

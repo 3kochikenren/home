@@ -652,11 +652,26 @@ const TILE_SECTIONS = {
                 </div>
             </div>
         </section>`;
+    },
+    event_carousel: function(tile) {
+        return `
+        <section id="event-carousel-${tile.id}" class="hidden py-16 bg-gray-50">
+            <div class="container mx-auto px-4 max-w-3xl">
+                <h2 class="text-2xl font-bold section-title text-center mb-10">イベント</h2>
+                <div class="relative rounded-2xl overflow-hidden shadow-lg bg-white">
+                    <div id="event-carousel-${tile.id}-slide"></div>
+                    <button onclick="shiftCarousel('${tile.id}', -1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button onclick="shiftCarousel('${tile.id}', 1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <div id="event-carousel-${tile.id}-dots" class="flex items-center justify-center gap-2 mt-4"></div>
+            </div>
+        </section>`;
     }
 };
 
 // ===== イベントカレンダー =====
 const calendarState = {};
+const newsEventCache = {}; // id -> newsレコード（カレンダー・カルーセル共通の詳細モーダルで使う）
 
 function toggleEventCalendar(tileId) {
     const body = document.getElementById("event-calendar-" + tileId + "-body");
@@ -743,6 +758,7 @@ async function loadEventCalendarTile(tile) {
     const events = await fetchDB("news", "kenren_id=eq." + kenrenId + "&is_published=eq.true&show_in_calendar=eq.true&order=published_date.asc&limit=500");
     const now = new Date();
     calendarState[tile.id] = { year: now.getFullYear(), month: now.getMonth(), events: events || [] };
+    (events || []).forEach(function(e) { newsEventCache[e.id] = e; });
     renderCalendarGrid(tile.id);
 }
 
@@ -754,11 +770,7 @@ function formatCalendarTimeHM(value) {
 }
 
 function openCalendarEventModal(eventId) {
-    let found = null;
-    Object.keys(calendarState).forEach(function(tileId) {
-        const hit = (calendarState[tileId].events || []).find(function(e) { return String(e.id) === String(eventId); });
-        if (hit) found = hit;
-    });
+    const found = newsEventCache[eventId];
     if (!found) return;
     const categoryColors = {
         "イベント": "bg-orange-100 text-orange-700",
@@ -769,6 +781,11 @@ function openCalendarEventModal(eventId) {
     const categoryEl = document.getElementById("calendar-event-modal-category");
     categoryEl.textContent = found.category || "";
     categoryEl.className = "text-xs px-2 py-1 rounded font-bold " + (categoryColors[found.category] || "bg-gray-100 text-gray-600");
+    const photoEl = document.getElementById("calendar-event-modal-photo");
+    if (photoEl) {
+        if (found.photo_url) { photoEl.src = found.photo_url; photoEl.classList.remove("hidden"); }
+        else { photoEl.classList.add("hidden"); }
+    }
     document.getElementById("calendar-event-modal-date").textContent = found.published_date || "";
     document.getElementById("calendar-event-modal-title").textContent = found.title || "";
     document.getElementById("calendar-event-modal-content").textContent = found.content || "";
@@ -794,6 +811,71 @@ function openCalendarEventModal(eventId) {
 function closeCalendarEventModal() {
     document.getElementById("calendar-event-modal").classList.add("hidden");
     document.body.style.overflow = "";
+}
+
+// ===== イベントカルーセル =====
+const carouselState = {};
+
+function renderCarouselSlide(tileId) {
+    const st = carouselState[tileId];
+    const slideEl = document.getElementById("event-carousel-" + tileId + "-slide");
+    const dotsEl = document.getElementById("event-carousel-" + tileId + "-dots");
+    if (!st || !slideEl) return;
+    const e = st.events[st.index];
+    if (!e) return;
+    slideEl.innerHTML = `
+        <div onclick="openCalendarEventModal('${e.id}')" class="cursor-pointer">
+            <img src="${e.photo_url}" alt="${e.title || ""}" class="w-full h-64 sm:h-80 object-cover">
+            <div class="p-5">
+                <p class="text-xs text-gray-400 font-mono mb-1">${e.published_date || ""}</p>
+                <h3 class="font-bold text-gray-800">${e.title || ""}</h3>
+            </div>
+        </div>
+    `;
+    if (dotsEl) {
+        dotsEl.innerHTML = st.events.map(function(_, i) {
+            return '<span class="w-2 h-2 rounded-full ' + (i === st.index ? "bg-primary" : "bg-gray-300") + '"></span>';
+        }).join("");
+    }
+}
+
+function shiftCarousel(tileId, delta) {
+    const st = carouselState[tileId];
+    if (!st || st.events.length === 0) return;
+    st.index = (st.index + delta + st.events.length) % st.events.length;
+    renderCarouselSlide(tileId);
+    resetCarouselAutoplay(tileId);
+}
+
+function resetCarouselAutoplay(tileId) {
+    const st = carouselState[tileId];
+    if (!st) return;
+    if (st.timer) clearInterval(st.timer);
+    if (st.events.length > 1) {
+        st.timer = setInterval(function() { shiftCarouselAuto(tileId); }, 6000);
+    }
+}
+
+function shiftCarouselAuto(tileId) {
+    const st = carouselState[tileId];
+    if (!st || st.events.length === 0) return;
+    st.index = (st.index + 1) % st.events.length;
+    renderCarouselSlide(tileId);
+}
+
+async function loadEventCarouselTile(tile) {
+    const section = document.getElementById("event-carousel-" + tile.id);
+    if (!section) return;
+    const kenrenId = await getKenrenId();
+    const today = new Date().toISOString().slice(0, 10);
+    const events = (await fetchDB("news", "kenren_id=eq." + kenrenId + "&is_published=eq.true&show_in_carousel=eq.true&published_date=gte." + today + "&order=published_date.asc&limit=50"))
+        .filter(function(e) { return !!e.photo_url; });
+    if (events.length === 0) { section.classList.add("hidden"); return; }
+    section.classList.remove("hidden");
+    events.forEach(function(e) { newsEventCache[e.id] = e; });
+    carouselState[tile.id] = { events: events, index: 0, timer: null };
+    renderCarouselSlide(tile.id);
+    resetCarouselAutoplay(tile.id);
 }
 
 // イベント紹介タイル: 指定イベント（未指定・削除済みなら直近の公開イベント）を大きく紹介
@@ -879,7 +961,8 @@ const TILE_LOADERS = {
     activities: loadActivities,
     event_highlight: loadEventHighlightTile,
     election_support: loadElectionSupportTile,
-    event_calendar: loadEventCalendarTile
+    event_calendar: loadEventCalendarTile,
+    event_carousel: loadEventCarouselTile
 };
 
 // admin.htmlの「ホーム画面構成」で選ばれた順番・表示設定に沿って
