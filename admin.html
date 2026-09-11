@@ -547,7 +547,7 @@ function applyRoleUI() {
         if (CURRENT_ADMIN_ROLE) {
             badge.textContent = roleLabels[CURRENT_ADMIN_ROLE] || CURRENT_ADMIN_ROLE;
             badge.className = "text-xs font-bold px-3 py-1 rounded-full " +
-                (CURRENT_ADMIN_ROLE === "viewer" ? "bg-gray-200 text-gray-700" : "bg-orange-100 text-orange-700");
+                (ROLE_BADGE_COLORS[CURRENT_ADMIN_ROLE] || "bg-orange-100 text-orange-700");
         } else {
             badge.classList.add("hidden");
         }
@@ -1727,6 +1727,11 @@ async function saveAddKenren() {
 
 let adminUsersCache = [];
 let staffUsersCache = [];
+const ROLE_BADGE_COLORS = {
+    super_admin: "bg-purple-100 text-purple-700",
+    kenren_admin: "bg-orange-100 text-orange-700",
+    viewer: "bg-gray-200 text-gray-600"
+};
 
 async function loadAdminUsersList() {
     const el = document.getElementById("admin-users-list");
@@ -1760,7 +1765,7 @@ function renderAdminUsersList() {
         return '<div class="py-3 flex items-center justify-between gap-3">' +
             '<div><span class="font-bold text-gray-800">' + (u.name || u.email) + '</span>' +
             (u.name ? '<span class="text-xs text-gray-400 ml-2">' + u.email + '</span>' : '') +
-            '<span class="text-xs bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-full ml-2">' + (roleLabels[u.role] || u.role) + '</span>' +
+            '<span class="text-xs ' + (ROLE_BADGE_COLORS[u.role] || "bg-orange-100 text-orange-700") + ' font-bold px-2 py-0.5 rounded-full ml-2">' + (roleLabels[u.role] || u.role) + '</span>' +
             (u.kenren_label ? '<span class="text-xs text-gray-400 ml-2">' + u.kenren_label + '</span>' : '') + '</div>' +
             '<div class="flex items-center gap-2 flex-shrink-0">' +
             '<button onclick="openAssignRoleModal(\'' + u.id + '\')" class="bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen"></i></button>' +
@@ -1842,7 +1847,7 @@ async function loadStaffAdmin() {
         return '<div class="py-3 flex items-center justify-between gap-3">' +
             '<div><span class="font-bold text-gray-800">' + (u.name || u.email) + '</span>' +
             (u.name ? '<span class="text-xs text-gray-400 ml-2">' + u.email + '</span>' : '') +
-            '<span class="text-xs bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-full ml-2">' + (roleLabels[u.role] || u.role) + '</span>' +
+            '<span class="text-xs ' + (ROLE_BADGE_COLORS[u.role] || "bg-orange-100 text-orange-700") + ' font-bold px-2 py-0.5 rounded-full ml-2">' + (roleLabels[u.role] || u.role) + '</span>' +
             (isSelf ? '<span class="text-xs text-gray-400 ml-2">（自分）</span>' : '') + '</div>' +
             '<div class="flex items-center gap-2 flex-shrink-0">' +
             '<button onclick="openStaffAssignModal(\'' + u.id + '\')" class="bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen"></i></button>' +
