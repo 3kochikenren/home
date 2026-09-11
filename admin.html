@@ -47,6 +47,7 @@
                     <i class="fa-solid fa-cog text-white"></i>
                 </div>
                 <span class="font-bold text-gray-800 text-lg">管理画面｜参政党 高知県連</span>
+                <span id="admin-role-badge" class="hidden text-xs font-bold px-3 py-1 rounded-full"></span>
             </div>
             <div class="flex items-center gap-6">
                 <a href="index.html" target="_blank" class="text-sm text-orange-500 hover:underline font-medium">
@@ -159,7 +160,7 @@
                         <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-sitemap mr-2 text-orange-500"></i>組織構造</h2>
                         <p class="text-gray-500 text-sm mt-1">支部の追加・改名や、県連4役の役職名を編集します（「役員」タブの表示単位になります）</p>
                     </div>
-                    <button onclick="openOrgGroupModal(null)" class="bg-orange-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-orange-600 whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i>グループを追加</button>
+                    <button onclick="openOrgGroupModal(null)" class="viewer-hide bg-orange-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-orange-600 whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i>グループを追加</button>
                 </div>
                 <div id="orggroups-list" class="space-y-4"></div>
             </section>
@@ -174,7 +175,7 @@
                         <button id="toggle-deleted-members-btn" onclick="toggleDeletedMembersView()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition">
                             <i class="fa-solid fa-user-xmark mr-1"></i>削除メンバー
                         </button>
-                        <button onclick="openModal('members')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                        <button onclick="openModal('members')" class="viewer-hide bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                             <i class="fa-solid fa-plus mr-1"></i>議員を追加
                         </button>
                     </div>
@@ -190,7 +191,7 @@
                         <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-newspaper mr-2 text-orange-500"></i>活動報告</h2>
                         <p class="text-gray-500 text-sm mt-1">活動の様子や報告記事を管理します</p>
                     </div>
-                    <button onclick="openModal('activities')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                    <button onclick="openModal('activities')" class="viewer-hide bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                         <i class="fa-solid fa-plus mr-1"></i>活動報告を追加
                     </button>
                 </div>
@@ -203,7 +204,7 @@
                         <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-calendar-days mr-2 text-orange-500"></i>イベント情報</h2>
                         <p class="text-gray-500 text-sm mt-1">サイトに表示するイベント情報を管理します</p>
                     </div>
-                    <button onclick="openModal('news')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                    <button onclick="openModal('news')" class="viewer-hide bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                         <i class="fa-solid fa-plus mr-1"></i>イベントを追加
                     </button>
                 </div>
@@ -216,7 +217,7 @@
                         <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-orange-500"></i>お知らせ情報</h2>
                         <p class="text-gray-500 text-sm mt-1">トップページに表示するお知らせを管理します</p>
                     </div>
-                    <button onclick="openModal('announcements')" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                    <button onclick="openModal('announcements')" class="viewer-hide bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                         <i class="fa-solid fa-plus mr-1"></i>お知らせを追加
                     </button>
                 </div>
@@ -236,7 +237,7 @@
                 <!-- 施設一覧 -->
                 <div id="tabloid-facilities-view">
                     <div class="flex justify-end mb-4">
-                        <button onclick="openFacilityModal(null)" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                        <button onclick="openFacilityModal(null)" class="viewer-hide bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                             <i class="fa-solid fa-plus mr-1"></i>施設を追加
                         </button>
                     </div>
@@ -264,7 +265,7 @@
                 <!-- 配置状況一覧 -->
                 <div id="tabloid-placements-view" class="hidden">
                     <div class="flex justify-end mb-4">
-                        <button onclick="openIssueModal()" class="bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
+                        <button onclick="openIssueModal()" class="viewer-hide bg-orange-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition shadow">
                             <i class="fa-solid fa-plus mr-1"></i>配置登録を作成
                         </button>
                     </div>
@@ -413,16 +414,62 @@ async function doLogin() {
         return;
     }
     sessionExpiredNotified = false;
-    document.getElementById("login-screen").classList.add("hidden");
-    document.getElementById("admin-screen").classList.remove("hidden");
-    loadSection("greeting");
+    const ok = await enterAdminScreenIfAuthorized();
+    if (!ok) {
+        errEl.textContent = "このアカウントには管理画面の権限が割り当てられていません。管理者にお問い合わせください。";
+        errEl.classList.remove("hidden");
+        await supabaseClient.auth.signOut();
+    }
 }
 async function doLogout() {
     await supabaseClient.auth.signOut();
+    CURRENT_ADMIN_ROLE = null;
+    CURRENT_ADMIN_KENREN_ID = null;
     document.getElementById("admin-screen").classList.add("hidden");
     document.getElementById("login-screen").classList.remove("hidden");
     document.getElementById("password-input").value = "";
     document.getElementById("email-input").value = "";
+}
+
+// 自分の admin_users 行（ロール・所属県連）を取得する。権限が無ければ null。
+let CURRENT_ADMIN_ROLE = null;
+let CURRENT_ADMIN_KENREN_ID = null;
+async function loadCurrentAdminProfile() {
+    const session = await getValidSession();
+    if (!session) return null;
+    const rows = await dbFetch("admin_users", "id=eq." + session.user.id);
+    const profile = rows && rows[0] ? rows[0] : null;
+    CURRENT_ADMIN_ROLE = profile ? profile.role : null;
+    CURRENT_ADMIN_KENREN_ID = profile ? profile.kenren_id : null;
+    return profile;
+}
+
+function applyRoleUI() {
+    const badge = document.getElementById("admin-role-badge");
+    const roleLabels = { super_admin: "全体管理者", kenren_admin: "県連管理者", viewer: "閲覧専用" };
+    if (badge) {
+        if (CURRENT_ADMIN_ROLE) {
+            badge.textContent = roleLabels[CURRENT_ADMIN_ROLE] || CURRENT_ADMIN_ROLE;
+            badge.className = "text-xs font-bold px-3 py-1 rounded-full " +
+                (CURRENT_ADMIN_ROLE === "viewer" ? "bg-gray-200 text-gray-700" : "bg-orange-100 text-orange-700");
+        } else {
+            badge.classList.add("hidden");
+        }
+    }
+    document.querySelectorAll(".viewer-hide").forEach(function(el) {
+        el.classList.toggle("hidden", CURRENT_ADMIN_ROLE === "viewer");
+    });
+}
+
+// ログイン後、権限を確認してから管理画面を表示する。権限が無ければ false を返す。
+async function enterAdminScreenIfAuthorized() {
+    const profile = await loadCurrentAdminProfile();
+    if (!profile) return false;
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("admin-screen").classList.remove("hidden");
+    applyRoleUI();
+    loadSection("greeting");
+    return true;
 }
 document.addEventListener("keydown", function(e) {
     if (e.key === "Enter" && !document.getElementById("login-screen").classList.contains("hidden")) doLogin();
@@ -430,9 +477,8 @@ document.addEventListener("keydown", function(e) {
 async function checkSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
-        document.getElementById("login-screen").classList.add("hidden");
-        document.getElementById("admin-screen").classList.remove("hidden");
-        loadSection("greeting");
+        const ok = await enterAdminScreenIfAuthorized();
+        if (!ok) await supabaseClient.auth.signOut();
     }
 }
 checkSession();
@@ -503,7 +549,11 @@ async function dbFetch(table, q) {
 }
 const KENREN_SLUG = "kochi";
 let cachedKenrenId = null;
+// kenren_admin/viewer は自分の所属県連(admin_users.kenren_id)を使う。
+// super_admin は kenren_id が無いため、今のところ高知をデフォルトにする
+// （複数県連の切り替えUIは未実装。将来のフェーズで対応予定）。
 async function getCurrentKenrenId() {
+    if (CURRENT_ADMIN_KENREN_ID) return CURRENT_ADMIN_KENREN_ID;
     if (cachedKenrenId) return cachedKenrenId;
     const rows = await dbFetch("kenren", "slug=eq." + KENREN_SLUG + "&select=id&limit=1");
     cachedKenrenId = (rows && rows[0] && rows[0].id) || null;
@@ -645,8 +695,8 @@ function greetingPreviewCard(item, group, options) {
     const nameText = isPlaceholder ? '未登録' : (item.name || '');
     const photoUrl = isPlaceholder ? 'https://placehold.co/120x120/f3f4f6/9ca3af?text=未登録' : (item.photo_url || 'https://placehold.co/120x120/fff7ed/f97316?text=写真');
     const actionButtons = isPlaceholder
-        ? '<button onclick="openGreetingModal(\'' + group.id + '\', null, \'' + roleText + '\')" class="w-full bg-orange-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-orange-600">追加する</button>'
-        : '<div class="flex gap-2 mt-3 w-full"><button onclick="editGreeting(\'' + item.id + '\')" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded-lg hover:bg-blue-100">編集</button><button onclick="deleteGreeting(\'' + item.id + '\')" class="flex-1 bg-red-50 text-red-500 text-xs font-bold py-2 rounded-lg hover:bg-red-100">削除</button></div>';
+        ? '<button onclick="openGreetingModal(\'' + group.id + '\', null, \'' + roleText + '\')" class="viewer-hide w-full bg-orange-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-orange-600">追加する</button>'
+        : '<div class="viewer-hide flex gap-2 mt-3 w-full"><button onclick="editGreeting(\'' + item.id + '\')" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded-lg hover:bg-blue-100">編集</button><button onclick="deleteGreeting(\'' + item.id + '\')" class="flex-1 bg-red-50 text-red-500 text-xs font-bold py-2 rounded-lg hover:bg-red-100">削除</button></div>';
     return '<div class="bg-' + (isPlaceholder ? 'gray-50' : 'gray-50') + ' rounded-2xl border ' + (isPlaceholder ? 'border-dashed border-gray-200' : 'border-orange-100') + ' p-4 flex flex-col items-center text-center shadow-sm">' +
         '<img src="' + photoUrl + '" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow mb-3 ' + (isPlaceholder ? 'opacity-40' : '') + '">' +
         '<p class="text-xs font-bold text-orange-500 mb-1">' + roleText + '</p>' +
@@ -701,6 +751,7 @@ async function loadMembersAdmin() {
         return;
     }
     el.innerHTML = filtered.map(function(item) { return renderCard("members", item); }).join("");
+    applyRoleUI();
 }
 
 async function setMemberDeleted(id, isDeleted) {
@@ -786,11 +837,12 @@ async function loadFacilitiesTable() {
             '<td class="px-3 py-2 text-gray-600 whitespace-nowrap">' + (f.status || "") + '</td>' +
             '<td class="px-3 py-2 text-gray-600 whitespace-nowrap">' + (f.contact_member || "") + '</td>' +
             '<td class="px-3 py-2 text-gray-500 text-xs max-w-xs truncate">' + (f.notes || "") + '</td>' +
-            '<td class="px-3 py-2 whitespace-nowrap">' +
+            '<td class="px-3 py-2 whitespace-nowrap viewer-hide">' +
                 '<button onclick="openFacilityModal(' + f.id + ')" class="text-blue-600 hover:text-blue-800 text-xs font-bold mr-2"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
                 '<button onclick="deleteFacility(' + f.id + ',\'' + (f.facility_name||"").replace(/'/g,"") + '\')" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash mr-1"></i>削除</button>' +
             '</td></tr>';
     }).join("");
+    applyRoleUI();
 }
 
 async function openFacilityModal(id) {
@@ -974,6 +1026,7 @@ async function loadSection(name) {
     }
     const list = data;
     el.innerHTML = list.map(function(item) { return renderCard(name, item); }).join("");
+    applyRoleUI();
 }
 
 function renderCard(type, item) {
@@ -991,12 +1044,12 @@ function renderCard(type, item) {
         '<div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-orange-400 text-xl flex-shrink-0"><i class="fa-solid ' + icons[type] + '"></i></div>';
     const safeTitle = (title || "").replace(/'/g, "");
     const actionButtons = type === "members"
-        ? ('<button onclick="editItem(\'' + type + '\',\'' + item.id + '\')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
+        ? ('<button onclick="editItem(\'' + type + '\',\'' + item.id + '\')" class="viewer-hide bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
            (showDeletedMembers
-                ? '<button onclick="restoreMember(\'' + item.id + '\',\'' + safeTitle + '\')" class="bg-green-50 text-green-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-100"><i class="fa-solid fa-rotate-left mr-1"></i>復活</button>'
-                : '<button onclick="softDeleteMember(\'' + item.id + '\',\'' + safeTitle + '\')" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>'))
-        : ('<button onclick="editItem(\'' + type + '\',\'' + item.id + '\')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
-           '<button onclick="deleteItem(\'' + type + '\',\'' + item.id + '\',\'' + safeTitle + '\')" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>');
+                ? '<button onclick="restoreMember(\'' + item.id + '\',\'' + safeTitle + '\')" class="viewer-hide bg-green-50 text-green-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-100"><i class="fa-solid fa-rotate-left mr-1"></i>復活</button>'
+                : '<button onclick="softDeleteMember(\'' + item.id + '\',\'' + safeTitle + '\')" class="viewer-hide bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>'))
+        : ('<button onclick="editItem(\'' + type + '\',\'' + item.id + '\')" class="viewer-hide bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
+           '<button onclick="deleteItem(\'' + type + '\',\'' + item.id + '\',\'' + safeTitle + '\')" class="viewer-hide bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>');
     return '<div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 mb-3">' + thumb +
         '<div class="flex-1 min-w-0"><div class="font-bold text-gray-800 truncate">' + (title || "") + '</div><div class="text-sm text-gray-500 mt-1">' + sub + '</div></div>' +
         '<div class="flex items-center gap-2 flex-shrink-0">' + statusBadge + actionButtons +
@@ -1023,7 +1076,7 @@ async function loadGreeting() {
         let sectionHtml = '<div class="mb-8 last:mb-0">';
         sectionHtml += '<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">';
         sectionHtml += '<div><h3 class="text-lg font-black text-gray-800">' + group.label + '</h3></div>';
-        sectionHtml += '<button onclick="openGreetingModal(\'' + group.id + '\', null, \'' + addRole + '\')" class="bg-orange-500 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-600">追加する</button>';
+        sectionHtml += '<button onclick="openGreetingModal(\'' + group.id + '\', null, \'' + addRole + '\')" class="viewer-hide bg-orange-500 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-600">追加する</button>';
         sectionHtml += '</div>';
 
         if (group.group_type === "fixed") {
@@ -1067,6 +1120,7 @@ async function loadGreeting() {
         sectionHtml += '</div>';
         return sectionHtml;
     }).join('');
+    applyRoleUI();
 }
 
 async function editGreeting(id) {
@@ -1179,11 +1233,12 @@ async function loadOrgGroups() {
         return '<div class="bg-white rounded-2xl shadow p-5 flex flex-col sm:flex-row sm:items-center gap-3">' +
             '<span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full self-start">' + (typeLabels[g.group_type] || g.group_type) + '</span>' +
             '<div class="flex-1 min-w-0"><div class="font-bold text-gray-800">' + g.label + '</div>' + detail + '<div class="text-xs text-gray-400 mt-1">表示順: ' + g.sort_order + '</div></div>' +
-            '<div class="flex items-center gap-2 flex-shrink-0">' +
+            '<div class="viewer-hide flex items-center gap-2 flex-shrink-0">' +
             '<button onclick="openOrgGroupModal(\'' + g.id + '\')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
             '<button onclick="deleteOrgGroup(this, \'' + g.id + '\')" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>' +
             '</div></div>';
     }).join("");
+    applyRoleUI();
 }
 
 function openOrgGroupModal(id) {
