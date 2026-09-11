@@ -447,7 +447,19 @@ const SUPABASE_URL = "https://yaimsonvxpujfupstpsd.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaW1zb252eHB1amZ1cHN0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODEwMjksImV4cCI6MjA5NTA1NzAyOX0.2PAKyBs8z44Ft4TXigKAsRfh6zEQwdVl2KNRZojxwzk";
 const STORAGE_URL = "https://yaimsonvxpujfupstpsd.supabase.co/storage/v1";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+});
+
+let isPasswordRecoveryFlow = false;
+supabaseClient.auth.onAuthStateChange(function(event) {
+    if (event === "PASSWORD_RECOVERY") {
+        isPasswordRecoveryFlow = true;
+        document.getElementById("login-screen").classList.add("hidden");
+        document.getElementById("admin-screen").classList.remove("hidden");
+        openPasswordModal();
+        const title = document.querySelector("#password-modal h3");
+        if (title) title.innerHTML = '<i class="fa-solid fa-key mr-2 text-orange-500"></i>新しいパスワードを設定してください';
+    }
 });
 const POSITIONS = [
     { label: "県連会長", order: 1 },
@@ -2074,8 +2086,15 @@ function openPasswordModal() {
     document.getElementById("password-error").classList.add("hidden");
     document.getElementById("password-modal").classList.remove("hidden");
 }
-function closePasswordModal() {
+async function closePasswordModal() {
     document.getElementById("password-modal").classList.add("hidden");
+    if (isPasswordRecoveryFlow) {
+        // パスワード未設定のままキャンセルされた場合は、中途半端な状態を避けるため一度サインアウトする
+        isPasswordRecoveryFlow = false;
+        await supabaseClient.auth.signOut();
+        document.getElementById("admin-screen").classList.add("hidden");
+        document.getElementById("login-screen").classList.remove("hidden");
+    }
 }
 async function changePassword() {
     const newPass = document.getElementById("new-password").value;
@@ -2098,8 +2117,18 @@ async function changePassword() {
         errEl.classList.remove("hidden");
         return;
     }
-    closePasswordModal();
+    document.getElementById("password-modal").classList.add("hidden");
     showToast("パスワードを変更しました");
+    if (isPasswordRecoveryFlow) {
+        isPasswordRecoveryFlow = false;
+        const ok = await enterAdminScreenIfAuthorized();
+        if (!ok) {
+            alert("パスワードは変更されましたが、このアカウントには管理画面の権限が割り当てられていません。管理者にお問い合わせください。");
+            await supabaseClient.auth.signOut();
+            document.getElementById("admin-screen").classList.add("hidden");
+            document.getElementById("login-screen").classList.remove("hidden");
+        }
+    }
 }
 
 function showToast(msg) {
