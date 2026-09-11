@@ -384,7 +384,7 @@ function toggleNewsList(e) {
 // お知らせ・イベントを表示（統合）
 async function loadNews() {
     const kenrenId = await getKenrenId();
-    const newsList = await fetchDB("news", "kenren_id=eq." + kenrenId + "&is_published=eq.true&order=published_date.asc&limit=200");
+    const newsList = await fetchDB("news", "kenren_id=eq." + kenrenId + "&is_published=eq.true&show_in_events=eq.true&order=published_date.asc&limit=200");
     const container = document.getElementById("news-container");
     if (!container) return;
     if (!newsList || newsList.length === 0) {
@@ -628,8 +628,173 @@ const TILE_SECTIONS = {
                 <div id="election-support-${tile.id}-container" class="flex flex-wrap justify-center gap-8"></div>
             </div>
         </section>`;
+    },
+    event_calendar: function(tile) {
+        return `
+        <section id="event-calendar-${tile.id}" class="py-16 bg-white border-t border-gray-100">
+            <div class="container mx-auto px-4 max-w-5xl">
+                <div id="event-calendar-${tile.id}-description" class="mb-6 text-sm text-gray-600 whitespace-pre-line"></div>
+                <div id="event-calendar-${tile.id}-toggle-wrap" class="hidden text-center mb-6">
+                    <button onclick="toggleEventCalendar('${tile.id}')" class="text-primary hover:underline font-bold inline-flex items-center gap-1">
+                        <span id="event-calendar-${tile.id}-toggle-label">イベントカレンダーを見る</span> <i id="event-calendar-${tile.id}-toggle-icon" class="fa-solid fa-angle-down transition-transform"></i>
+                    </button>
+                </div>
+                <div id="event-calendar-${tile.id}-body">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-bold section-title">イベントカレンダー</h2>
+                        <div class="flex items-center gap-2">
+                            <button onclick="shiftCalendarMonth('${tile.id}', -1)" class="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span id="event-calendar-${tile.id}-month-label" class="font-bold text-base w-24 text-center"></span>
+                            <button onclick="shiftCalendarMonth('${tile.id}', 1)" class="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div id="event-calendar-${tile.id}-grid" class="overflow-x-auto"></div>
+                </div>
+            </div>
+        </section>`;
     }
 };
+
+// ===== イベントカレンダー =====
+const calendarState = {};
+
+function toggleEventCalendar(tileId) {
+    const body = document.getElementById("event-calendar-" + tileId + "-body");
+    const icon = document.getElementById("event-calendar-" + tileId + "-toggle-icon");
+    const label = document.getElementById("event-calendar-" + tileId + "-toggle-label");
+    if (!body) return;
+    const willShow = body.classList.contains("hidden");
+    body.classList.toggle("hidden");
+    if (icon) icon.classList.toggle("rotate-180", willShow);
+    if (label) label.textContent = willShow ? "イベントカレンダーを閉じる" : "イベントカレンダーを見る";
+}
+
+function shiftCalendarMonth(tileId, delta) {
+    const st = calendarState[tileId];
+    if (!st) return;
+    st.month += delta;
+    if (st.month < 0) { st.month = 11; st.year -= 1; }
+    if (st.month > 11) { st.month = 0; st.year += 1; }
+    renderCalendarGrid(tileId);
+}
+
+function renderCalendarGrid(tileId) {
+    const st = calendarState[tileId];
+    const grid = document.getElementById("event-calendar-" + tileId + "-grid");
+    const label = document.getElementById("event-calendar-" + tileId + "-month-label");
+    if (!st || !grid) return;
+    if (label) label.textContent = st.year + "年" + (st.month + 1) + "月";
+
+    const firstDay = new Date(st.year, st.month, 1);
+    const startWeekday = (firstDay.getDay() + 6) % 7; // 月曜始まり
+    const daysInMonth = new Date(st.year, st.month + 1, 0).getDate();
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    const eventsByDate = {};
+    (st.events || []).forEach(function(e) {
+        if (!e.published_date) return;
+        if (!eventsByDate[e.published_date]) eventsByDate[e.published_date] = [];
+        eventsByDate[e.published_date].push(e);
+    });
+
+    const weekdayLabels = ["月", "火", "水", "木", "金", "土", "日"];
+    let html = '<div class="grid grid-cols-7 border-t border-l border-gray-200 min-w-[560px]">';
+    weekdayLabels.forEach(function(w, i) {
+        html += '<div class="border-r border-b border-gray-200 bg-orange-50 text-center text-xs font-bold py-2 ' + (i === 5 ? "text-blue-600" : i === 6 ? "text-red-600" : "text-gray-600") + '">' + w + '</div>';
+    });
+
+    const totalCells = Math.ceil((startWeekday + daysInMonth) / 7) * 7;
+    for (let i = 0; i < totalCells; i++) {
+        const dayNum = i - startWeekday + 1;
+        if (dayNum < 1 || dayNum > daysInMonth) {
+            html += '<div class="border-r border-b border-gray-200 bg-gray-50 min-h-[90px]"></div>';
+            continue;
+        }
+        const dateStr = st.year + "-" + String(st.month + 1).padStart(2, "0") + "-" + String(dayNum).padStart(2, "0");
+        const isToday = dateStr === todayStr;
+        const dayEvents = eventsByDate[dateStr] || [];
+        html += '<div class="border-r border-b border-gray-200 min-h-[90px] p-1">' +
+            '<div class="text-xs font-bold mb-1 ' + (isToday ? "inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white" : "text-gray-500") + '">' + dayNum + '</div>' +
+            dayEvents.map(function(e) {
+                return '<button type="button" onclick="openCalendarEventModal(\'' + e.id + '\')" class="block w-full text-left truncate text-[11px] leading-tight px-1 py-0.5 mb-0.5 rounded hover:bg-orange-100 text-gray-700">' + (e.title || "") + '</button>';
+            }).join("") +
+            '</div>';
+    }
+    html += '</div>';
+    grid.innerHTML = html;
+}
+
+async function loadEventCalendarTile(tile) {
+    const kenrenId = await getKenrenId();
+    const cfg = tile.config || {};
+    const descEl = document.getElementById("event-calendar-" + tile.id + "-description");
+    if (descEl) descEl.textContent = cfg.description || "";
+
+    const toggleWrap = document.getElementById("event-calendar-" + tile.id + "-toggle-wrap");
+    const body = document.getElementById("event-calendar-" + tile.id + "-body");
+    if (cfg.display_mode === "toggle") {
+        if (toggleWrap) toggleWrap.classList.remove("hidden");
+        if (body) body.classList.add("hidden");
+    } else {
+        if (toggleWrap) toggleWrap.classList.add("hidden");
+        if (body) body.classList.remove("hidden");
+    }
+
+    const events = await fetchDB("news", "kenren_id=eq." + kenrenId + "&is_published=eq.true&show_in_calendar=eq.true&order=published_date.asc&limit=500");
+    const now = new Date();
+    calendarState[tile.id] = { year: now.getFullYear(), month: now.getMonth(), events: events || [] };
+    renderCalendarGrid(tile.id);
+}
+
+function formatCalendarTimeHM(value) {
+    if (!value) return "";
+    const text = String(value).trim();
+    const m = text.match(/^(\d{1,2}):(\d{2})/);
+    return m ? m[1].padStart(2, "0") + ":" + m[2] : text;
+}
+
+function openCalendarEventModal(eventId) {
+    let found = null;
+    Object.keys(calendarState).forEach(function(tileId) {
+        const hit = (calendarState[tileId].events || []).find(function(e) { return String(e.id) === String(eventId); });
+        if (hit) found = hit;
+    });
+    if (!found) return;
+    const categoryColors = {
+        "イベント": "bg-orange-100 text-orange-700",
+        "活動報告": "bg-green-100 text-green-800",
+        "重要": "bg-red-100 text-red-800",
+        "その他": "bg-gray-100 text-gray-600"
+    };
+    const categoryEl = document.getElementById("calendar-event-modal-category");
+    categoryEl.textContent = found.category || "";
+    categoryEl.className = "text-xs px-2 py-1 rounded font-bold " + (categoryColors[found.category] || "bg-gray-100 text-gray-600");
+    document.getElementById("calendar-event-modal-date").textContent = found.published_date || "";
+    document.getElementById("calendar-event-modal-title").textContent = found.title || "";
+    document.getElementById("calendar-event-modal-content").textContent = found.content || "";
+
+    const detailRows = [];
+    if (found.reception_time) detailRows.push("受付時間: " + formatCalendarTimeHM(found.reception_time));
+    if (found.start_time || found.end_time) {
+        detailRows.push("時間: " + formatCalendarTimeHM(found.start_time) + (found.end_time ? " - " + formatCalendarTimeHM(found.end_time) : ""));
+    }
+    if (found.venue_name) detailRows.push("会場名: " + found.venue_name);
+    if (found.venue_address) detailRows.push("会場住所: " + found.venue_address);
+    if (found.target_audience) detailRows.push("対象者: " + found.target_audience);
+    if (found.participation_fee) detailRows.push("参加費: " + found.participation_fee);
+    const detailsEl = document.getElementById("calendar-event-modal-details");
+    detailsEl.innerHTML = detailRows.map(function(r) { return "<li>" + r + "</li>"; }).join("");
+    if (found.application_url) {
+        detailsEl.innerHTML += '<li><a href="' + found.application_url + '" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all">申込URL: ' + found.application_url + '</a></li>';
+    }
+    document.getElementById("calendar-event-modal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+}
+
+function closeCalendarEventModal() {
+    document.getElementById("calendar-event-modal").classList.add("hidden");
+    document.body.style.overflow = "";
+}
 
 // イベント紹介タイル: 指定イベント（未指定・削除済みなら直近の公開イベント）を大きく紹介
 async function loadEventHighlightTile(tile) {
@@ -713,7 +878,8 @@ const TILE_LOADERS = {
     members: loadMembers,
     activities: loadActivities,
     event_highlight: loadEventHighlightTile,
-    election_support: loadElectionSupportTile
+    election_support: loadElectionSupportTile,
+    event_calendar: loadEventCalendarTile
 };
 
 // admin.htmlの「ホーム画面構成」で選ばれた順番・表示設定に沿って

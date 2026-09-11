@@ -230,6 +230,25 @@
         </div>
     </div>
 
+    <!-- イベントカレンダー詳細モーダル -->
+    <div id="calendar-event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeCalendarEventModal()">
+        <div class="absolute inset-0 bg-black/60"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <button onclick="closeCalendarEventModal()" class="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 z-10">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="p-6 pt-5">
+                <div class="flex items-center gap-2 mb-2">
+                    <span id="calendar-event-modal-category" class="text-xs px-2 py-1 rounded font-bold"></span>
+                    <p id="calendar-event-modal-date" class="text-xs text-gray-500 font-mono"></p>
+                </div>
+                <h3 id="calendar-event-modal-title" class="text-lg font-bold text-gray-800 mb-4 pr-8"></h3>
+                <div id="calendar-event-modal-content" class="text-sm text-gray-700 leading-relaxed whitespace-pre-line mb-4"></div>
+                <ul id="calendar-event-modal-details" class="space-y-1 text-sm text-gray-600"></ul>
+            </div>
+        </div>
+    </div>
+
     <!-- 県連ブランディング（県連名・住所等）の反映 -->
     <script src="branding.js"></script>
     <!-- 独自のJavaScript (script.js) を読み込む -->

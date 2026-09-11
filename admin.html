@@ -1485,7 +1485,7 @@ async function loadHomeTilesAdmin() {
     }
     const typeById = {};
     tileTypesCache.forEach(function(t) { typeById[t.id] = t; });
-    const CONFIGURABLE_TYPES = ["recruiting", "event_highlight", "election_support"];
+    const CONFIGURABLE_TYPES = ["recruiting", "event_highlight", "election_support", "event_calendar"];
     el.innerHTML = homeTilesCache.map(function(tile) {
         const type = typeById[tile.tile_type] || { label: tile.tile_type, icon: "fa-square" };
         const configurable = CONFIGURABLE_TYPES.indexOf(tile.tile_type) >= 0;
@@ -1601,6 +1601,22 @@ async function openTileConfigModal(tileId) {
             '<select name="news_id" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' + options + '</select></div>' +
             '<div class="flex gap-3 mt-4">' +
             '<button type="button" onclick="saveTileConfig(\'' + tile.id + '\', \'event_highlight\')" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">保存する</button>' +
+            '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+            '</div></form>';
+        document.getElementById("modal").classList.remove("hidden");
+    } else if (tile.tile_type === "event_calendar") {
+        const displayMode = cfg.display_mode || "always";
+        document.getElementById("modal-body").innerHTML =
+            '<form id="tile-config-form">' +
+            '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">表示方法</label>' +
+            '<select name="display_mode" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+            '<option value="always" ' + (displayMode === "always" ? "selected" : "") + '>常時表示する</option>' +
+            '<option value="toggle" ' + (displayMode === "toggle" ? "selected" : "") + '>文字リンクのみ表示し、クリックしたら開く</option>' +
+            '</select></div>' +
+            textareaField("description", "説明文（カレンダーの上に表示）", cfg.description || "", "例：イベントスケジュールです。予定は変更になる場合があります。") +
+            '<p class="text-xs text-gray-400 -mt-3 mb-4">イベント情報の編集画面で「イベントカレンダーへの表示」にチェックした項目が表示されます。</p>' +
+            '<div class="flex gap-3 mt-4">' +
+            '<button type="button" onclick="saveTileConfig(\'' + tile.id + '\', \'event_calendar\')" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">保存する</button>' +
             '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
             '</div></form>';
         document.getElementById("modal").classList.remove("hidden");
@@ -2050,6 +2066,26 @@ function toggleField(name, label, checked) {
         '<label for="chk_' + name + '" class="font-bold text-gray-700 cursor-pointer">' + label + '</label>' +
         '<span class="text-xs text-gray-400 ml-auto">オフで非公開</span></div>';
 }
+function eventVisibilityFields(d) {
+    const showEvents = d.show_in_events !== false;
+    const showCalendar = d.show_in_calendar !== false;
+    return '<div class="mb-5 bg-gray-50 rounded-xl p-4 space-y-3">' +
+        '<div class="flex items-center gap-3">' +
+        '<input type="checkbox" name="show_in_events" id="chk_show_in_events" ' + (showEvents ? "checked" : "") + ' onchange="onShowInEventsChange(this)" class="w-5 h-5 accent-orange-500">' +
+        '<label for="chk_show_in_events" class="font-bold text-gray-700 cursor-pointer">イベントへの表示</label>' +
+        '</div>' +
+        '<div class="flex items-center gap-3">' +
+        '<input type="checkbox" name="show_in_calendar" id="chk_show_in_calendar" ' + (showCalendar ? "checked" : "") + ' class="w-5 h-5 accent-orange-500">' +
+        '<label for="chk_show_in_calendar" class="font-bold text-gray-700 cursor-pointer">イベントカレンダーへの表示</label>' +
+        '</div>' +
+        '</div>';
+}
+function onShowInEventsChange(checkbox) {
+    if (checkbox.checked) {
+        const cal = document.getElementById("chk_show_in_calendar");
+        if (cal) cal.checked = true;
+    }
+}
 function photoField(name, label, value) {
     return '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">' + label + '</label>' +
         '<div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center bg-gray-50 hover:border-orange-400 cursor-pointer" onclick="document.getElementById(\'file-' + name + '\').click()">' +
@@ -2168,6 +2204,7 @@ function buildForm(type, d) {
             textareaField("content", "内容", d.content, "イベント内容を入力してください") +
             inputField("participation_fee", "参加費", "text", d.participation_fee, "例：無料") +
             inputField("application_url", "申込のURL", "url", d.application_url, "https://") +
+            eventVisibilityFields(d) +
             toggleField("is_published", "サイトに公開する", d.is_published !== false);
     } else if (type === "announcements") {
         const titleSizes = [["sm","小"],["base","中"],["lg","大（標準）"],["xl","特大"],["2xl","最大"]];
