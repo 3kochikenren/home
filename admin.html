@@ -1397,14 +1397,17 @@ async function loadHomeTilesAdmin() {
     }
     const typeById = {};
     tileTypesCache.forEach(function(t) { typeById[t.id] = t; });
+    const CONFIGURABLE_TYPES = ["recruiting", "event_highlight", "election_support"];
     el.innerHTML = homeTilesCache.map(function(tile) {
         const type = typeById[tile.tile_type] || { label: tile.tile_type, icon: "fa-square" };
+        const configurable = CONFIGURABLE_TYPES.indexOf(tile.tile_type) >= 0;
         return '<div class="bg-white rounded-2xl shadow p-4 flex flex-col sm:flex-row sm:items-center gap-3">' +
             '<div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-500 flex-shrink-0"><i class="fa-solid ' + (type.icon || "fa-square") + '"></i></div>' +
             '<div class="flex-1 min-w-0"><div class="font-bold text-gray-800">' + type.label + '</div>' + (type.description ? '<div class="text-xs text-gray-400 mt-0.5">' + type.description + '</div>' : '') + '</div>' +
             '<div class="viewer-hide flex items-center gap-4 flex-shrink-0">' +
             '<label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" ' + (tile.is_visible ? "checked" : "") + ' onchange="toggleTileVisible(\'' + tile.id + '\', this.checked)" class="w-5 h-5 accent-orange-500">表示</label>' +
             '<label class="flex items-center gap-2 text-sm text-gray-600"><span class="whitespace-nowrap">表示順</span><input type="number" value="' + tile.sort_order + '" onchange="updateTileSortOrder(\'' + tile.id + '\', this.value)" class="w-16 border-2 border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-orange-400"></label>' +
+            (configurable ? '<button onclick="openTileConfigModal(\'' + tile.id + '\')" class="bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-gear"></i></button>' : '') +
             '<button onclick="deleteHomeTile(this, \'' + tile.id + '\')" class="bg-red-50 text-red-500 px-3 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash"></i></button>' +
             '</div></div>';
     }).join("");
@@ -1451,9 +1454,80 @@ function openAddTileModal() {
 
 async function addTile(tileType) {
     const maxOrder = homeTilesCache.reduce(function(max, t) { return Math.max(max, t.sort_order); }, 0);
-    const ok = await dbInsert("kenren_home_tiles", { tile_type: tileType, sort_order: maxOrder + 1, is_visible: true });
-    if (ok) { closeModal(); loadHomeTilesAdmin(); showToast("追加しました"); }
-    else alert("追加に失敗しました。");
+    const hdrs = await getAuthHdrs();
+    if (!hdrs) return;
+    const kenrenId = await getCurrentKenrenId();
+    const r = await fetch(SUPABASE_URL + "/rest/v1/kenren_home_tiles", {
+        method: "POST",
+        body: JSON.stringify({ kenren_id: kenrenId, tile_type: tileType, sort_order: maxOrder + 1, is_visible: true }),
+        headers: Object.assign({}, hdrs, { "Content-Type": "application/json", "Prefer": "return=representation" })
+    });
+    if (!r.ok) { await reportError(r, "追加エラー"); return; }
+    const rows = await r.json();
+    const newTile = rows && rows[0];
+    closeModal();
+    await loadHomeTilesAdmin();
+    showToast("追加しました");
+    if (newTile && ["recruiting", "event_highlight", "election_support"].indexOf(tileType) >= 0) {
+        openTileConfigModal(newTile.id);
+    }
+}
+
+async function openTileConfigModal(tileId) {
+    const tile = homeTilesCache.find(function(t) { return t.id === tileId; });
+    if (!tile) return;
+    const cfg = tile.config || {};
+    document.getElementById("modal-title").textContent = "タイル設定";
+    if (tile.tile_type === "recruiting") {
+        document.getElementById("modal-body").innerHTML =
+            '<form id="tile-config-form">' +
+            inputField("title", "見出し ※必須", "text", cfg.title || "", "例：サポーター募集中！") +
+            textareaField("description", "説明文", cfg.description || "", "募集内容の説明を入力してください") +
+            inputField("link_url", "リンク先URL", "text", cfg.link_url || "contact.html", "例：contact.html、https://...") +
+            inputField("link_label", "ボタンの文言", "text", cfg.link_label || "お問い合わせ", "例：応募する") +
+            '<div class="flex gap-3 mt-4">' +
+            '<button type="button" onclick="saveTileConfig(\'' + tile.id + '\', \'recruiting\')" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">保存する</button>' +
+            '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+            '</div></form>';
+        document.getElementById("modal").classList.remove("hidden");
+    } else if (tile.tile_type === "election_support") {
+        document.getElementById("modal-body").innerHTML =
+            '<form id="tile-config-form">' +
+            inputField("heading", "見出し（空欄で既定文言）", "text", cfg.heading || "", "例：選挙中の公認候補者　応援をお願いします！") +
+            '<p class="text-xs text-gray-400 -mt-3 mb-4">議員情報で「候補者」区分に設定したメンバーが自動で表示されます。</p>' +
+            '<div class="flex gap-3 mt-4">' +
+            '<button type="button" onclick="saveTileConfig(\'' + tile.id + '\', \'election_support\')" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">保存する</button>' +
+            '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+            '</div></form>';
+        document.getElementById("modal").classList.remove("hidden");
+    } else if (tile.tile_type === "event_highlight") {
+        const kenrenId = await getCurrentKenrenId();
+        const newsRows = await dbFetch("news", "kenren_id=eq." + kenrenId + "&is_published=eq.true&order=published_date.desc&limit=100");
+        const options = '<option value="">-- 直近の公開イベントを自動選択 --</option>' +
+            (newsRows || []).map(function(n) {
+                return '<option value="' + n.id + '" ' + (cfg.news_id === n.id ? "selected" : "") + '>' + n.published_date + '　' + n.title + '</option>';
+            }).join("");
+        document.getElementById("modal-body").innerHTML =
+            '<form id="tile-config-form">' +
+            '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">紹介するイベント</label>' +
+            '<select name="news_id" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' + options + '</select></div>' +
+            '<div class="flex gap-3 mt-4">' +
+            '<button type="button" onclick="saveTileConfig(\'' + tile.id + '\', \'event_highlight\')" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">保存する</button>' +
+            '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+            '</div></form>';
+        document.getElementById("modal").classList.remove("hidden");
+    }
+}
+
+async function saveTileConfig(tileId, tileType) {
+    const form = document.getElementById("tile-config-form");
+    const config = {};
+    form.querySelectorAll("input,textarea,select").forEach(function(el) {
+        if (el.value !== "") config[el.name] = el.value;
+    });
+    const ok = await dbUpdate("kenren_home_tiles", tileId, { config: config });
+    if (ok) { closeModal(); loadHomeTilesAdmin(); showToast("保存しました"); }
+    else alert("保存に失敗しました。");
 }
 
 async function loadSettings() {

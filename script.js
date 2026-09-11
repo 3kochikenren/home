@@ -201,36 +201,6 @@ async function loadMembers() {
         </article>
     `;
 
-    const topCandidatesSection = document.getElementById("top-candidates-section");
-    const topCandidatesContainer = document.getElementById("top-candidates-container");
-    if (topCandidatesSection && topCandidatesContainer) {
-        if (candidates.length > 0) {
-            topCandidatesSection.classList.remove("hidden");
-            topCandidatesContainer.innerHTML = candidates.map(m => {
-                const days = ["日", "月", "火", "水", "木", "金", "土"];
-                let voteDateLabel = "";
-                if (m.vote_date) {
-                    const d = new Date(m.vote_date + "T00:00:00");
-                    if (!Number.isNaN(d.getTime())) {
-                        voteDateLabel = `${d.getMonth() + 1}月${d.getDate()}日（${days[d.getDay()]}）`;
-                    }
-                }
-                const electionLabel = [m.election_district, m.election_type].filter(Boolean).join(" ");
-                return `
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-red-200 text-center w-72">
-                    ${m.photo_url ? `<img src="${m.photo_url}" alt="${m.name}" class="w-full h-56 object-cover object-top">` : `<div class="w-full h-56 bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-user text-5xl text-gray-300"></i></div>`}
-                    <div class="p-5">
-                        ${voteDateLabel ? `<div class="inline-block bg-red-600 text-white text-sm font-bold px-4 py-2 rounded-lg mb-3">投票日　${voteDateLabel}</div>` : ""}
-                        ${electionLabel ? `<p class="text-gray-600 font-bold text-sm mb-2">${electionLabel}</p>` : ""}
-                        <h3 class="text-xl font-black text-gray-800">${m.name}</h3>
-                    </div>
-                </div>`;
-            }).join("");
-        } else {
-            topCandidatesSection.classList.add("hidden");
-        }
-    }
-
     membersContainer.innerHTML = lawmakers.length > 0
         ? lawmakers.map(renderCard).join("")
         : '<div class="md:col-span-2 bg-gray-50 rounded-xl p-8 text-center text-gray-400">所属議員は現在準備中です。</div>';
@@ -588,12 +558,6 @@ const TILE_SECTIONS = {
     },
     members: function() {
         return `
-        <section id="top-candidates-section" class="hidden py-14 bg-red-50 border-b-4 border-red-400">
-            <div class="container mx-auto px-4 max-w-5xl">
-                <h2 class="text-2xl font-black text-center text-red-700 mb-10">選挙中の公認候補者　応援をお願いします！</h2>
-                <div id="top-candidates-container" class="flex flex-wrap justify-center gap-8"></div>
-            </div>
-        </section>
         <section id="policy" class="py-20 bg-white">
             <div class="container mx-auto px-4 max-w-4xl">
                 <div class="text-center mb-16">
@@ -638,8 +602,118 @@ const TILE_SECTIONS = {
                 </div>
             </div>
         </section>`;
+    },
+    recruiting: function(tile) {
+        const cfg = tile.config || {};
+        const title = cfg.title || "募集のご案内";
+        const description = cfg.description || "";
+        const linkUrl = cfg.link_url || "contact.html";
+        const linkLabel = cfg.link_label || "お問い合わせ";
+        return `
+        <section class="py-16 bg-gradient-to-br from-orange-50 to-amber-50">
+            <div class="container mx-auto px-4 max-w-3xl text-center">
+                <h2 class="text-2xl md:text-3xl font-black text-gray-900 mb-4">${title}</h2>
+                ${description ? `<p class="text-gray-700 mb-8 whitespace-pre-line leading-relaxed">${description}</p>` : ""}
+                <a href="${linkUrl}" class="inline-block bg-primary text-white font-bold px-8 py-4 rounded-full hover:bg-orange-700 transition shadow-md">${linkLabel}</a>
+            </div>
+        </section>`;
+    },
+    event_highlight: function(tile) {
+        return `
+        <section id="event-highlight-${tile.id}" class="hidden py-16 bg-white border-t border-gray-100">
+            <div class="container mx-auto px-4 max-w-3xl">
+                <div id="event-highlight-${tile.id}-container">
+                    <p class="text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>
+                </div>
+            </div>
+        </section>`;
+    },
+    election_support: function(tile) {
+        const cfg = tile.config || {};
+        const heading = cfg.heading || "選挙中の公認候補者　応援をお願いします！";
+        return `
+        <section id="election-support-${tile.id}" class="hidden py-14 bg-red-50 border-b-4 border-red-400">
+            <div class="container mx-auto px-4 max-w-5xl">
+                <h2 class="text-2xl font-black text-center text-red-700 mb-10">${heading}</h2>
+                <div id="election-support-${tile.id}-container" class="flex flex-wrap justify-center gap-8"></div>
+            </div>
+        </section>`;
     }
 };
+
+// イベント紹介タイル: 指定イベント（未指定・削除済みなら直近の公開イベント）を大きく紹介
+async function loadEventHighlightTile(tile) {
+    const section = document.getElementById("event-highlight-" + tile.id);
+    const container = document.getElementById("event-highlight-" + tile.id + "-container");
+    if (!section || !container) return;
+    const kenrenId = await getKenrenId();
+    const cfg = tile.config || {};
+    let picked = null;
+    if (cfg.news_id) {
+        const rows = await fetchDB("news", "id=eq." + encodeURIComponent(cfg.news_id) + "&kenren_id=eq." + kenrenId + "&is_published=eq.true");
+        picked = rows && rows[0] ? rows[0] : null;
+    }
+    if (!picked) {
+        const today = new Date().toISOString().slice(0, 10);
+        const rows = await fetchDB("news", "kenren_id=eq." + kenrenId + "&is_published=eq.true&published_date=gte." + today + "&order=published_date.asc&limit=1");
+        picked = rows && rows[0] ? rows[0] : null;
+    }
+    if (!picked) { section.classList.add("hidden"); return; }
+    section.classList.remove("hidden");
+    const formatTimeHM = function(value) {
+        if (!value) return "";
+        const text = String(value).trim();
+        const m = text.match(/^(\d{1,2}):(\d{2})/);
+        return m ? m[1].padStart(2, "0") + ":" + m[2] : text;
+    };
+    const detailRows = [];
+    if (picked.start_time) detailRows.push(`<li><span class="font-bold text-gray-700">開始時間:</span> ${formatTimeHM(picked.start_time)}</li>`);
+    if (picked.venue_name) detailRows.push(`<li><span class="font-bold text-gray-700">会場名:</span> ${picked.venue_name}</li>`);
+    if (picked.venue_address) detailRows.push(`<li><span class="font-bold text-gray-700">会場住所:</span> ${picked.venue_address}</li>`);
+    if (picked.participation_fee) detailRows.push(`<li><span class="font-bold text-gray-700">参加費:</span> ${picked.participation_fee}</li>`);
+    const applyHtml = picked.application_url
+        ? `<a href="${picked.application_url}" target="_blank" rel="noopener noreferrer" class="inline-block mt-6 bg-primary text-white font-bold px-8 py-3 rounded-full hover:bg-orange-700 transition">お申し込みはこちら</a>`
+        : "";
+    container.innerHTML = `
+        <div class="bg-gray-50 rounded-2xl shadow-inner p-8 text-center">
+            <p class="text-sm text-orange-500 font-bold mb-2">注目のイベント</p>
+            <p class="text-sm text-gray-500 font-mono mb-3">${picked.published_date}</p>
+            <h2 class="text-2xl font-black text-gray-900 mb-4">${picked.title}</h2>
+            ${picked.content ? `<p class="text-gray-700 leading-relaxed whitespace-pre-line text-left max-w-xl mx-auto mb-4">${picked.content}</p>` : ""}
+            ${detailRows.length ? `<ul class="text-left max-w-xl mx-auto space-y-1 text-sm text-gray-600">${detailRows.join("")}</ul>` : ""}
+            ${applyHtml}
+        </div>
+    `;
+}
+
+// 選挙タイル: 選挙中（member_type=候補者）の議員候補への応援バナー
+async function loadElectionSupportTile(tile) {
+    const section = document.getElementById("election-support-" + tile.id);
+    const container = document.getElementById("election-support-" + tile.id + "-container");
+    if (!section || !container) return;
+    const kenrenId = await getKenrenId();
+    const members = await fetchDB("members", "kenren_id=eq." + kenrenId + "&member_type=eq." + encodeURIComponent("候補者") + "&is_deleted=eq.false&order=sort_order.asc");
+    if (!members || members.length === 0) { section.classList.add("hidden"); return; }
+    section.classList.remove("hidden");
+    const days = ["日", "月", "火", "水", "木", "金", "土"];
+    container.innerHTML = members.map(function(m) {
+        let voteDateLabel = "";
+        if (m.vote_date) {
+            const d = new Date(m.vote_date + "T00:00:00");
+            if (!Number.isNaN(d.getTime())) voteDateLabel = `${d.getMonth() + 1}月${d.getDate()}日（${days[d.getDay()]}）`;
+        }
+        const electionLabel = [m.election_district, m.election_type].filter(Boolean).join(" ");
+        return `
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-red-200 text-center w-72">
+            ${m.photo_url ? `<img src="${m.photo_url}" alt="${m.name}" class="w-full h-56 object-cover object-top">` : `<div class="w-full h-56 bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-user text-5xl text-gray-300"></i></div>`}
+            <div class="p-5">
+                ${voteDateLabel ? `<div class="inline-block bg-red-600 text-white text-sm font-bold px-4 py-2 rounded-lg mb-3">投票日　${voteDateLabel}</div>` : ""}
+                ${electionLabel ? `<p class="text-gray-600 font-bold text-sm mb-2">${electionLabel}</p>` : ""}
+                <h3 class="text-xl font-black text-gray-800">${m.name}</h3>
+            </div>
+        </div>`;
+    }).join("");
+}
 
 const TILE_LOADERS = {
     events: loadNews,
@@ -647,7 +721,9 @@ const TILE_LOADERS = {
     officers_kenren: loadOfficersKenrenTile,
     officers_branch: loadOfficersBranchTile,
     members: loadMembers,
-    activities: loadActivities
+    activities: loadActivities,
+    event_highlight: loadEventHighlightTile,
+    election_support: loadElectionSupportTile
 };
 
 // admin.htmlの「ホーム画面構成」で選ばれた順番・表示設定に沿って
@@ -663,14 +739,14 @@ async function loadHomeTiles() {
 
     const wrapper = document.createElement("div");
     knownTiles.forEach(function(tile) {
-        wrapper.insertAdjacentHTML("beforeend", TILE_SECTIONS[tile.tile_type]());
+        wrapper.insertAdjacentHTML("beforeend", TILE_SECTIONS[tile.tile_type](tile));
     });
     container.innerHTML = "";
     while (wrapper.firstChild) container.appendChild(wrapper.firstChild);
 
     knownTiles.forEach(function(tile) {
         const loaderFn = TILE_LOADERS[tile.tile_type];
-        if (loaderFn) loaderFn();
+        if (loaderFn) loaderFn(tile);
     });
 }
 
