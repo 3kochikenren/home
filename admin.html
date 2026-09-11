@@ -465,6 +465,13 @@ const STORAGE_URL = "https://yaimsonvxpujfupstpsd.supabase.co/storage/v1";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
+// 新規アカウント作成(signUp)専用の別インスタンス。
+// メインのsupabaseClientでsignUpすると、ログイン中の管理者自身のセッションが
+// 新規作成したアカウントに切り替わってしまうため、セッションを共有しない
+// 別クライアントを使う（persistSession:falseでlocalStorageも汚さない）。
+const signupClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+});
 
 let isPasswordRecoveryFlow = false;
 supabaseClient.auth.onAuthStateChange(function(event) {
@@ -1606,6 +1613,17 @@ async function saveTileConfig(tileId, tileType) {
 }
 
 // ===== システム管理（super_admin専用: 県連追加・管理者権限付与） =====
+// パスワードが入力されていれば新規アカウントを作成する（空欄なら何もせず成功扱い＝既存アカウント前提）
+async function createAccountIfPasswordProvided(email, password) {
+    if (!password) return { ok: true };
+    if (password.length < 6) return { ok: false, error: "パスワードは6文字以上で入力してください。" };
+    const { error } = await signupClient.auth.signUp({ email: email, password: password });
+    if (error && !/already registered|already exists/i.test(error.message || "")) {
+        return { ok: false, error: "アカウント作成に失敗しました：" + error.message };
+    }
+    return { ok: true };
+}
+
 async function callRpc(fnName, args) {
     const hdrs = await getAuthHdrs();
     if (!hdrs) return { ok: false, error: "ログインが必要です" };
@@ -1727,7 +1745,8 @@ function openAssignRoleModal() {
     document.getElementById("modal-title").textContent = "権限を付与";
     document.getElementById("modal-body").innerHTML =
         '<form id="assign-role-form">' +
-        inputField("email", "メールアドレス ※必須（先にダッシュボードでアカウント作成済みであること）", "email", "", "example@mail.com") +
+        inputField("email", "メールアドレス ※必須", "email", "", "example@mail.com") +
+        inputField("password", "パスワード（新規アカウントを作成する場合のみ入力・6文字以上）", "password", "", "既存アカウントに権限だけ付与する場合は空欄のまま") +
         '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">ロール</label>' +
         '<select name="role" onchange="onAssignRoleTypeChange(this)" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
         '<option value="kenren_admin">県連管理者（kenren_admin）</option>' +
@@ -1750,13 +1769,18 @@ function onAssignRoleTypeChange(sel) {
 async function saveAssignRole() {
     const form = document.getElementById("assign-role-form");
     const email = form.querySelector('[name="email"]').value.trim();
+    const password = form.querySelector('[name="password"]').value;
     const role = form.querySelector('[name="role"]').value;
     const kenrenSlugEl = form.querySelector('[name="kenren_slug"]');
     const kenrenSlug = role === "super_admin" ? null : (kenrenSlugEl ? kenrenSlugEl.value : null);
     if (!email) { alert("メールアドレスを入力してください。"); return; }
+    const created = await createAccountIfPasswordProvided(email, password);
+    if (!created.ok) { alert(created.error); return; }
     const res = await callRpc("admin_assign_role", { target_email: email, target_role: role, target_kenren_slug: kenrenSlug });
-    if (res.ok) { closeModal(); loadAdminUsersList(); showToast("権限を付与しました"); }
-    else alert(res.error);
+    if (res.ok) {
+        closeModal(); loadAdminUsersList();
+        showToast(password ? "アカウントを作成し、権限を付与しました（本人確認メールの確認が必要です）" : "権限を付与しました");
+    } else alert(res.error);
 }
 
 function removeAdminUser(btn, id) {
@@ -1792,7 +1816,8 @@ function openStaffAssignModal() {
     document.getElementById("modal-title").textContent = "権限を付与";
     document.getElementById("modal-body").innerHTML =
         '<form id="staff-assign-form">' +
-        inputField("email", "メールアドレス ※必須（先にダッシュボードでアカウント作成済みであること）", "email", "", "example@mail.com") +
+        inputField("email", "メールアドレス ※必須", "email", "", "example@mail.com") +
+        inputField("password", "パスワード（新規アカウントを作成する場合のみ入力・6文字以上）", "password", "", "既存アカウントに権限だけ付与する場合は空欄のまま") +
         '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">ロール</label>' +
         '<select name="role" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
         '<option value="kenren_admin">県連管理者（kenren_admin）</option>' +
@@ -1808,11 +1833,16 @@ function openStaffAssignModal() {
 async function saveStaffAssign() {
     const form = document.getElementById("staff-assign-form");
     const email = form.querySelector('[name="email"]').value.trim();
+    const password = form.querySelector('[name="password"]').value;
     const role = form.querySelector('[name="role"]').value;
     if (!email) { alert("メールアドレスを入力してください。"); return; }
+    const created = await createAccountIfPasswordProvided(email, password);
+    if (!created.ok) { alert(created.error); return; }
     const res = await callRpc("kenren_admin_assign_role", { target_email: email, target_role: role });
-    if (res.ok) { closeModal(); loadStaffAdmin(); showToast("権限を付与しました"); }
-    else alert(res.error);
+    if (res.ok) {
+        closeModal(); loadStaffAdmin();
+        showToast(password ? "アカウントを作成し、権限を付与しました（本人確認メールの確認が必要です）" : "権限を付与しました");
+    } else alert(res.error);
 }
 
 function removeStaffUser(btn, id) {
