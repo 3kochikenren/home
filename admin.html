@@ -365,6 +365,12 @@
                         <button onclick="openAssignRoleModal()" class="bg-orange-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-orange-600"><i class="fa-solid fa-plus mr-1"></i>権限を付与</button>
                     </div>
                     <p class="text-xs text-gray-400 mb-4">アカウント自体（メールアドレス・パスワード）は、先にSupabaseダッシュボードの Authentication → Users で作成しておいてください。ここではそのアカウントへの役割（ロール）・所属県連の割り当てのみ行います。</p>
+                    <div class="mb-4">
+                        <label class="text-xs font-bold text-gray-500 mr-2">県連で絞り込み</label>
+                        <select id="admin-users-kenren-filter" onchange="renderAdminUsersList()" class="border-2 border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-400">
+                            <option value="">すべて</option>
+                        </select>
+                    </div>
                     <div id="admin-users-list"></div>
                 </div>
             </section>
@@ -1642,7 +1648,7 @@ async function callRpc(fnName, args) {
 }
 
 async function loadSystemAdmin() {
-    loadKenrenList();
+    await loadKenrenList();
     loadAdminUsersList();
 }
 
@@ -1719,18 +1725,40 @@ async function saveAddKenren() {
     else alert(res.error);
 }
 
+let adminUsersCache = [];
+
 async function loadAdminUsersList() {
     const el = document.getElementById("admin-users-list");
     if (!el) return;
     el.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i></div>';
     const res = await callRpc("admin_list_users", {});
     if (!res.ok) { el.innerHTML = '<p class="text-center text-red-400 py-6">' + res.error + '</p>'; return; }
-    const rows = res.data || [];
+    adminUsersCache = res.data || [];
+
+    const filterEl = document.getElementById("admin-users-kenren-filter");
+    if (filterEl) {
+        const currentValue = filterEl.value;
+        filterEl.innerHTML = '<option value="">すべて</option>' + kenrenListCache.map(function(k) {
+            return '<option value="' + k.id + '">' + k.display_name + '</option>';
+        }).join("");
+        filterEl.value = currentValue;
+    }
+
+    renderAdminUsersList();
+}
+
+function renderAdminUsersList() {
+    const el = document.getElementById("admin-users-list");
+    const filterEl = document.getElementById("admin-users-kenren-filter");
+    if (!el) return;
+    const filterKenrenId = filterEl ? filterEl.value : "";
+    const rows = filterKenrenId ? adminUsersCache.filter(function(u) { return u.kenren_id === filterKenrenId; }) : adminUsersCache;
     const roleLabels = { super_admin: "全体管理者", kenren_admin: "県連管理者", viewer: "閲覧専用" };
-    if (rows.length === 0) { el.innerHTML = '<p class="text-center text-gray-400 py-6">管理者が登録されていません</p>'; return; }
+    if (rows.length === 0) { el.innerHTML = '<p class="text-center text-gray-400 py-6">該当する管理者がいません</p>'; return; }
     el.innerHTML = '<div class="divide-y divide-gray-100">' + rows.map(function(u) {
         return '<div class="py-3 flex items-center justify-between gap-3">' +
-            '<div><span class="font-bold text-gray-800">' + u.email + '</span>' +
+            '<div><span class="font-bold text-gray-800">' + (u.name || u.email) + '</span>' +
+            (u.name ? '<span class="text-xs text-gray-400 ml-2">' + u.email + '</span>' : '') +
             '<span class="text-xs bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-full ml-2">' + (roleLabels[u.role] || u.role) + '</span>' +
             (u.kenren_label ? '<span class="text-xs text-gray-400 ml-2">' + u.kenren_label + '</span>' : '') + '</div>' +
             '<button onclick="removeAdminUser(this, \'' + u.id + '\')" class="bg-red-50 text-red-500 px-3 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash"></i></button>' +
@@ -1745,6 +1773,7 @@ function openAssignRoleModal() {
     document.getElementById("modal-title").textContent = "権限を付与";
     document.getElementById("modal-body").innerHTML =
         '<form id="assign-role-form">' +
+        inputField("name", "氏名", "text", "", "例：山田 太郎") +
         inputField("email", "メールアドレス ※必須", "email", "", "example@mail.com") +
         inputField("password", "パスワード（新規アカウントを作成する場合のみ入力・6文字以上）", "password", "", "既存アカウントに権限だけ付与する場合は空欄のまま") +
         '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">ロール</label>' +
@@ -1768,6 +1797,7 @@ function onAssignRoleTypeChange(sel) {
 
 async function saveAssignRole() {
     const form = document.getElementById("assign-role-form");
+    const name = form.querySelector('[name="name"]').value.trim();
     const email = form.querySelector('[name="email"]').value.trim();
     const password = form.querySelector('[name="password"]').value;
     const role = form.querySelector('[name="role"]').value;
@@ -1776,7 +1806,7 @@ async function saveAssignRole() {
     if (!email) { alert("メールアドレスを入力してください。"); return; }
     const created = await createAccountIfPasswordProvided(email, password);
     if (!created.ok) { alert(created.error); return; }
-    const res = await callRpc("admin_assign_role", { target_email: email, target_role: role, target_kenren_slug: kenrenSlug });
+    const res = await callRpc("admin_assign_role", { target_email: email, target_role: role, target_kenren_slug: kenrenSlug, target_name: name || null });
     if (res.ok) {
         closeModal(); loadAdminUsersList();
         showToast(password ? "アカウントを作成し、権限を付与しました（本人確認メールの確認が必要です）" : "権限を付与しました");
@@ -1804,7 +1834,8 @@ async function loadStaffAdmin() {
     el.innerHTML = '<div class="divide-y divide-gray-100">' + rows.map(function(u) {
         const isSelf = u.id === CURRENT_ADMIN_ID;
         return '<div class="py-3 flex items-center justify-between gap-3">' +
-            '<div><span class="font-bold text-gray-800">' + u.email + '</span>' +
+            '<div><span class="font-bold text-gray-800">' + (u.name || u.email) + '</span>' +
+            (u.name ? '<span class="text-xs text-gray-400 ml-2">' + u.email + '</span>' : '') +
             '<span class="text-xs bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-full ml-2">' + (roleLabels[u.role] || u.role) + '</span>' +
             (isSelf ? '<span class="text-xs text-gray-400 ml-2">（自分）</span>' : '') + '</div>' +
             (isSelf ? '' : '<button onclick="removeStaffUser(this, \'' + u.id + '\')" class="bg-red-50 text-red-500 px-3 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash"></i></button>') +
@@ -1816,6 +1847,7 @@ function openStaffAssignModal() {
     document.getElementById("modal-title").textContent = "権限を付与";
     document.getElementById("modal-body").innerHTML =
         '<form id="staff-assign-form">' +
+        inputField("name", "氏名", "text", "", "例：山田 太郎") +
         inputField("email", "メールアドレス ※必須", "email", "", "example@mail.com") +
         inputField("password", "パスワード（新規アカウントを作成する場合のみ入力・6文字以上）", "password", "", "既存アカウントに権限だけ付与する場合は空欄のまま") +
         '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">ロール</label>' +
@@ -1832,13 +1864,14 @@ function openStaffAssignModal() {
 
 async function saveStaffAssign() {
     const form = document.getElementById("staff-assign-form");
+    const name = form.querySelector('[name="name"]').value.trim();
     const email = form.querySelector('[name="email"]').value.trim();
     const password = form.querySelector('[name="password"]').value;
     const role = form.querySelector('[name="role"]').value;
     if (!email) { alert("メールアドレスを入力してください。"); return; }
     const created = await createAccountIfPasswordProvided(email, password);
     if (!created.ok) { alert(created.error); return; }
-    const res = await callRpc("kenren_admin_assign_role", { target_email: email, target_role: role });
+    const res = await callRpc("kenren_admin_assign_role", { target_email: email, target_role: role, target_name: name || null });
     if (res.ok) {
         closeModal(); loadStaffAdmin();
         showToast(password ? "アカウントを作成し、権限を付与しました（本人確認メールの確認が必要です）" : "権限を付与しました");
