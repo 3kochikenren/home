@@ -553,7 +553,7 @@ const TILE_SECTIONS = {
                 <div class="text-center mb-16">
                     <h2 class="text-3xl font-bold section-title">高知県所属議員</h2>
                 </div>
-                <div id="members-container" class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div id="members-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     <p class="md:col-span-2 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み込み中...</p>
                 </div>
                 <div id="candidates-section" class="mt-16">
@@ -567,7 +567,7 @@ const TILE_SECTIONS = {
                     <div class="text-center mb-10">
                         <h3 class="text-2xl font-bold text-gray-800">改革委員の紹介</h3>
                     </div>
-                    <div id="reformers-container" class="grid grid-cols-1 md:grid-cols-2 gap-12"></div>
+                    <div id="reformers-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
             </div>
         </section>`;
