@@ -14,7 +14,7 @@
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
     <header class="bg-white shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="index.html" class="font-bold text-xl text-gray-800 hover:text-orange-500 transition">参政党高知県支部連合会</a>
+            <a href="index.html" class="font-bold text-xl text-gray-800 hover:text-orange-500 transition" data-brand="site-name">参政党高知県支部連合会</a>
             <a href="index.html" class="text-sm text-orange-500 hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i>トップページへ戻る</a>
         </div>
     </header>
@@ -62,9 +62,10 @@
     </main>
 
     <footer class="bg-gray-900 text-gray-400 text-center py-8 mt-8">
-        <p class="text-sm">&copy; 2026 参政党高知県支部連合会 All Rights Reserved.</p>
+        <p class="text-sm">&copy; 2026 <span data-brand="site-name">参政党高知県支部連合会</span> All Rights Reserved.</p>
     </footer>
 
+    <script src="branding.js"></script>
     <script src="forms.js?v=20260911b"></script>
     <script>
         bindFormSubmit({

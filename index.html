@@ -37,7 +37,7 @@
                 <!-- ロゴ領域 -->
                 <div class="flex-shrink-0 flex items-center">
                     <a href="#" class="flex items-center gap-2">
-                        <span class="top-brand-glow font-bold text-xl tracking-wider text-gray-800">参政党高知県支部連合会</span>
+                        <span class="top-brand-glow font-bold text-xl tracking-wider text-gray-800" data-brand="site-name">参政党高知県支部連合会</span>
                     </a>
                 </div>
 
@@ -80,10 +80,10 @@
         <section id="hero-section" class="hero-bg relative h-[60vh] min-h-[400px] flex items-center justify-center" style="background-size:cover;background-position:center;">
             <div class="absolute inset-0 bg-black bg-opacity-30"></div>
             <div class="relative z-10 text-center px-4">
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 drop-shadow-lg leading-tight">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 drop-shadow-lg leading-tight" data-brand="hero-headline">
                     高知の未来を、<br class="md:hidden">共に創る。
                 </h1>
-                <p class="text-lg md:text-2xl text-white font-medium mb-8 drop-shadow-md">
+                <p class="text-lg md:text-2xl text-white font-medium mb-8 drop-shadow-md" data-brand="hero-subheadline">
                     地域に根ざし、新しい県政を目指して
                 </p>
 
@@ -131,16 +131,16 @@
             <div class="flex flex-col md:flex-row justify-between gap-10 mb-12">
                 <div class="md:w-1/3">
                     <a href="#" class="flex items-center gap-2 mb-6">
-                        <span class="font-bold text-xl tracking-wider text-white">参政党高知県支部連合会</span>
+                        <span class="font-bold text-xl tracking-wider text-white" data-brand="site-name">参政党高知県支部連合会</span>
                     </a>
-                    <p class="text-sm mb-4 leading-relaxed">
+                    <p class="text-sm mb-4 leading-relaxed" data-brand="footer-address">
                         〒781-5106<br>
                         高知市介良乙3137-5　2F
                     </p>
-                    <p class="text-sm"><i class="fa-solid fa-envelope mr-2"></i> kochi@sanseito.jp</p>
+                    <p class="text-sm"><i class="fa-solid fa-envelope mr-2"></i> <span data-brand="footer-email">kochi@sanseito.jp</span></p>
                     <div class="flex gap-4 mt-6">
-                        <a href="https://x.com/sanseito_kochi" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-orange-500 hover:text-white transition"><i class="fa-brands fa-x-twitter"></i></a>
-                        <a href="https://www.facebook.com/profile.php?id=100082876765213" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-orange-700 hover:text-white transition"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a data-brand="footer-x-url" href="https://x.com/sanseito_kochi" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-orange-500 hover:text-white transition"><i class="fa-brands fa-x-twitter"></i></a>
+                        <a data-brand="footer-facebook-url" href="https://www.facebook.com/profile.php?id=100082876765213" target="_blank" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-orange-700 hover:text-white transition"><i class="fa-brands fa-facebook-f"></i></a>
                     </div>
                 </div>
                 <div class="md:w-2/3 flex flex-wrap gap-10">
@@ -172,7 +172,7 @@
                 </div>
             </div>
             <div class="border-t border-gray-800 pt-8 text-center text-xs text-gray-500">
-                <p>&copy; 2026 参政党高知県支部連合会 All Rights Reserved.</p>
+                <p>&copy; 2026 <span data-brand="site-name">参政党高知県支部連合会</span> All Rights Reserved.</p>
                 <p class="mt-2"><a href="admin.html" class="text-gray-600 hover:text-white transition text-xs"><i class="fa-solid fa-lock mr-1"></i>管理者ログイン</a></p>
             </div>
         </div>
@@ -230,6 +230,8 @@
         </div>
     </div>
 
+    <!-- 県連ブランディング（県連名・住所等）の反映 -->
+    <script src="branding.js"></script>
     <!-- 独自のJavaScript (script.js) を読み込む -->
     <script src="script.js"></script>
 </body>

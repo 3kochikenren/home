@@ -152,6 +152,15 @@
                             </button>
                         </div>
                     </div>
+
+                    <div class="mt-10 border-t border-gray-100 pt-8">
+                        <h3 class="text-lg font-bold text-gray-800 mb-2"><i class="fa-solid fa-palette mr-2 text-orange-400"></i>サイト表示設定</h3>
+                        <p class="text-sm text-gray-500 mb-4">トップページの見出しや、各ページのフッターに表示する連絡先を設定します。空欄のままにすると既定の文言がそのまま表示されます。</p>
+                        <div id="branding-fields"></div>
+                        <button onclick="saveBrandingSettings()" class="viewer-hide bg-orange-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-orange-600 transition">
+                            <i class="fa-solid fa-floppy-disk mr-2"></i>表示設定を保存
+                        </button>
+                    </div>
                 </div>
             </section>
 
@@ -1695,20 +1704,74 @@ function removeAdminUser(btn, id) {
 }
 
 async function loadSettings() {
-    const data = await dbFetch("settings", "key=eq.hero_image");
-    const electionDateData = await dbFetch("settings", "key=eq.election_date");
+    const kenrenId = await getCurrentKenrenId();
+    const allSettings = await dbFetch("settings", "kenren_id=eq." + kenrenId);
+    const byKey = {};
+    (allSettings || []).forEach(function(s) { byKey[s.key] = s.value; });
+
     const el = document.getElementById("hero-current");
     const electionCurrent = document.getElementById("election-date-current");
     const electionInput = document.getElementById("election-date-input");
-    if (!el) return;
-    if (data && data.length > 0 && data[0].value) {
-        el.innerHTML = "<p class=\"text-sm font-bold text-gray-700 mb-2\">現在のヒーロー画像：</p><img src=\"" + data[0].value + "\" class=\"w-full rounded-xl border-2 border-gray-200 max-h-64 object-cover\">";
-    } else {
-        el.innerHTML = "<p class=\"text-sm text-gray-400 mb-2\">現在は既定の画像が表示されています</p>";
+    if (el) {
+        if (byKey.hero_image) {
+            el.innerHTML = "<p class=\"text-sm font-bold text-gray-700 mb-2\">現在のヒーロー画像：</p><img src=\"" + byKey.hero_image + "\" class=\"w-full rounded-xl border-2 border-gray-200 max-h-64 object-cover\">";
+        } else {
+            el.innerHTML = "<p class=\"text-sm text-gray-400 mb-2\">現在は既定の画像が表示されています</p>";
+        }
     }
-    const electionDateValue = electionDateData && electionDateData.length > 0 ? electionDateData[0].value : "";
-    if (electionCurrent) electionCurrent.textContent = "現在の設定: " + formatDisplayDate(electionDateValue);
-    if (electionInput) electionInput.value = electionDateValue || "";
+    if (electionCurrent) electionCurrent.textContent = "現在の設定: " + formatDisplayDate(byKey.election_date || "");
+    if (electionInput) electionInput.value = byKey.election_date || "";
+
+    renderBrandingFields(byKey);
+    applyRoleUI();
+}
+
+const BRANDING_FIELDS = [
+    { key: "hero_headline", label: "ヒーロー見出し（空欄で既定文言）", type: "text", placeholder: "例：高知の未来を、共に創る。" },
+    { key: "hero_subheadline", label: "ヒーロー副見出し（空欄で既定文言）", type: "text", placeholder: "例：地域に根ざし、新しい県政を目指して" },
+    { key: "footer_address", label: "フッター住所（複数行可・空欄で既定文言）", type: "textarea", placeholder: "〒000-0000\n〇〇市〇〇町1-2-3" },
+    { key: "footer_email", label: "フッター連絡先メール（空欄で既定文言）", type: "email", placeholder: "例：info@example.jp" },
+    { key: "footer_x_url", label: "X（旧Twitter）のURL（空欄で既定リンク）", type: "url", placeholder: "https://x.com/..." },
+    { key: "footer_facebook_url", label: "FacebookのURL（空欄で既定リンク）", type: "url", placeholder: "https://www.facebook.com/..." }
+];
+
+function renderBrandingFields(values) {
+    const el = document.getElementById("branding-fields");
+    if (!el) return;
+    el.innerHTML = BRANDING_FIELDS.map(function(f) {
+        const val = values[f.key] || "";
+        if (f.type === "textarea") {
+            return '<div class="mb-4"><label class="block text-sm font-bold text-gray-700 mb-1">' + f.label + '</label><textarea id="branding-' + f.key + '" rows="2" placeholder="' + f.placeholder + '" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' + val + '</textarea></div>';
+        }
+        return '<div class="mb-4"><label class="block text-sm font-bold text-gray-700 mb-1">' + f.label + '</label><input type="' + f.type + '" id="branding-' + f.key + '" value="' + val + '" placeholder="' + f.placeholder + '" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400"></div>';
+    }).join("");
+}
+
+async function saveBrandingSettings() {
+    const kenrenId = await getCurrentKenrenId();
+    const existing = await dbFetch("settings", "kenren_id=eq." + kenrenId);
+    const existingByKey = {};
+    (existing || []).forEach(function(s) { existingByKey[s.key] = s; });
+    let allOk = true;
+    for (const f of BRANDING_FIELDS) {
+        const el = document.getElementById("branding-" + f.key);
+        if (!el) continue;
+        const value = el.value.trim();
+        const current = existingByKey[f.key];
+        if (!value) {
+            if (current) { const ok = await dbDelete("settings", current.id); if (!ok) allOk = false; }
+            continue;
+        }
+        if (current) {
+            const ok = await dbUpdate("settings", current.id, { value: value });
+            if (!ok) allOk = false;
+        } else {
+            const ok = await dbInsert("settings", { key: f.key, value: value });
+            if (!ok) allOk = false;
+        }
+    }
+    if (allOk) { showToast("保存しました"); loadSettings(); }
+    else alert("一部の保存に失敗しました。");
 }
 function previewHero(input) {
     const file = input.files[0];
@@ -1726,7 +1789,8 @@ async function saveHeroImage() {
     showToast("画像をアップロード中...");
     const url = await uploadPhoto(input.files[0]);
     if (!url) { alert("アップロードに失敗しました。"); return; }
-    const existing = await dbFetch("settings", "key=eq.hero_image");
+    const kenrenId = await getCurrentKenrenId();
+    const existing = await dbFetch("settings", "key=eq.hero_image&kenren_id=eq." + kenrenId);
     let ok;
     if (existing && existing.length > 0) {
         ok = await dbUpdate("settings", existing[0].id, { value: url });
@@ -1745,7 +1809,8 @@ async function saveElectionDate() {
         alert("投開票日を入力してください。");
         return;
     }
-    const existing = await dbFetch("settings", "key=eq.election_date");
+    const kenrenId = await getCurrentKenrenId();
+    const existing = await dbFetch("settings", "key=eq.election_date&kenren_id=eq." + kenrenId);
     let ok;
     if (existing && existing.length > 0) {
         ok = await dbUpdate("settings", existing[0].id, { value: value });

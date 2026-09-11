@@ -1,6 +1,4 @@
-const SUPABASE_URL = "https://yaimsonvxpujfupstpsd.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaW1zb252eHB1amZ1cHN0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODEwMjksImV4cCI6MjA5NTA1NzAyOX0.2PAKyBs8z44Ft4TXigKAsRfh6zEQwdVl2KNRZojxwzk";
-
+// SUPABASE_URL / SUPABASE_KEY / KENREN_SLUG は branding.js（先に読み込み）で定義済み
 async function fetchDB(table, query = "") {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
         headers: {
@@ -24,14 +22,6 @@ function formatVoteDateJa(dateValue) {
     return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-// 県連の切り替えはURLの ?k=<スラッグ> で行う（例: ?k=tokyo）。
-// 省略時は高知（既存のURLをそのまま使い続けられるようにするため）。
-const DEFAULT_KENREN_SLUG = "kochi";
-function resolveKenrenSlug() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("k") || DEFAULT_KENREN_SLUG;
-}
-const KENREN_SLUG = resolveKenrenSlug();
 let CURRENT_KENREN_ID = null;
 async function getKenrenId() {
     if (CURRENT_KENREN_ID) return CURRENT_KENREN_ID;

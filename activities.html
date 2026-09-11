@@ -28,7 +28,7 @@
     <header class="bg-white shadow-md sticky top-0 z-40">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-2">
-                <span class="font-bold text-xl tracking-wider text-gray-800">参政党高知県連</span>
+                <span class="font-bold text-xl tracking-wider text-gray-800" data-brand="site-name">参政党高知県連</span>
             </a>
             <a href="index.html#activity" class="text-primary hover:underline font-bold inline-flex items-center gap-2">
                 <i class="fa-solid fa-arrow-left"></i> トップへ戻る
@@ -63,13 +63,12 @@
 
     <footer class="bg-gray-900 text-gray-400 py-8">
         <div class="container mx-auto px-4 text-center text-sm">
-            <p>&copy; 2026 参政党 高知県連 All Rights Reserved.</p>
+            <p>&copy; 2026 <span data-brand="site-name">参政党 高知県連</span> All Rights Reserved.</p>
         </div>
     </footer>
 
+    <script src="branding.js"></script>
     <script>
-        const SUPABASE_URL = "https://yaimsonvxpujfupstpsd.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaW1zb252eHB1amZ1cHN0cHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODEwMjksImV4cCI6MjA5NTA1NzAyOX0.2PAKyBs8z44Ft4TXigKAsRfh6zEQwdVl2KNRZojxwzk";
         const PAGE_SIZE = 21;
         let allActivities = [];
         let currentPage = 1;
@@ -81,7 +80,14 @@
                     "Authorization": `Bearer ${SUPABASE_KEY}`
                 }
             });
-            return res.json();
+            if (!res.ok) return [];
+            const data = await res.json();
+            return Array.isArray(data) ? data : [];
+        }
+
+        async function getKenrenId() {
+            const rows = await fetchDB("kenren", "slug=eq." + encodeURIComponent(KENREN_SLUG) + "&select=id&limit=1");
+            return (rows && rows[0] && rows[0].id) || null;
         }
 
         function renderActivitiesPage() {
@@ -129,7 +135,9 @@
         }
 
         async function loadActivitiesAll() {
-            allActivities = await fetchDB("activities", "is_published=eq.true&order=activity_date.desc");
+            const kenrenId = await getKenrenId();
+            if (!kenrenId) { allActivities = []; renderActivitiesPage(); return; }
+            allActivities = await fetchDB("activities", "kenren_id=eq." + kenrenId + "&is_published=eq.true&order=activity_date.desc");
             renderActivitiesPage();
         }
 
