@@ -1619,9 +1619,39 @@ async function loadKenrenList() {
         return '<div class="py-3 flex items-center justify-between gap-3">' +
             '<div><span class="font-bold text-gray-800">' + k.display_name + '</span>' +
             '<span class="text-xs text-gray-400 ml-2">' + k.prefecture_name + ' ／ slug: ' + k.slug + '</span></div>' +
+            '<div class="flex items-center gap-3 flex-shrink-0">' +
+            '<button onclick="openEditKenrenModal(\'' + k.id + '\')" class="text-xs text-blue-600 hover:underline whitespace-nowrap">編集</button>' +
             '<a href="admin.html?k=' + encodeURIComponent(k.slug) + '" class="text-xs text-orange-500 hover:underline whitespace-nowrap">この県連を開く</a>' +
-            '</div>';
+            '</div></div>';
     }).join("") + '</div>';
+}
+
+function openEditKenrenModal(id) {
+    const k = kenrenListCache.find(function(x) { return x.id === id; });
+    if (!k) return;
+    document.getElementById("modal-title").textContent = "県連を編集";
+    document.getElementById("modal-body").innerHTML =
+        '<form id="edit-kenren-form">' +
+        inputField("slug", "スラッグ（半角英数、URLの ?k= に使う） ※必須", "text", k.slug, "例：tokyo") +
+        inputField("prefecture_name", "都道府県名 ※必須", "text", k.prefecture_name, "例：東京都") +
+        inputField("display_name", "サイト表示名 ※必須", "text", k.display_name, "例：参政党東京都支部連合会") +
+        '<p class="text-xs text-amber-600 -mt-3 mb-4"><i class="fa-solid fa-triangle-exclamation mr-1"></i>スラッグを変更すると、これまでの ?k=' + k.slug + ' のURLでは開けなくなります（共有済みのリンクがあればご注意ください）。</p>' +
+        '<div class="flex gap-3 mt-4">' +
+        '<button type="button" onclick="saveEditKenren(\'' + k.id + '\')" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">保存する</button>' +
+        '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+        '</div></form>';
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+async function saveEditKenren(id) {
+    const form = document.getElementById("edit-kenren-form");
+    const slug = form.querySelector('[name="slug"]').value.trim();
+    const prefectureName = form.querySelector('[name="prefecture_name"]').value.trim();
+    const displayName = form.querySelector('[name="display_name"]').value.trim();
+    if (!slug || !prefectureName || !displayName) { alert("すべて入力してください。"); return; }
+    const ok = await dbUpdate("kenren", id, { slug: slug, prefecture_name: prefectureName, display_name: displayName });
+    if (ok) { closeModal(); loadKenrenList(); showToast("保存しました"); }
+    else alert("保存に失敗しました。");
 }
 
 function openAddKenrenModal() {
