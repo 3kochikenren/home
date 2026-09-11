@@ -96,6 +96,9 @@
                     <button onclick="showSection('tabloid')" id="nav-tabloid" data-nav-section="tabloid" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-map-location-dot w-5 text-center"></i><span>タブロイド判管理</span>
                     </button>
+                    <button onclick="showSection('system')" id="nav-system" data-nav-section="system" class="super-admin-only hidden nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-user-shield w-5 text-center"></i><span>システム管理</span>
+                    </button>
                 </nav>
             </div>
         </aside>
@@ -112,6 +115,7 @@
                     <button onclick="showSection('members')" data-nav-section="members" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">議員情報</button>
                     <button onclick="showSection('activities')" data-nav-section="activities" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">活動報告</button>
                     <button onclick="showSection('tabloid')" data-nav-section="tabloid" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">タブロイド判</button>
+                    <button onclick="showSection('system')" data-nav-section="system" class="super-admin-only hidden nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">システム管理</button>
                 </div>
             </div>
             <section id="section-settings" class="admin-section hidden">
@@ -316,6 +320,30 @@
                 </div>
             </section>
 
+            <section id="section-system" class="admin-section hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-user-shield mr-2 text-orange-500"></i>システム管理</h2>
+                    <p class="text-gray-500 text-sm mt-1">全体管理者（super_admin）専用。県連の追加と、管理者アカウントへの権限付与を行います</p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow p-6 mb-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-earth-asia mr-2 text-orange-400"></i>県連一覧</h3>
+                        <button onclick="openAddKenrenModal()" class="bg-orange-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-orange-600"><i class="fa-solid fa-plus mr-1"></i>県連を追加</button>
+                    </div>
+                    <div id="kenren-list"></div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-user-gear mr-2 text-orange-400"></i>管理者アカウント</h3>
+                        <button onclick="openAssignRoleModal()" class="bg-orange-500 text-white font-bold px-4 py-2 rounded-xl hover:bg-orange-600"><i class="fa-solid fa-plus mr-1"></i>権限を付与</button>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-4">アカウント自体（メールアドレス・パスワード）は、先にSupabaseダッシュボードの Authentication → Users で作成しておいてください。ここではそのアカウントへの役割（ロール）・所属県連の割り当てのみ行います。</p>
+                    <div id="admin-users-list"></div>
+                </div>
+            </section>
+
         </main>
     </div>
 </div>
@@ -474,6 +502,9 @@ function applyRoleUI() {
     }
     document.querySelectorAll(".viewer-hide").forEach(function(el) {
         el.classList.toggle("hidden", CURRENT_ADMIN_ROLE === "viewer");
+    });
+    document.querySelectorAll(".super-admin-only").forEach(function(el) {
+        el.classList.toggle("hidden", CURRENT_ADMIN_ROLE !== "super_admin");
     });
 }
 
@@ -1056,6 +1087,7 @@ async function loadSection(name) {
     if (name === "orggroups") { loadOrgGroups(); return; }
     if (name === "members") { loadMembersAdmin(); return; }
     if (name === "tabloid") { switchTabloidTab("facilities"); return; }
+    if (name === "system") { loadSystemAdmin(); return; }
     const el = document.getElementById(name + "-list");
     if (!el) return;
     el.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3">読み込み中...</p></div>';
@@ -1528,6 +1560,138 @@ async function saveTileConfig(tileId, tileType) {
     const ok = await dbUpdate("kenren_home_tiles", tileId, { config: config });
     if (ok) { closeModal(); loadHomeTilesAdmin(); showToast("保存しました"); }
     else alert("保存に失敗しました。");
+}
+
+// ===== システム管理（super_admin専用: 県連追加・管理者権限付与） =====
+async function callRpc(fnName, args) {
+    const hdrs = await getAuthHdrs();
+    if (!hdrs) return { ok: false, error: "ログインが必要です" };
+    const r = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + fnName, {
+        method: "POST",
+        body: JSON.stringify(args || {}),
+        headers: Object.assign({}, hdrs, { "Content-Type": "application/json" })
+    });
+    if (!r.ok) {
+        let msg = "エラーが発生しました。";
+        try { const e = await r.json(); msg = e.message || msg; } catch (_) {}
+        return { ok: false, error: msg };
+    }
+    const data = await r.json().catch(function() { return null; });
+    return { ok: true, data: data };
+}
+
+async function loadSystemAdmin() {
+    loadKenrenList();
+    loadAdminUsersList();
+}
+
+let kenrenListCache = [];
+
+async function loadKenrenList() {
+    const el = document.getElementById("kenren-list");
+    if (!el) return;
+    el.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+    const rows = await dbFetch("kenren", "order=prefecture_name.asc");
+    kenrenListCache = rows || [];
+    if (kenrenListCache.length === 0) { el.innerHTML = '<p class="text-center text-gray-400 py-6">県連がありません</p>'; return; }
+    el.innerHTML = '<div class="divide-y divide-gray-100">' + kenrenListCache.map(function(k) {
+        return '<div class="py-3 flex items-center justify-between gap-3">' +
+            '<div><span class="font-bold text-gray-800">' + k.display_name + '</span>' +
+            '<span class="text-xs text-gray-400 ml-2">' + k.prefecture_name + ' ／ slug: ' + k.slug + '</span></div>' +
+            '<a href="admin.html?k=' + encodeURIComponent(k.slug) + '" class="text-xs text-orange-500 hover:underline whitespace-nowrap">この県連を開く</a>' +
+            '</div>';
+    }).join("") + '</div>';
+}
+
+function openAddKenrenModal() {
+    document.getElementById("modal-title").textContent = "県連を追加";
+    document.getElementById("modal-body").innerHTML =
+        '<form id="add-kenren-form">' +
+        inputField("slug", "スラッグ（半角英数、URLの ?k= に使う） ※必須", "text", "", "例：tokyo") +
+        inputField("prefecture_name", "都道府県名 ※必須", "text", "", "例：東京都") +
+        inputField("display_name", "サイト表示名 ※必須", "text", "", "例：参政党東京都支部連合会") +
+        '<div class="flex gap-3 mt-4">' +
+        '<button type="button" onclick="saveAddKenren()" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">作成する</button>' +
+        '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+        '</div></form>';
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+async function saveAddKenren() {
+    const form = document.getElementById("add-kenren-form");
+    const slug = form.querySelector('[name="slug"]').value.trim();
+    const prefectureName = form.querySelector('[name="prefecture_name"]').value.trim();
+    const displayName = form.querySelector('[name="display_name"]').value.trim();
+    if (!slug || !prefectureName || !displayName) { alert("すべて入力してください。"); return; }
+    const res = await callRpc("create_kenren_with_defaults", { p_slug: slug, p_prefecture_name: prefectureName, p_display_name: displayName });
+    if (res.ok) { closeModal(); loadKenrenList(); showToast("県連を作成しました"); }
+    else alert(res.error);
+}
+
+async function loadAdminUsersList() {
+    const el = document.getElementById("admin-users-list");
+    if (!el) return;
+    el.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+    const res = await callRpc("admin_list_users", {});
+    if (!res.ok) { el.innerHTML = '<p class="text-center text-red-400 py-6">' + res.error + '</p>'; return; }
+    const rows = res.data || [];
+    const roleLabels = { super_admin: "全体管理者", kenren_admin: "県連管理者", viewer: "閲覧専用" };
+    if (rows.length === 0) { el.innerHTML = '<p class="text-center text-gray-400 py-6">管理者が登録されていません</p>'; return; }
+    el.innerHTML = '<div class="divide-y divide-gray-100">' + rows.map(function(u) {
+        return '<div class="py-3 flex items-center justify-between gap-3">' +
+            '<div><span class="font-bold text-gray-800">' + u.email + '</span>' +
+            '<span class="text-xs bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded-full ml-2">' + (roleLabels[u.role] || u.role) + '</span>' +
+            (u.kenren_label ? '<span class="text-xs text-gray-400 ml-2">' + u.kenren_label + '</span>' : '') + '</div>' +
+            '<button onclick="removeAdminUser(this, \'' + u.id + '\')" class="bg-red-50 text-red-500 px-3 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash"></i></button>' +
+            '</div>';
+    }).join("") + '</div>';
+}
+
+function openAssignRoleModal() {
+    const kenrenOptions = kenrenListCache.map(function(k) {
+        return '<option value="' + k.slug + '">' + k.display_name + '</option>';
+    }).join("");
+    document.getElementById("modal-title").textContent = "権限を付与";
+    document.getElementById("modal-body").innerHTML =
+        '<form id="assign-role-form">' +
+        inputField("email", "メールアドレス ※必須（先にダッシュボードでアカウント作成済みであること）", "email", "", "example@mail.com") +
+        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">ロール</label>' +
+        '<select name="role" onchange="onAssignRoleTypeChange(this)" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+        '<option value="kenren_admin">県連管理者（kenren_admin）</option>' +
+        '<option value="viewer">閲覧専用（viewer）</option>' +
+        '<option value="super_admin">全体管理者（super_admin）</option>' +
+        '</select></div>' +
+        '<div id="assign-role-kenren-field" class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">所属県連</label>' +
+        '<select name="kenren_slug" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' + kenrenOptions + '</select></div>' +
+        '<div class="flex gap-3 mt-4">' +
+        '<button type="button" onclick="saveAssignRole()" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">付与する</button>' +
+        '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
+        '</div></form>';
+    document.getElementById("modal").classList.remove("hidden");
+}
+
+function onAssignRoleTypeChange(sel) {
+    document.getElementById("assign-role-kenren-field").classList.toggle("hidden", sel.value === "super_admin");
+}
+
+async function saveAssignRole() {
+    const form = document.getElementById("assign-role-form");
+    const email = form.querySelector('[name="email"]').value.trim();
+    const role = form.querySelector('[name="role"]').value;
+    const kenrenSlugEl = form.querySelector('[name="kenren_slug"]');
+    const kenrenSlug = role === "super_admin" ? null : (kenrenSlugEl ? kenrenSlugEl.value : null);
+    if (!email) { alert("メールアドレスを入力してください。"); return; }
+    const res = await callRpc("admin_assign_role", { target_email: email, target_role: role, target_kenren_slug: kenrenSlug });
+    if (res.ok) { closeModal(); loadAdminUsersList(); showToast("権限を付与しました"); }
+    else alert(res.error);
+}
+
+function removeAdminUser(btn, id) {
+    confirmStepDelete(btn, async function() {
+        const ok = await dbDelete("admin_users", id);
+        if (ok) { showToast("削除しました"); loadAdminUsersList(); }
+        else { btn.disabled = false; }
+    });
 }
 
 async function loadSettings() {
