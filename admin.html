@@ -887,8 +887,29 @@ async function loadMembersAdmin() {
         el.innerHTML = '<div class="bg-white rounded-2xl p-12 text-center text-gray-400 shadow"><i class="fa-solid fa-inbox text-5xl mb-4 block"></i><p class="font-bold text-lg">' + emptyText + '</p><p class="text-sm mt-1">' + helperText + '</p></div>';
         return;
     }
-    el.innerHTML = filtered.map(function(item) { return renderCard("members", item); }).join("");
+    membersListCache = filtered;
+    el.innerHTML = filtered.map(function(item, idx) {
+        return renderCard("members", item, {
+            prevId: idx > 0 ? filtered[idx - 1].id : null,
+            nextId: idx < filtered.length - 1 ? filtered[idx + 1].id : null
+        });
+    }).join("");
     applyRoleUI();
+}
+
+let membersListCache = [];
+
+async function moveMemberOrder(id, targetId) {
+    if (!targetId) return;
+    const ids = membersListCache.map(function(m) { return m.id; });
+    const fromIdx = ids.indexOf(id);
+    const toIdx = ids.indexOf(targetId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const reordered = membersListCache.slice();
+    const moved = reordered.splice(fromIdx, 1)[0];
+    reordered.splice(toIdx, 0, moved);
+    await Promise.all(reordered.map(function(m, idx) { return dbUpdate("members", m.id, { sort_order: idx }); }));
+    loadMembersAdmin();
 }
 
 async function setMemberDeleted(id, isDeleted) {
@@ -1169,7 +1190,7 @@ async function loadSection(name) {
     applyRoleUI();
 }
 
-function renderCard(type, item) {
+function renderCard(type, item, opts) {
     const icons = { members: "fa-user", events: "fa-calendar-days", activities: "fa-newspaper", news: "fa-bell", announcements: "fa-bullhorn" };
     const statusBadge = type !== "members" ? (item.is_published === false ? '<span class="bg-gray-100 text-gray-500 text-xs px-3 py-1 rounded-full font-bold">非公開</span>' : '<span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">公開中</span>') : "";
     const title = type === "members" ? item.name : item.title;
@@ -1190,7 +1211,12 @@ function renderCard(type, item) {
                 : '<button onclick="softDeleteMember(\'' + item.id + '\',\'' + safeTitle + '\')" class="viewer-hide bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>'))
         : ('<button onclick="editItem(\'' + type + '\',\'' + item.id + '\')" class="viewer-hide bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100"><i class="fa-solid fa-pen mr-1"></i>編集</button>' +
            '<button onclick="deleteItem(\'' + type + '\',\'' + item.id + '\',\'' + safeTitle + '\')" class="viewer-hide bg-red-50 text-red-500 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100"><i class="fa-solid fa-trash mr-1"></i>削除</button>');
-    return '<div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 mb-3">' + thumb +
+    const reorderButtons = (type === "members" && opts) ?
+        '<div class="viewer-hide flex flex-col gap-1 flex-shrink-0">' +
+        '<button onclick="moveMemberOrder(\'' + item.id + '\', \'' + (opts.prevId || "") + '\')" ' + (opts.prevId ? "" : "disabled") + ' class="w-7 h-7 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"><i class="fa-solid fa-chevron-up text-xs"></i></button>' +
+        '<button onclick="moveMemberOrder(\'' + item.id + '\', \'' + (opts.nextId || "") + '\')" ' + (opts.nextId ? "" : "disabled") + ' class="w-7 h-7 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"><i class="fa-solid fa-chevron-down text-xs"></i></button>' +
+        '</div>' : '';
+    return '<div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 mb-3">' + reorderButtons + thumb +
         '<div class="flex-1 min-w-0"><div class="font-bold text-gray-800 truncate">' + (title || "") + '</div><div class="text-sm text-gray-500 mt-1">' + sub + '</div></div>' +
         '<div class="flex items-center gap-2 flex-shrink-0">' + statusBadge + actionButtons +
         '</div></div>';
