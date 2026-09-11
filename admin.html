@@ -820,16 +820,27 @@ function greetingPreviewCard(item, group, options) {
     const content = !isPlaceholder && item.content ? '<p class="text-xs text-gray-600 leading-relaxed mt-2 line-clamp-3">' + item.content + '</p>' : '';
     const nameText = isPlaceholder ? '未登録' : (item.name || '');
     const photoUrl = isPlaceholder ? 'https://placehold.co/120x120/f3f4f6/9ca3af?text=未登録' : (item.photo_url || 'https://placehold.co/120x120/fff7ed/f97316?text=写真');
+    const isPublished = isPlaceholder || item.is_published !== false;
+    const publishToggle = isPlaceholder ? '' :
+        '<label class="viewer-hide flex items-center gap-2 text-xs text-gray-500 mt-3 cursor-pointer">' +
+        '<input type="checkbox" ' + (isPublished ? "checked" : "") + ' onchange="toggleGreetingPublished(\'' + item.id + '\', this.checked)" class="w-4 h-4 accent-orange-500">トップページに表示する</label>';
     const actionButtons = isPlaceholder
         ? '<button onclick="openGreetingModal(\'' + group.id + '\', null, \'' + roleText + '\')" class="viewer-hide w-full bg-orange-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-orange-600">追加する</button>'
-        : '<div class="viewer-hide flex gap-2 mt-3 w-full"><button onclick="editGreeting(\'' + item.id + '\')" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded-lg hover:bg-blue-100">編集</button><button onclick="deleteGreeting(\'' + item.id + '\')" class="flex-1 bg-red-50 text-red-500 text-xs font-bold py-2 rounded-lg hover:bg-red-100">削除</button></div>';
-    return '<div class="bg-' + (isPlaceholder ? 'gray-50' : 'gray-50') + ' rounded-2xl border ' + (isPlaceholder ? 'border-dashed border-gray-200' : 'border-orange-100') + ' p-4 flex flex-col items-center text-center shadow-sm">' +
+        : '<div class="viewer-hide flex gap-2 mt-2 w-full"><button onclick="editGreeting(\'' + item.id + '\')" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded-lg hover:bg-blue-100">編集</button><button onclick="deleteGreeting(\'' + item.id + '\')" class="flex-1 bg-red-50 text-red-500 text-xs font-bold py-2 rounded-lg hover:bg-red-100">削除</button></div>';
+    return '<div class="bg-gray-50 rounded-2xl border ' + (isPlaceholder ? 'border-dashed border-gray-200' : 'border-orange-100') + ' p-4 flex flex-col items-center text-center shadow-sm ' + (!isPublished ? 'opacity-60' : '') + '">' +
         '<img src="' + photoUrl + '" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow mb-3 ' + (isPlaceholder ? 'opacity-40' : '') + '">' +
         '<p class="text-xs font-bold text-orange-500 mb-1">' + roleText + '</p>' +
         '<p class="font-bold text-gray-800">' + nameText + '</p>' +
+        (!isPlaceholder && !isPublished ? '<span class="text-[10px] font-bold text-gray-400 bg-gray-200 px-2 py-0.5 rounded-full mt-1">非表示</span>' : '') +
         content +
+        publishToggle +
         actionButtons +
         '</div>';
+}
+
+async function toggleGreetingPublished(id, checked) {
+    const ok = await dbUpdate("greeting", id, { is_published: checked });
+    if (ok) { showToast(checked ? "表示にしました" : "非表示にしました"); loadGreeting(); }
 }
 
 function onBranchRoleTypeChange(radio) {
@@ -1285,6 +1296,7 @@ async function openGreetingModal(groupId, greetingItem, presetRole) {
         '<p class="text-xs text-gray-400 -mt-3">代表者のみ入力できます</p>' +
         '</div>' +
         inputField("sort_order", "表示順", "number", g && g.sort_order !== undefined ? g.sort_order : 0, "") +
+        toggleField("is_published", "トップページに表示する", !g || g.is_published !== false) +
         '<div class="flex gap-3 mt-4">' +
         '<button type="button" onclick="saveGreeting()" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600"><i class="fa-solid fa-floppy-disk mr-2"></i>保存する</button>' +
         '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
@@ -1311,11 +1323,12 @@ async function saveGreeting() {
         if (hid) hid.value = url;
     }
     // greeting テーブルに実在する列だけを送る（branch_role_type 等のUI専用フィールドは除外）
-    const GREETING_COLUMNS = ["photo_url", "group_id", "name", "role", "content", "sort_order"];
+    const GREETING_COLUMNS = ["photo_url", "group_id", "name", "role", "content", "sort_order", "is_published"];
     form.querySelectorAll("input,textarea,select").forEach(function(el) {
         if (el.type === "file") return;
         if (GREETING_COLUMNS.indexOf(el.name) === -1) return;
-        if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
+        if (el.type === "checkbox") data[el.name] = el.checked;
+        else if (el.value !== "") data[el.name] = el.type === "number" ? Number(el.value) : el.value;
     });
     const group = greetingGroupsCache.find(function(x) { return x.id === data.group_id; }) || currentGreetingGroupForModal;
     if (!data.role) {

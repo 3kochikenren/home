@@ -113,7 +113,7 @@ async function loadOfficersKenrenTile() {
     const kenrenId = await getKenrenId();
     const [groups, officers] = await Promise.all([
         fetchDB("org_officer_groups", "kenren_id=eq." + kenrenId + "&group_type=in.(fixed,multi)&order=sort_order.asc"),
-        fetchDB("greeting", "kenren_id=eq." + kenrenId + "&order=sort_order.asc")
+        fetchDB("greeting", "kenren_id=eq." + kenrenId + "&is_published=eq.true&order=sort_order.asc")
     ]);
     const html = (groups || []).map(function(g) { return renderOfficerGroupSection(g, officers); }).filter(Boolean).join('<div class="h-4"></div>');
     container.innerHTML = html || '<p class="text-center text-gray-400">役員情報は準備中です。</p>';
@@ -126,7 +126,7 @@ async function loadOfficersBranchTile() {
     const kenrenId = await getKenrenId();
     const [groups, officers] = await Promise.all([
         fetchDB("org_officer_groups", "kenren_id=eq." + kenrenId + "&group_type=eq.branch&order=sort_order.asc"),
-        fetchDB("greeting", "kenren_id=eq." + kenrenId + "&order=sort_order.asc")
+        fetchDB("greeting", "kenren_id=eq." + kenrenId + "&is_published=eq.true&order=sort_order.asc")
     ]);
     const html = (groups || []).map(function(g) { return renderOfficerGroupSection(g, officers); }).filter(Boolean).join('<div class="h-4"></div>');
     container.innerHTML = html || '<p class="text-center text-gray-400">支部役員情報は準備中です。</p>';
