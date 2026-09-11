@@ -99,11 +99,16 @@ function renderOfficerGroupSection(group, officers) {
 async function loadHeroImage() {
     const kenrenId = await getKenrenId();
     const data = await fetchDB("settings", "key=eq.hero_image&kenren_id=eq." + kenrenId);
-    if (!data || data.length === 0) return;
-    const url = data[0].value;
-    if (!url) return;
+    const url = data && data[0] && data[0].value;
+    const overlay = document.getElementById("hero-overlay");
+    if (!url) {
+        // 写真未設定: ブランドカラーの既定背景をそのまま見せる（黒オーバーレイは不要）
+        return;
+    }
     const hero = document.getElementById("hero-section");
     if (hero) hero.style.backgroundImage = "url(" + url + ")";
+    // 写真がある場合のみ、文字を読みやすくする黒オーバーレイを表示する
+    if (overlay) overlay.classList.remove("hidden");
 }
 
 // 県連役員タイル（県連4役＋県連役員）

@@ -27,9 +27,9 @@ html {
     scroll-behavior: smooth;
 }
 
-/* ヒーローエリアの画像プレースホルダー用背景 */
+/* ヒーローエリアの画像プレースホルダー用背景（写真未設定の県連向けの既定デザイン） */
 .hero-bg {
-    background-color: #ffffff;
+    background: linear-gradient(135deg, #fb923c 0%, #f97316 60%, #ea580c 100%);
     background-size: cover;
     background-position: center;
 }

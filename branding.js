@@ -84,12 +84,12 @@ async function applyBranding() {
     if (prefectureFull) applyText("members-heading", prefectureFull + "所属議員");
     if (prefectureShort) applyText("join-heading", "あなたの力が、" + prefectureShort + "を変え、そして日本を変える");
 
-    // ヒーロー見出し: 設定があればそれを使う。無ければ、高知はHTMLの既定文言の
-    // まま、それ以外は県名から自動生成する（「高知の未来を、共に創る。」を
-    // 他県にそのまま出さないため）
+    // ヒーロー見出し: 設定があればそれを使う。無ければ県名から自動生成する
+    // （HTMLの既定文言は「地域の未来を、共に創る。」という中立な文言にして
+    // あるため、この処理が終わるまでの一瞬も特定の県名が見えることはない）
     if (settings.hero_headline) {
         applyHtml("hero-headline", settings.hero_headline);
-    } else if (!isKochi && prefectureShort) {
+    } else if (prefectureShort) {
         applyHtml("hero-headline", prefectureShort + "の未来を、\n共に創る。");
     }
     applyText("hero-subheadline", settings.hero_subheadline);
