@@ -45,12 +45,13 @@ function normalizeOfficerRole(role, group) {
 }
 
 // 役員1名分のカード（県連役員タイル・支部役員タイルで共通利用）
-function renderPublicOfficerCard(item, roleText, empty) {
-    const photo = (!empty && item && item.photo_url) ? item.photo_url : "https://placehold.co/200x200/fdf2e8/f97316?text=写真";
-    const name = (!empty && item && item.name) ? item.name : "未登録";
-    const content = (!empty && item && item.content) ? `<p class="text-xs text-gray-600 leading-relaxed mt-2 text-left">${item.content}</p>` : "";
+// 公開ページ用の役員カード（登録済みの人だけを描画する。未登録の枠は呼び出し側でスキップする）
+function renderPublicOfficerCard(item, roleText) {
+    const photo = item.photo_url || "https://placehold.co/200x200/fdf2e8/f97316?text=写真";
+    const name = item.name || "";
+    const content = item.content ? `<p class="text-xs text-gray-600 leading-relaxed mt-2 text-left">${item.content}</p>` : "";
     return `
-        <article class="bg-white rounded-xl shadow-sm border border-orange-100 p-4 text-center ${empty ? "border-dashed bg-gray-50 opacity-60" : ""}">
+        <article class="w-40 flex-shrink-0 bg-white rounded-xl shadow-sm border border-orange-100 p-4 text-center">
             <img src="${photo}" alt="${name}" class="w-28 h-28 rounded-full object-cover mx-auto mb-3 border-4 border-orange-100 shadow-sm">
             <p class="text-xs font-bold text-orange-500 mb-1">${roleText}</p>
             <h3 class="text-base font-black text-gray-900 leading-tight">${name}</h3>
@@ -60,29 +61,30 @@ function renderPublicOfficerCard(item, roleText, empty) {
 }
 
 // 1つの役員グループ（県連4役／県連役員／各支部）をカード群として描画する
+// 公開ページの役員グループ表示。登録が無い枠は表示せず、登録済みの人だけを
+// 中央寄せで詰めて表示する（人数に関わらずレイアウトが崩れないように）
 function renderOfficerGroupSection(group, officers) {
     const items = (officers || []).filter(function(o) { return o.group_id === group.id; });
-    let bodyHtml = "";
+    let cards = [];
     if (group.group_type === "fixed") {
         const byRole = new Map();
         items.forEach(function(item) { byRole.set(normalizeOfficerRole(item.role, group), item); });
-        bodyHtml = (group.fixed_slots || []).map(function(slot) {
-            const item = byRole.get(slot);
-            return item ? renderPublicOfficerCard(item, slot, false) : renderPublicOfficerCard(null, slot, true);
-        }).join("");
+        cards = (group.fixed_slots || [])
+            .map(function(slot) { return byRole.get(slot) ? { item: byRole.get(slot), roleText: slot } : null; })
+            .filter(Boolean);
     } else if (group.group_type === "branch") {
         const headRole = group.head_role_label || "支部長";
         const head = items.find(function(item) { return normalizeOfficerRole(item.role, group) === headRole; }) || null;
         const others = items.filter(function(item) { return normalizeOfficerRole(item.role, group) !== headRole; })
             .sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); });
-        bodyHtml = renderPublicOfficerCard(head, headRole, !head) +
-            others.map(function(item) { return renderPublicOfficerCard(item, normalizeOfficerRole(item.role, group), false); }).join("");
+        if (head) cards.push({ item: head, roleText: headRole });
+        others.forEach(function(item) { cards.push({ item: item, roleText: normalizeOfficerRole(item.role, group) }); });
     } else {
         const sorted = items.slice().sort(function(a, b) { return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0); });
-        if (sorted.length === 0) return "";
-        bodyHtml = sorted.map(function(item) { return renderPublicOfficerCard(item, normalizeOfficerRole(item.role, group), false); }).join("");
+        sorted.forEach(function(item) { cards.push({ item: item, roleText: normalizeOfficerRole(item.role, group) }); });
     }
-    if (!bodyHtml) return "";
+    if (cards.length === 0) return "";
+    const bodyHtml = cards.map(function(c) { return renderPublicOfficerCard(c.item, c.roleText); }).join("");
     return `
         <div>
             <div class="flex items-center justify-center gap-3 mb-5">
@@ -90,7 +92,7 @@ function renderOfficerGroupSection(group, officers) {
                 <h3 class="text-lg font-black text-gray-800 whitespace-nowrap">${group.label}</h3>
                 <div class="h-px flex-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">${bodyHtml}</div>
+            <div class="flex flex-wrap justify-center gap-4 sm:gap-5">${bodyHtml}</div>
         </div>
     `;
 }
