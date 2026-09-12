@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理画面 | 参政党 高知県連</title>
+    <title>管理画面 | 参政党</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -46,7 +46,7 @@
                 <div class="w-9 h-9 bg-orange-500 rounded-lg flex items-center justify-center">
                     <i class="fa-solid fa-cog text-white"></i>
                 </div>
-                <span class="font-bold text-gray-800 text-lg">管理画面｜参政党 高知県連</span>
+                <span id="admin-header-brand" class="font-bold text-gray-800 text-lg">管理画面</span>
                 <span id="admin-role-badge" class="hidden text-xs font-bold px-3 py-1 rounded-full"></span>
                 <select id="kenren-switcher" class="hidden text-sm border-2 border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-orange-400" onchange="switchKenren(this.value)"></select>
             </div>
@@ -81,11 +81,11 @@
                     <button onclick="showSection('announcements')" id="nav-announcements" data-nav-section="announcements" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-bullhorn w-5 text-center"></i><span>お知らせ情報</span>
                     </button>
-                    <button onclick="showSection('greeting')" id="nav-greeting" data-nav-section="greeting" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
-                        <i class="fa-solid fa-handshake w-5 text-center"></i><span>役員</span>
-                    </button>
                     <button onclick="showSection('orggroups')" id="nav-orggroups" data-nav-section="orggroups" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-sitemap w-5 text-center"></i><span>組織構造</span>
+                    </button>
+                    <button onclick="showSection('greeting')" id="nav-greeting" data-nav-section="greeting" class="nav-btn active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
+                        <i class="fa-solid fa-handshake w-5 text-center"></i><span>役員</span>
                     </button>
                     <button onclick="showSection('staff')" id="nav-staff" data-nav-section="staff" class="kenren-admin-only hidden nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition">
                         <i class="fa-solid fa-user-group w-5 text-center"></i><span>スタッフ管理</span>
@@ -113,8 +113,8 @@
                     <button onclick="showSection('hometiles')" data-nav-section="hometiles" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">ホーム画面構成</button>
                     <button onclick="showSection('news')" data-nav-section="news" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">イベント情報</button>
                     <button onclick="showSection('announcements')" data-nav-section="announcements" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">お知らせ情報</button>
-                    <button onclick="showSection('greeting')" data-nav-section="greeting" class="nav-btn active px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-orange-200 bg-white">役員</button>
                     <button onclick="showSection('orggroups')" data-nav-section="orggroups" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">組織構造</button>
+                    <button onclick="showSection('greeting')" data-nav-section="greeting" class="nav-btn active px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-orange-200 bg-white">役員</button>
                     <button onclick="showSection('staff')" data-nav-section="staff" class="kenren-admin-only hidden nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">スタッフ管理</button>
                     <button onclick="showSection('members')" data-nav-section="members" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">議員情報</button>
                     <button onclick="showSection('activities')" data-nav-section="activities" class="nav-btn px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap border border-gray-200 bg-white">活動報告</button>
@@ -180,9 +180,12 @@
             </section>
 
             <section id="section-greeting" class="admin-section">
-                <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-building-columns mr-2 text-orange-500"></i>役員</h2>
-                    <p class="text-gray-500 text-sm mt-1">トップページの「県連及び支部役員の組織図」を管理します</p>
+                <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-building-columns mr-2 text-orange-500"></i>役員</h2>
+                        <p class="text-gray-500 text-sm mt-1">トップページの「県連及び支部役員の組織図」を管理します</p>
+                    </div>
+                    <button onclick="showSection('orggroups')" class="text-sm text-orange-500 hover:underline font-medium whitespace-nowrap"><i class="fa-solid fa-sitemap mr-1"></i>支部・役職名を編集する（組織構造）</button>
                 </div>
                 <div id="greeting-preview" class="bg-white rounded-2xl shadow p-6"></div>
             </section>
@@ -571,8 +574,22 @@ async function enterAdminScreenIfAuthorized() {
     document.getElementById("admin-screen").classList.remove("hidden");
     applyRoleUI();
     await setupKenrenSwitcher();
+    applyAdminHeaderBranding();
     loadSection("greeting");
     return true;
+}
+
+// ヘッダーの「管理画面｜〇〇県連」表示を、現在操作対象の県連名で動的に上書きする
+// （固定文言のままだと他県連でも「高知県連」と出てしまうため）
+async function applyAdminHeaderBranding() {
+    const kenrenId = await getCurrentKenrenId();
+    if (!kenrenId) return;
+    const rows = await dbFetch("kenren", "id=eq." + kenrenId + "&select=display_name&limit=1");
+    const displayName = rows && rows[0] && rows[0].display_name;
+    if (!displayName) return;
+    const headerEl = document.getElementById("admin-header-brand");
+    if (headerEl) headerEl.textContent = "管理画面｜" + displayName;
+    document.title = "管理画面 | " + displayName;
 }
 
 // super_admin のみ、管理対象の県連を切り替えるドロップダウンを表示する。
@@ -1829,63 +1846,82 @@ function renderAdminUsersList() {
     }).join("") + '</div>';
 }
 
-function openAssignRoleModal(editId) {
-    const editing = editId ? adminUsersCache.find(function(x) { return x.id === editId; }) : null;
-    const kenrenOptions = kenrenListCache.map(function(k) {
+// ロール付与モーダル（システム管理＝super_admin用/全県連対象と、スタッフ管理＝
+// kenren_admin用/自県連のみ対象は、フォームもRPC呼び出しもほぼ同じ形なので
+// mode（"system" / "staff"）で分岐する1つの実装に統合してある。
+function openRoleModal(mode, editId) {
+    const cache = mode === "system" ? adminUsersCache : staffUsersCache;
+    const editing = editId ? cache.find(function(x) { return x.id === editId; }) : null;
+    const kenrenOptions = mode === "system" ? kenrenListCache.map(function(k) {
         return '<option value="' + k.slug + '" ' + (editing && editing.kenren_id === k.id ? "selected" : "") + '>' + k.display_name + '</option>';
-    }).join("");
+    }).join("") : "";
+    const roleOptions =
+        '<option value="kenren_admin" ' + (editing && editing.role === "kenren_admin" ? "selected" : "") + '>県連管理者（kenren_admin）</option>' +
+        '<option value="viewer" ' + (editing && editing.role === "viewer" ? "selected" : "") + '>閲覧専用（viewer）</option>' +
+        (mode === "system" ? '<option value="super_admin" ' + (editing && editing.role === "super_admin" ? "selected" : "") + '>全体管理者（super_admin）</option>' : "");
     document.getElementById("modal-title").textContent = editing ? "権限を編集" : "権限を付与";
     document.getElementById("modal-body").innerHTML =
-        '<form id="assign-role-form">' +
+        '<form id="role-assign-form">' +
         inputField("name", "氏名", "text", editing ? (editing.name || "") : "", "例：山田 太郎") +
         '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">メールアドレス ※必須</label>' +
         '<input type="email" name="email" value="' + (editing ? editing.email : "") + '" placeholder="example@mail.com" ' + (editing ? "readonly" : "") + ' class="w-full border-2 rounded-xl px-4 py-3 focus:outline-none ' + (editing ? "bg-gray-100 border-gray-200 text-gray-500" : "border-gray-200 focus:border-orange-400") + '"></div>' +
         (editing ? '' : inputField("password", "パスワード（新規アカウントを作成する場合のみ入力・6文字以上）", "password", "", "既存アカウントに権限だけ付与する場合は空欄のまま")) +
         '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">ロール</label>' +
-        '<select name="role" onchange="onAssignRoleTypeChange(this)" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
-        '<option value="kenren_admin" ' + (editing && editing.role === "kenren_admin" ? "selected" : "") + '>県連管理者（kenren_admin）</option>' +
-        '<option value="viewer" ' + (editing && editing.role === "viewer" ? "selected" : "") + '>閲覧専用（viewer）</option>' +
-        '<option value="super_admin" ' + (editing && editing.role === "super_admin" ? "selected" : "") + '>全体管理者（super_admin）</option>' +
+        '<select name="role" ' + (mode === "system" ? 'onchange="onAssignRoleTypeChange(this)"' : '') + ' class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
+        roleOptions +
         '</select></div>' +
-        '<div id="assign-role-kenren-field" class="mb-5 ' + (editing && editing.role === "super_admin" ? "hidden" : "") + '"><label class="block text-sm font-bold text-gray-700 mb-1">所属県連</label>' +
-        '<select name="kenren_slug" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' + kenrenOptions + '</select></div>' +
+        (mode === "system" ?
+            '<div id="assign-role-kenren-field" class="mb-5 ' + (editing && editing.role === "super_admin" ? "hidden" : "") + '"><label class="block text-sm font-bold text-gray-700 mb-1">所属県連</label>' +
+            '<select name="kenren_slug" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' + kenrenOptions + '</select></div>'
+            : '') +
         '<div class="flex gap-3 mt-4">' +
-        '<button type="button" onclick="saveAssignRole()" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">' + (editing ? "更新する" : "付与する") + '</button>' +
+        '<button type="button" onclick="saveRoleModal(\'' + mode + '\')" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">' + (editing ? "更新する" : "付与する") + '</button>' +
         '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
         '</div></form>';
     document.getElementById("modal").classList.remove("hidden");
 }
 
 function onAssignRoleTypeChange(sel) {
-    document.getElementById("assign-role-kenren-field").classList.toggle("hidden", sel.value === "super_admin");
+    const field = document.getElementById("assign-role-kenren-field");
+    if (field) field.classList.toggle("hidden", sel.value === "super_admin");
 }
 
-async function saveAssignRole() {
-    const form = document.getElementById("assign-role-form");
+async function saveRoleModal(mode) {
+    const form = document.getElementById("role-assign-form");
     const name = form.querySelector('[name="name"]').value.trim();
     const email = form.querySelector('[name="email"]').value.trim();
     const passwordEl = form.querySelector('[name="password"]');
     const password = passwordEl ? passwordEl.value : "";
     const role = form.querySelector('[name="role"]').value;
-    const kenrenSlugEl = form.querySelector('[name="kenren_slug"]');
-    const kenrenSlug = role === "super_admin" ? null : (kenrenSlugEl ? kenrenSlugEl.value : null);
     if (!email) { alert("メールアドレスを入力してください。"); return; }
     const created = await createAccountIfPasswordProvided(email, password);
     if (!created.ok) { alert(created.error); return; }
-    const res = await callRpc("admin_assign_role", { target_email: email, target_role: role, target_kenren_slug: kenrenSlug, target_name: name || null });
+    let res;
+    if (mode === "system") {
+        const kenrenSlugEl = form.querySelector('[name="kenren_slug"]');
+        const kenrenSlug = role === "super_admin" ? null : (kenrenSlugEl ? kenrenSlugEl.value : null);
+        res = await callRpc("admin_assign_role", { target_email: email, target_role: role, target_kenren_slug: kenrenSlug, target_name: name || null });
+    } else {
+        res = await callRpc("kenren_admin_assign_role", { target_email: email, target_role: role, target_name: name || null });
+    }
     if (res.ok) {
-        closeModal(); loadAdminUsersList();
+        closeModal();
+        if (mode === "system") loadAdminUsersList(); else loadStaffAdmin();
         showToast(password ? "アカウントを作成し、権限を付与しました（本人確認メールの確認が必要です）" : "保存しました");
     } else alert(res.error);
 }
 
-function removeAdminUser(btn, id) {
+function removeRoleUser(btn, id, reload) {
     confirmStepDelete(btn, async function() {
         const ok = await dbDelete("admin_users", id);
-        if (ok) { showToast("削除しました"); loadAdminUsersList(); }
+        if (ok) { showToast("削除しました"); reload(); }
         else { btn.disabled = false; }
     });
 }
+
+// システム管理（super_admin・全県連対象）側の呼び出し口
+function openAssignRoleModal(editId) { openRoleModal("system", editId); }
+function removeAdminUser(btn, id) { removeRoleUser(btn, id, loadAdminUsersList); }
 
 // ===== スタッフ管理（kenren_admin専用: 自分の県連のアカウント管理） =====
 async function loadStaffAdmin() {
@@ -1911,51 +1947,9 @@ async function loadStaffAdmin() {
     }).join("") + '</div>';
 }
 
-function openStaffAssignModal(editId) {
-    const editing = editId ? staffUsersCache.find(function(x) { return x.id === editId; }) : null;
-    document.getElementById("modal-title").textContent = editing ? "権限を編集" : "権限を付与";
-    document.getElementById("modal-body").innerHTML =
-        '<form id="staff-assign-form">' +
-        inputField("name", "氏名", "text", editing ? (editing.name || "") : "", "例：山田 太郎") +
-        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">メールアドレス ※必須</label>' +
-        '<input type="email" name="email" value="' + (editing ? editing.email : "") + '" placeholder="example@mail.com" ' + (editing ? "readonly" : "") + ' class="w-full border-2 rounded-xl px-4 py-3 focus:outline-none ' + (editing ? "bg-gray-100 border-gray-200 text-gray-500" : "border-gray-200 focus:border-orange-400") + '"></div>' +
-        (editing ? '' : inputField("password", "パスワード（新規アカウントを作成する場合のみ入力・6文字以上）", "password", "", "既存アカウントに権限だけ付与する場合は空欄のまま")) +
-        '<div class="mb-5"><label class="block text-sm font-bold text-gray-700 mb-1">ロール</label>' +
-        '<select name="role" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-400">' +
-        '<option value="kenren_admin" ' + (editing && editing.role === "kenren_admin" ? "selected" : "") + '>県連管理者（kenren_admin）</option>' +
-        '<option value="viewer" ' + (editing && editing.role === "viewer" ? "selected" : "") + '>閲覧専用（viewer）</option>' +
-        '</select></div>' +
-        '<div class="flex gap-3 mt-4">' +
-        '<button type="button" onclick="saveStaffAssign()" class="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600">' + (editing ? "更新する" : "付与する") + '</button>' +
-        '<button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-4 rounded-xl">キャンセル</button>' +
-        '</div></form>';
-    document.getElementById("modal").classList.remove("hidden");
-}
-
-async function saveStaffAssign() {
-    const form = document.getElementById("staff-assign-form");
-    const name = form.querySelector('[name="name"]').value.trim();
-    const email = form.querySelector('[name="email"]').value.trim();
-    const passwordEl = form.querySelector('[name="password"]');
-    const password = passwordEl ? passwordEl.value : "";
-    const role = form.querySelector('[name="role"]').value;
-    if (!email) { alert("メールアドレスを入力してください。"); return; }
-    const created = await createAccountIfPasswordProvided(email, password);
-    if (!created.ok) { alert(created.error); return; }
-    const res = await callRpc("kenren_admin_assign_role", { target_email: email, target_role: role, target_name: name || null });
-    if (res.ok) {
-        closeModal(); loadStaffAdmin();
-        showToast(password ? "アカウントを作成し、権限を付与しました（本人確認メールの確認が必要です）" : "保存しました");
-    } else alert(res.error);
-}
-
-function removeStaffUser(btn, id) {
-    confirmStepDelete(btn, async function() {
-        const ok = await dbDelete("admin_users", id);
-        if (ok) { showToast("削除しました"); loadStaffAdmin(); }
-        else { btn.disabled = false; }
-    });
-}
+// スタッフ管理（kenren_admin・自県連のみ対象）側の呼び出し口
+function openStaffAssignModal(editId) { openRoleModal("staff", editId); }
+function removeStaffUser(btn, id) { removeRoleUser(btn, id, loadStaffAdmin); }
 
 async function loadSettings() {
     const kenrenId = await getCurrentKenrenId();
@@ -2001,28 +1995,28 @@ function renderBrandingFields(values) {
     }).join("");
 }
 
-async function saveBrandingSettings() {
+// settings テーブル（kenren_id + key + value）への1件アップサート／削除の共通処理。
+// ヒーロー画像・投開票日・その他表示設定は全部このテーブルへの読み書きなので、
+// 保存ロジックはここに集約する（value が空文字なら既定文言に戻す＝行を削除）。
+async function upsertSetting(key, value) {
     const kenrenId = await getCurrentKenrenId();
-    const existing = await dbFetch("settings", "kenren_id=eq." + kenrenId);
-    const existingByKey = {};
-    (existing || []).forEach(function(s) { existingByKey[s.key] = s; });
+    const existing = await dbFetch("settings", "key=eq." + key + "&kenren_id=eq." + kenrenId);
+    const current = existing && existing[0];
+    if (!value) {
+        if (current) return await dbDelete("settings", current.id);
+        return true;
+    }
+    if (current) return await dbUpdate("settings", current.id, { value: value });
+    return await dbInsert("settings", { key: key, value: value });
+}
+
+async function saveBrandingSettings() {
     let allOk = true;
     for (const f of BRANDING_FIELDS) {
         const el = document.getElementById("branding-" + f.key);
         if (!el) continue;
-        const value = el.value.trim();
-        const current = existingByKey[f.key];
-        if (!value) {
-            if (current) { const ok = await dbDelete("settings", current.id); if (!ok) allOk = false; }
-            continue;
-        }
-        if (current) {
-            const ok = await dbUpdate("settings", current.id, { value: value });
-            if (!ok) allOk = false;
-        } else {
-            const ok = await dbInsert("settings", { key: f.key, value: value });
-            if (!ok) allOk = false;
-        }
+        const ok = await upsertSetting(f.key, el.value.trim());
+        if (!ok) allOk = false;
     }
     if (allOk) { showToast("保存しました"); loadSettings(); }
     else alert("一部の保存に失敗しました。");
@@ -2043,14 +2037,7 @@ async function saveHeroImage() {
     showToast("画像をアップロード中...");
     const url = await uploadPhoto(input.files[0]);
     if (!url) { alert("アップロードに失敗しました。"); return; }
-    const kenrenId = await getCurrentKenrenId();
-    const existing = await dbFetch("settings", "key=eq.hero_image&kenren_id=eq." + kenrenId);
-    let ok;
-    if (existing && existing.length > 0) {
-        ok = await dbUpdate("settings", existing[0].id, { value: url });
-    } else {
-        ok = await dbInsert("settings", { key: "hero_image", value: url });
-    }
+    const ok = await upsertSetting("hero_image", url);
     if (ok) { loadSettings(); document.getElementById("hero-new-preview").classList.add("hidden"); showToast("ヒーロー画像を更新しました"); }
     else alert("保存に失敗しました。");
 }
@@ -2063,14 +2050,7 @@ async function saveElectionDate() {
         alert("投開票日を入力してください。");
         return;
     }
-    const kenrenId = await getCurrentKenrenId();
-    const existing = await dbFetch("settings", "key=eq.election_date&kenren_id=eq." + kenrenId);
-    let ok;
-    if (existing && existing.length > 0) {
-        ok = await dbUpdate("settings", existing[0].id, { value: value });
-    } else {
-        ok = await dbInsert("settings", { key: "election_date", value: value });
-    }
+    const ok = await upsertSetting("election_date", value);
     if (ok) {
         loadSettings();
         showToast("投開票日を更新しました");
