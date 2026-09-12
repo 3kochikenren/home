@@ -51,7 +51,7 @@ function renderPublicOfficerCard(item, roleText) {
     const name = item.name || "";
     const content = item.content ? `<p class="text-xs text-gray-600 leading-relaxed mt-2 text-left">${item.content}</p>` : "";
     return `
-        <article class="w-40 flex-shrink-0 bg-white rounded-xl shadow-sm border border-orange-100 p-4 text-center">
+        <article class="w-40 sm:w-64 flex-shrink-0 bg-white rounded-xl shadow-sm border border-orange-100 p-4 text-center">
             <img src="${photo}" alt="${name}" class="w-28 h-28 rounded-full object-cover mx-auto mb-3 border-4 border-orange-100 shadow-sm">
             <p class="text-xs font-bold text-orange-500 mb-1">${roleText}</p>
             <h3 class="text-base font-black text-gray-900 leading-tight">${name}</h3>
