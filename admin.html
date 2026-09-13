@@ -146,18 +146,6 @@
                     </div>
 
                     <div class="mt-10 border-t border-gray-100 pt-8">
-                        <h3 class="text-lg font-bold text-gray-800 mb-2"><i class="fa-solid fa-calendar-day mr-2 text-red-500"></i>公認候補者 投開票日</h3>
-                        <p class="text-sm text-gray-500 mb-4">トップページの公認候補者写真上に大きく表示します</p>
-                        <p id="election-date-current" class="text-sm text-gray-700 mb-3">現在の設定: 未設定</p>
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <input type="date" id="election-date-input" class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-red-400">
-                            <button onclick="saveElectionDate()" class="bg-red-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-red-600 transition">
-                                <i class="fa-solid fa-floppy-disk mr-2"></i>投開票日を保存
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="mt-10 border-t border-gray-100 pt-8">
                         <h3 class="text-lg font-bold text-gray-800 mb-2"><i class="fa-solid fa-palette mr-2 text-orange-400"></i>サイト表示設定</h3>
                         <p class="text-sm text-gray-500 mb-4">トップページの見出しや、各ページのフッターに表示する連絡先を設定します。空欄のままにすると既定の文言がそのまま表示されます。</p>
                         <div id="branding-fields"></div>
@@ -750,16 +738,6 @@ async function uploadPhoto(file) {
     return STORAGE_URL + "/object/public/images/" + fileName;
 }
 
-
-function formatDisplayDate(dateValue) {
-    if (!dateValue) return "未設定";
-    const d = new Date(dateValue);
-    if (Number.isNaN(d.getTime())) return "未設定";
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}.${m}.${day}`;
-}
 
 function updateDeletedMembersToggleButton() {
     const btn = document.getElementById("toggle-deleted-members-btn");
@@ -1958,8 +1936,6 @@ async function loadSettings() {
     (allSettings || []).forEach(function(s) { byKey[s.key] = s.value; });
 
     const el = document.getElementById("hero-current");
-    const electionCurrent = document.getElementById("election-date-current");
-    const electionInput = document.getElementById("election-date-input");
     if (el) {
         if (byKey.hero_image) {
             el.innerHTML = "<p class=\"text-sm font-bold text-gray-700 mb-2\">現在のヒーロー画像：</p><img src=\"" + byKey.hero_image + "\" class=\"w-full rounded-xl border-2 border-gray-200 max-h-64 object-cover\">";
@@ -1967,8 +1943,6 @@ async function loadSettings() {
             el.innerHTML = "<p class=\"text-sm text-gray-400 mb-2\">現在は既定の画像が表示されています</p>";
         }
     }
-    if (electionCurrent) electionCurrent.textContent = "現在の設定: " + formatDisplayDate(byKey.election_date || "");
-    if (electionInput) electionInput.value = byKey.election_date || "";
 
     renderBrandingFields(byKey);
     applyRoleUI();
@@ -2040,23 +2014,6 @@ async function saveHeroImage() {
     const ok = await upsertSetting("hero_image", url);
     if (ok) { loadSettings(); document.getElementById("hero-new-preview").classList.add("hidden"); showToast("ヒーロー画像を更新しました"); }
     else alert("保存に失敗しました。");
-}
-
-async function saveElectionDate() {
-    const input = document.getElementById("election-date-input");
-    if (!input) return;
-    const value = (input.value || "").trim();
-    if (!value) {
-        alert("投開票日を入力してください。");
-        return;
-    }
-    const ok = await upsertSetting("election_date", value);
-    if (ok) {
-        loadSettings();
-        showToast("投開票日を更新しました");
-    } else {
-        alert("保存に失敗しました。");
-    }
 }
 
 function openModal(type, data) {
